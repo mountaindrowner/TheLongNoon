@@ -36,7 +36,7 @@ numbers like §5.4 refer to [`docs/research/engineering-brief.md`](../research/e
 | Staybook (`13`) | 5 pages, unlocked by commands | — | — |
 | Saves (`20`) | `localStorage['longnoon.poc2.save']` holds the whole `ST` object (`v:1`), a small domain object with no renderer state. Saves on step change and rest | Versioned save, migrations, export/import (§5.10) | Any save that isn't `v:1` is rejected. No migrations, no export, one slot |
 | Flags | `fed tank drainStarted drainDone qteSeen armorHint shutterWarn`, created freely at runtime | Registry of declared flags (§5.4) | No registry. `shutterWarn` holds a day number, not a true/false value |
-| Tests | None. A headless Chromium boot works (≈3 s, no console errors) and baseline screenshots are in `docs/baseline/` | Playwright and CI (§6.8, §8) | Need a committed harness and CI |
+| Tests | `npm test`: Playwright playtests on desktop 1080p, phone landscape and phone portrait (boot, layout, scenes loaded from saves, drain fight setup, no console errors). Run in CI by `.github/workflows/test.yml` | Playwright and CI (§6.8, §8) | No battle-rule unit tests yet; no visual comparison against `docs/baseline/` |
 
 ## Mission-specific code that blocks a second mission
 
@@ -80,15 +80,16 @@ export/import is enough); localization string keys (they move text out of the sc
 which makes writing harder for the owner; add them only when a translation is planned);
 splitting work across multiple agent roles; a Three.js upgrade.
 
-## Proposed first three changes (each small, each checked against the baselines)
+## Proposed first three changes
+
+Changes 1 and 3 touch game code, so they wait until the owner's latest build is imported (see `CLAUDE.md`).
+ (each small, each checked against the baselines)
 
 1. **Module build.** Move `src/js/*` to real ES modules under Vite, with behavior unchanged.
    Builds produce (a) a website build for the full game and (b) the current
    single-file demo. Success means the baseline screenshots and smoke run still match.
-2. **Test harness, CI and play link.** Playwright smoke tests (boot, continue into each
-   baseline scene, reach the drain fight, no console errors), run by GitHub Actions on
-   every pull request, plus automatic deployment to GitHub Pages so every merged change
-   is playable from a phone.
+2. **Test harness, CI and play link.** *Done:* `npm test`, `.github/workflows/test.yml`,
+   and `.github/workflows/deploy.yml` (GitHub Pages from `main`).
 3. **Save v2.** An explicit save schema with `schemaVersion`, a v1→v2 migration with saved
    test files, Export/Import save buttons in the pause menu, and a declared flag registry.
 

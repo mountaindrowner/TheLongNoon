@@ -1,0 +1,29 @@
+# Publishes the latest game from main to GitHub Pages, so it can be played from any
+# browser or phone at https://mountaindrowner.github.io/TheLongNoon/
+# One-time setup: repo Settings -> Pages -> Source: "GitHub Actions".
+name: Deploy play link
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/build.py src site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

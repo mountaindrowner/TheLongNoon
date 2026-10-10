@@ -6,15 +6,27 @@ so read these before changing anything:
 - `docs/architecture/current-state.md`: how the game is actually built today. Keep it updated when that changes.
 - `docs/research/engineering-brief.md`: the agreed direction. These are recommendations, not existing APIs.
 - `README.md`: how each system works.
+- `docs/architecture/display-and-input.md`: screen targets (1080p desktop first; phones are
+  where the owner tests) and input.
+
+## Waiting on the owner's latest build
+
+The owner is still developing the game in Claude chat and will hand over a newer single-file
+build. **Until it is imported, don't edit game code or content in `src/`**, because
+`tools/unpack.py` replaces `src/` wholesale. Tooling, tests and docs are fine.
+To import: `python3 tools/unpack.py new.html src`, review `git diff`, run `npm test`, then
+re-check `docs/architecture/current-state.md` against the new code.
 
 ## Commands
 
 ```
 python3 tools/build.py                 # src/ -> dist/The-Long-Noon.html (open it in a browser)
 python3 tools/unpack.py file.html src  # import a single-file build made elsewhere
+npm install && npm test                # build, then playtest on desktop-1080p, phone-landscape, phone-portrait
 ```
 
 Append `#debug` to the URL for instant text and `window.__LN` (tp, setStep, setClock, runScript).
+The play link (GitHub Pages, deployed from `main`): https://mountaindrowner.github.io/TheLongNoon/
 
 ## Rules
 
