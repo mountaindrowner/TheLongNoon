@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>The Long Noon: Lamp</title>
+<style>{{include css/fonts.css}}</style>
+<style>{{include css/style.css}}</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game"></canvas>
+  <div id="fade"></div>
+  <div id="wipe"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div>
+
+  <div id="hud" hidden>
+    <div class="clock"><i class="ic" data-ic="ic_moon"></i><b id="hTime">7:20 pm</b><span id="hPhase">Lamp</span></div>
+    <div class="meters"><div id="hWater" class="drops" aria-label="Water"></div><div class="tins"><i class="ic" data-ic="ic_tin"></i><b id="hWhite">0</b></div></div>
+    <div id="hWarn" hidden></div>
+  </div>
+  <div id="objective" hidden><span id="oMission">Lamp</span><p id="oText"></p></div>
+  <div id="marker" hidden><i></i></div>
+  <div id="prompt" hidden><b>A</b><span></span></div>
+  <div id="toasts"></div>
+  <div id="tale" hidden><canvas width="320" height="150"></canvas></div>
+  <div id="chapter" hidden></div>
+  <button id="skip" hidden>Skip ›</button>
+
+  <div id="dialog" hidden><div class="pt"></div><div class="name"></div><p class="text"></p><div class="choices"></div><i class="more"></i></div>
+
+  <div id="battle" hidden>
+    <div id="turnbar"><span class="lbl">Next</span><div class="q"></div></div>
+    <div id="bmsg"></div>
+    <div id="bparty"></div>
+    <div id="bmenu" class="menu"></div>
+  </div>
+  <div id="qte" hidden><i></i><b></b></div>
+  <div id="floats"></div>
+
+  <div id="book" hidden>
+    <div class="page"><div class="hand"></div><p class="teach"></p><div class="pnum"></div></div>
+    <div class="bnav"><button id="bkPrev" aria-label="Previous page">‹</button><span id="bkNew">New page</span><button id="bkClose">Close</button><button id="bkNext" aria-label="Next page">›</button></div>
+  </div>
+
+  <div id="pause" hidden>
+    <div class="col">
+      <h2>Paused</h2>
+      <div class="menu" id="pmenu">
+        <button data-a="resume">Resume</button>
+        <button data-a="book">Staybook</button>
+        <button data-a="save">Save game</button>
+        <button data-a="load">Load last save</button>
+        <button data-a="fps">Frame counter: on</button>
+        <button data-a="quality">Graphics: high</button>
+        <button data-a="chunks">Show world chunks: off</button>
+        <button data-a="music">Music: on</button>
+        <button data-a="mute">Sound effects: on</button>
+        <button data-a="title">Quit to title</button>
+      </div>
+    </div>
+    <div class="col side"><h3>Party</h3><div id="pParty"></div><h3>Pack</h3><div id="pItems"></div></div>
+  </div>
+
+  <div id="title" hidden>
+    <h1>The Long Noon</h1>
+    <p class="tag">The hundredth summer.</p>
+    <div class="menu" id="tmenu">
+      <button data-a="new">New game</button>
+      <button data-a="continue" hidden>Continue</button>
+      <button data-a="full" hidden>Play full screen</button>
+    </div>
+    <p class="foot">Proof of concept 2: the first scenes and the first mission.</p>
+    <p id="tapstart">Tap anywhere to begin</p>
+  </div>
+
+  <div id="card" hidden>
+    <p class="k">Mission complete</p><h2>Lamp</h2><p class="next">Next: The White Bowl</p>
+    <p class="newpage">A page in the staybook you'd never noticed is open in your hands.</p>
+    <div class="menu"><button data-a="read">Read the page</button><button data-a="explore">Keep exploring</button><button data-a="title">Back to title</button></div>
+  </div>
+
+  <div id="loading"><h1>The Long Noon</h1><div id="loadbar"><i></i></div><p id="loadtxt">Starting…</p></div>
+
+  <div id="touch" hidden>
+    <div id="stickzone"><div id="stick"><i></i></div></div>
+    <button id="btnA" aria-label="Action">A</button>
+    <button id="btnBook" aria-label="Staybook"><i class="ic" data-ic="ic_book"></i></button>
+    <button id="btnMenu" aria-label="Menu">≡</button>
+  </div>
+  <div id="fps" hidden></div>
+</div>
+<div id="rotate" hidden><div><p>Turn your phone sideways.</p><p class="s">The Long Noon is a widescreen game.</p><button id="rotOk">Play upright anyway</button></div></div>
+
+<script type="application/json" id="asset-manifest">{{json data/manifest.json}}</script>
+<script type="application/json" id="data-map">{{json data/map.json}}</script>
+<script type="application/json" id="data-dialogue">{{json data/dialogue.json}}</script>
+<script type="application/json" id="data-quests">{{json data/quests.json}}</script>
+<script type="application/json" id="data-pages">{{json data/pages.json}}</script>
+<script type="application/json" id="data-battles">{{json data/battles.json}}</script>
+<script type="application/json" id="music-data">{{music intro explore combat}}</script>
+<script>{{include vendor/three.min.js}}</script>
+<script>{{js}}</script>
+</body>
+</html>

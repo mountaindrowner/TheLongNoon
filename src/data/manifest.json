@@ -1,0 +1,1200 @@
+{
+  "version": 1,
+  "images": {
+    "chars": "../assets/img/chars.png",
+    "props": "../assets/img/props.png",
+    "tiles": "../assets/img/tiles.png",
+    "walls": "../assets/img/walls.png",
+    "portraits": "../assets/img/portraits.png"
+  },
+  "frames": {
+    "juno": {
+      "a": "chars",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 96
+    },
+    "kit": {
+      "a": "chars",
+      "x": 49,
+      "y": 0,
+      "w": 48,
+      "h": 96
+    },
+    "lupe": {
+      "a": "chars",
+      "x": 98,
+      "y": 0,
+      "w": 48,
+      "h": 96
+    },
+    "chayo": {
+      "a": "chars",
+      "x": 147,
+      "y": 0,
+      "w": 48,
+      "h": 96
+    },
+    "beto": {
+      "a": "chars",
+      "x": 196,
+      "y": 0,
+      "w": 48,
+      "h": 96
+    },
+    "ruben": {
+      "a": "chars",
+      "x": 0,
+      "y": 97,
+      "w": 48,
+      "h": 96
+    },
+    "tavo": {
+      "a": "chars",
+      "x": 49,
+      "y": 97,
+      "w": 48,
+      "h": 96
+    },
+    "nacho": {
+      "a": "chars",
+      "x": 98,
+      "y": 97,
+      "w": 48,
+      "h": 96
+    },
+    "fina": {
+      "a": "chars",
+      "x": 147,
+      "y": 97,
+      "w": 48,
+      "h": 96
+    },
+    "memo": {
+      "a": "chars",
+      "x": 196,
+      "y": 97,
+      "w": 48,
+      "h": 96
+    },
+    "nina": {
+      "a": "chars",
+      "x": 0,
+      "y": 194,
+      "w": 48,
+      "h": 96
+    },
+    "tona": {
+      "a": "chars",
+      "x": 49,
+      "y": 194,
+      "w": 48,
+      "h": 96
+    },
+    "elias": {
+      "a": "chars",
+      "x": 98,
+      "y": 194,
+      "w": 48,
+      "h": 96
+    },
+    "rosa": {
+      "a": "chars",
+      "x": 147,
+      "y": 194,
+      "w": 48,
+      "h": 96
+    },
+    "kidjuno": {
+      "a": "chars",
+      "x": 196,
+      "y": 194,
+      "w": 48,
+      "h": 96
+    },
+    "stray_0": {
+      "a": "chars",
+      "x": 0,
+      "y": 291,
+      "w": 28,
+      "h": 24
+    },
+    "stray_1": {
+      "a": "chars",
+      "x": 29,
+      "y": 291,
+      "w": 28,
+      "h": 24
+    },
+    "stray_broken": {
+      "a": "chars",
+      "x": 58,
+      "y": 291,
+      "w": 28,
+      "h": 24
+    },
+    "coyote_0": {
+      "a": "chars",
+      "x": 87,
+      "y": 291,
+      "w": 26,
+      "h": 17
+    },
+    "coyote_1": {
+      "a": "chars",
+      "x": 114,
+      "y": 291,
+      "w": 26,
+      "h": 17
+    },
+    "goat_0": {
+      "a": "chars",
+      "x": 141,
+      "y": 291,
+      "w": 18,
+      "h": 15
+    },
+    "goat_1": {
+      "a": "chars",
+      "x": 160,
+      "y": 291,
+      "w": 18,
+      "h": 15
+    },
+    "chicken_0": {
+      "a": "chars",
+      "x": 179,
+      "y": 291,
+      "w": 10,
+      "h": 10
+    },
+    "chicken_1": {
+      "a": "chars",
+      "x": 190,
+      "y": 291,
+      "w": 10,
+      "h": 10
+    },
+    "pt_juno_0": {
+      "a": "portraits",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_juno_1": {
+      "a": "portraits",
+      "x": 49,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_kit_0": {
+      "a": "portraits",
+      "x": 98,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_kit_1": {
+      "a": "portraits",
+      "x": 147,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_lupe_0": {
+      "a": "portraits",
+      "x": 196,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_lupe_1": {
+      "a": "portraits",
+      "x": 245,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_chayo_0": {
+      "a": "portraits",
+      "x": 294,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_chayo_1": {
+      "a": "portraits",
+      "x": 343,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_beto_0": {
+      "a": "portraits",
+      "x": 392,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_beto_1": {
+      "a": "portraits",
+      "x": 441,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    "pt_ruben_0": {
+      "a": "portraits",
+      "x": 0,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_ruben_1": {
+      "a": "portraits",
+      "x": 49,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_tavo_0": {
+      "a": "portraits",
+      "x": 98,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_tavo_1": {
+      "a": "portraits",
+      "x": 147,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_nacho_0": {
+      "a": "portraits",
+      "x": 196,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_nacho_1": {
+      "a": "portraits",
+      "x": 245,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_fina_0": {
+      "a": "portraits",
+      "x": 294,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_fina_1": {
+      "a": "portraits",
+      "x": 343,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_memo_0": {
+      "a": "portraits",
+      "x": 392,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_memo_1": {
+      "a": "portraits",
+      "x": 441,
+      "y": 49,
+      "w": 48,
+      "h": 48
+    },
+    "pt_nina_0": {
+      "a": "portraits",
+      "x": 0,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_nina_1": {
+      "a": "portraits",
+      "x": 49,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_tona_0": {
+      "a": "portraits",
+      "x": 98,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_tona_1": {
+      "a": "portraits",
+      "x": 147,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_elias_0": {
+      "a": "portraits",
+      "x": 196,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_elias_1": {
+      "a": "portraits",
+      "x": 245,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_rosa_0": {
+      "a": "portraits",
+      "x": 294,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_rosa_1": {
+      "a": "portraits",
+      "x": 343,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_kidjuno_0": {
+      "a": "portraits",
+      "x": 392,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "pt_kidjuno_1": {
+      "a": "portraits",
+      "x": 441,
+      "y": 98,
+      "w": 48,
+      "h": 48
+    },
+    "palm": {
+      "a": "props",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 78
+    },
+    "powerpole": {
+      "a": "props",
+      "x": 31,
+      "y": 0,
+      "w": 20,
+      "h": 72
+    },
+    "lookout": {
+      "a": "props",
+      "x": 52,
+      "y": 0,
+      "w": 28,
+      "h": 60
+    },
+    "mesquite_a": {
+      "a": "props",
+      "x": 81,
+      "y": 0,
+      "w": 44,
+      "h": 46
+    },
+    "mesquite_b": {
+      "a": "props",
+      "x": 126,
+      "y": 0,
+      "w": 44,
+      "h": 46
+    },
+    "mesquite_c": {
+      "a": "props",
+      "x": 171,
+      "y": 0,
+      "w": 44,
+      "h": 46
+    },
+    "pole": {
+      "a": "props",
+      "x": 216,
+      "y": 0,
+      "w": 4,
+      "h": 44
+    },
+    "lantern": {
+      "a": "props",
+      "x": 221,
+      "y": 0,
+      "w": 12,
+      "h": 32
+    },
+    "glow": {
+      "a": "props",
+      "x": 234,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    "stall_a": {
+      "a": "props",
+      "x": 267,
+      "y": 0,
+      "w": 40,
+      "h": 30
+    },
+    "stall_b": {
+      "a": "props",
+      "x": 308,
+      "y": 0,
+      "w": 40,
+      "h": 30
+    },
+    "stall_c": {
+      "a": "props",
+      "x": 349,
+      "y": 0,
+      "w": 40,
+      "h": 30
+    },
+    "dewnet": {
+      "a": "props",
+      "x": 390,
+      "y": 0,
+      "w": 22,
+      "h": 28
+    },
+    "laundry": {
+      "a": "props",
+      "x": 413,
+      "y": 0,
+      "w": 44,
+      "h": 26
+    },
+    "nopal_a": {
+      "a": "props",
+      "x": 458,
+      "y": 0,
+      "w": 22,
+      "h": 24
+    },
+    "nopal_b": {
+      "a": "props",
+      "x": 481,
+      "y": 0,
+      "w": 22,
+      "h": 24
+    },
+    "tank": {
+      "a": "props",
+      "x": 0,
+      "y": 79,
+      "w": 16,
+      "h": 22
+    },
+    "well": {
+      "a": "props",
+      "x": 17,
+      "y": 79,
+      "w": 22,
+      "h": 22
+    },
+    "shrine": {
+      "a": "props",
+      "x": 40,
+      "y": 79,
+      "w": 22,
+      "h": 22
+    },
+    "sign_agua": {
+      "a": "props",
+      "x": 63,
+      "y": 79,
+      "w": 24,
+      "h": 22
+    },
+    "truck": {
+      "a": "props",
+      "x": 88,
+      "y": 79,
+      "w": 46,
+      "h": 22
+    },
+    "car": {
+      "a": "props",
+      "x": 135,
+      "y": 79,
+      "w": 40,
+      "h": 20
+    },
+    "tires": {
+      "a": "props",
+      "x": 176,
+      "y": 79,
+      "w": 16,
+      "h": 20
+    },
+    "sign_fallen": {
+      "a": "props",
+      "x": 193,
+      "y": 79,
+      "w": 22,
+      "h": 20
+    },
+    "crates_b": {
+      "a": "props",
+      "x": 216,
+      "y": 79,
+      "w": 16,
+      "h": 20
+    },
+    "cart": {
+      "a": "props",
+      "x": 233,
+      "y": 79,
+      "w": 22,
+      "h": 19
+    },
+    "bush_a": {
+      "a": "props",
+      "x": 256,
+      "y": 79,
+      "w": 26,
+      "h": 18
+    },
+    "bush_b": {
+      "a": "props",
+      "x": 283,
+      "y": 79,
+      "w": 26,
+      "h": 18
+    },
+    "sign_mar": {
+      "a": "props",
+      "x": 310,
+      "y": 79,
+      "w": 50,
+      "h": 18
+    },
+    "rubble_b": {
+      "a": "props",
+      "x": 361,
+      "y": 79,
+      "w": 34,
+      "h": 18
+    },
+    "bucket": {
+      "a": "props",
+      "x": 396,
+      "y": 79,
+      "w": 14,
+      "h": 18
+    },
+    "dish": {
+      "a": "props",
+      "x": 411,
+      "y": 79,
+      "w": 18,
+      "h": 18
+    },
+    "couch": {
+      "a": "props",
+      "x": 430,
+      "y": 79,
+      "w": 32,
+      "h": 17
+    },
+    "drum": {
+      "a": "props",
+      "x": 463,
+      "y": 79,
+      "w": 13,
+      "h": 17
+    },
+    "rubble_a": {
+      "a": "props",
+      "x": 477,
+      "y": 79,
+      "w": 28,
+      "h": 16
+    },
+    "fire_0": {
+      "a": "props",
+      "x": 0,
+      "y": 102,
+      "w": 18,
+      "h": 16
+    },
+    "fire_1": {
+      "a": "props",
+      "x": 19,
+      "y": 102,
+      "w": 18,
+      "h": 16
+    },
+    "barrier": {
+      "a": "props",
+      "x": 38,
+      "y": 102,
+      "w": 34,
+      "h": 15
+    },
+    "pallet": {
+      "a": "props",
+      "x": 73,
+      "y": 102,
+      "w": 18,
+      "h": 15
+    },
+    "chair": {
+      "a": "props",
+      "x": 92,
+      "y": 102,
+      "w": 12,
+      "h": 15
+    },
+    "chair_b": {
+      "a": "props",
+      "x": 105,
+      "y": 102,
+      "w": 12,
+      "h": 15
+    },
+    "bike": {
+      "a": "props",
+      "x": 118,
+      "y": 102,
+      "w": 24,
+      "h": 15
+    },
+    "sandbags": {
+      "a": "props",
+      "x": 143,
+      "y": 102,
+      "w": 30,
+      "h": 14
+    },
+    "jugs": {
+      "a": "props",
+      "x": 174,
+      "y": 102,
+      "w": 18,
+      "h": 13
+    },
+    "crate": {
+      "a": "props",
+      "x": 193,
+      "y": 102,
+      "w": 14,
+      "h": 12
+    },
+    "ic_drop": {
+      "a": "props",
+      "x": 208,
+      "y": 102,
+      "w": 12,
+      "h": 12
+    },
+    "ic_tin": {
+      "a": "props",
+      "x": 221,
+      "y": 102,
+      "w": 12,
+      "h": 12
+    },
+    "ic_book": {
+      "a": "props",
+      "x": 234,
+      "y": 102,
+      "w": 12,
+      "h": 12
+    },
+    "ic_sun": {
+      "a": "props",
+      "x": 247,
+      "y": 102,
+      "w": 12,
+      "h": 12
+    },
+    "ic_moon": {
+      "a": "props",
+      "x": 260,
+      "y": 102,
+      "w": 12,
+      "h": 12
+    },
+    "rubble_c": {
+      "a": "props",
+      "x": 273,
+      "y": 102,
+      "w": 20,
+      "h": 12
+    },
+    "cinder": {
+      "a": "props",
+      "x": 294,
+      "y": 102,
+      "w": 16,
+      "h": 12
+    },
+    "trike": {
+      "a": "props",
+      "x": 311,
+      "y": 102,
+      "w": 14,
+      "h": 12
+    },
+    "bench_w": {
+      "a": "props",
+      "x": 326,
+      "y": 102,
+      "w": 26,
+      "h": 12
+    },
+    "flag0_0": {
+      "a": "props",
+      "x": 353,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag0_1": {
+      "a": "props",
+      "x": 370,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag1_0": {
+      "a": "props",
+      "x": 387,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag1_1": {
+      "a": "props",
+      "x": 404,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag2_0": {
+      "a": "props",
+      "x": 421,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag2_1": {
+      "a": "props",
+      "x": 438,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag3_0": {
+      "a": "props",
+      "x": 455,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag3_1": {
+      "a": "props",
+      "x": 472,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag4_0": {
+      "a": "props",
+      "x": 489,
+      "y": 102,
+      "w": 16,
+      "h": 11
+    },
+    "flag4_1": {
+      "a": "props",
+      "x": 0,
+      "y": 119,
+      "w": 16,
+      "h": 11
+    },
+    "flag5_0": {
+      "a": "props",
+      "x": 17,
+      "y": 119,
+      "w": 16,
+      "h": 11
+    },
+    "flag5_1": {
+      "a": "props",
+      "x": 34,
+      "y": 119,
+      "w": 16,
+      "h": 11
+    },
+    "flag6_0": {
+      "a": "props",
+      "x": 51,
+      "y": 119,
+      "w": 16,
+      "h": 11
+    },
+    "flag6_1": {
+      "a": "props",
+      "x": 68,
+      "y": 119,
+      "w": 16,
+      "h": 11
+    },
+    "bricks": {
+      "a": "props",
+      "x": 85,
+      "y": 119,
+      "w": 18,
+      "h": 11
+    },
+    "trash": {
+      "a": "props",
+      "x": 104,
+      "y": 119,
+      "w": 20,
+      "h": 11
+    },
+    "tire": {
+      "a": "props",
+      "x": 125,
+      "y": 119,
+      "w": 14,
+      "h": 10
+    },
+    "skull": {
+      "a": "props",
+      "x": 140,
+      "y": 119,
+      "w": 14,
+      "h": 10
+    },
+    "shroud": {
+      "a": "props",
+      "x": 155,
+      "y": 119,
+      "w": 26,
+      "h": 9
+    },
+    "bulb": {
+      "a": "props",
+      "x": 182,
+      "y": 119,
+      "w": 8,
+      "h": 8
+    }
+  },
+  "characters": {
+    "juno": {
+      "sheet": "juno",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "kit": {
+      "sheet": "kit",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "lupe": {
+      "sheet": "lupe",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "chayo": {
+      "sheet": "chayo",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "beto": {
+      "sheet": "beto",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "ruben": {
+      "sheet": "ruben",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "tavo": {
+      "sheet": "tavo",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "nacho": {
+      "sheet": "nacho",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "fina": {
+      "sheet": "fina",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "memo": {
+      "sheet": "memo",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "nina": {
+      "sheet": "nina",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "tona": {
+      "sheet": "tona",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "elias": {
+      "sheet": "elias",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "rosa": {
+      "sheet": "rosa",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    },
+    "kidjuno": {
+      "sheet": "kidjuno",
+      "fw": 16,
+      "fh": 24,
+      "dirs": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "walk": [
+        1,
+        0,
+        2,
+        0
+      ]
+    }
+  },
+  "tiles": {
+    "size": 16,
+    "cols": 8,
+    "index": {
+      "caliche": 0,
+      "caliche2": 1,
+      "gravel": 2,
+      "deadgrass": 3,
+      "asphalt": 4,
+      "asphalt_crack": 5,
+      "asphalt_line": 6,
+      "sidewalk": 7,
+      "lot": 8,
+      "lot_stripe": 9,
+      "sand": 10,
+      "drain": 11,
+      "mud": 12,
+      "dirtpath": 13,
+      "floor": 14
+    }
+  },
+  "walls": {
+    "size": 32,
+    "cols": 4,
+    "index": {
+      "wall_store": 0,
+      "shutter": 1,
+      "wall_house": 2,
+      "wall_brick": 3,
+      "roof": 4,
+      "wall_chapel": 5,
+      "boarded": 6,
+      "concrete": 7
+    }
+  }
+}

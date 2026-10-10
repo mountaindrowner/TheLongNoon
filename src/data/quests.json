@@ -1,0 +1,36 @@
+{
+  "mission": "Lamp",
+  "steps": {
+    "burial": {
+      "obj": "",
+      "marker": null
+    },
+    "home": {
+      "obj": "Feed the goats and check the water tank",
+      "marker": "homeTasks"
+    },
+    "market": {
+      "obj": "Trade the milk with Doña Chayo at the night market in Del Mar Park",
+      "marker": "npc:chayo"
+    },
+    "kit": {
+      "obj": "Find Kit by the seven flags",
+      "marker": "npc:kit"
+    },
+    "pancha": {
+      "obj": "Find Pancha down by the drain, east of the park",
+      "marker": [
+        107.5,
+        56.5
+      ]
+    },
+    "home2": {
+      "obj": "Get home to Mar Farm before Shutter",
+      "marker": "i:door"
+    },
+    "free": {
+      "obj": "First mission complete. The Span is yours to explore.",
+      "marker": null
+    }
+  }
+}
