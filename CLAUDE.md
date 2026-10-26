@@ -6,6 +6,7 @@ spec. Every session starts fresh, so read these first:
 - `docs/style/world-style-spec.md`: **the rules for how the world looks and is built.** MUST rules are hard.
 - `docs/design/world-methodology.md`: **how The Long Noon's world is laid out** (regions, roads, naming, day/night,
   the lantern language). It overrides the style spec where they differ (real places, night first). `[PROPOSAL]` items await the owner.
+- `docs/design/held-ideas.md`: the owner's ideas waiting for a go (daytime shade-as-cover, …). Don't build them unasked.
 - `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
