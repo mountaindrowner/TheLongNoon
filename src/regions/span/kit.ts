@@ -21,12 +21,22 @@ const glow = (hex: string, k: number): THREE.MeshStandardMaterial => colMat(hex,
 
 // ------------------------------------------------------------------ ground
 
+const ASPHALT = ['#6a6762', '#77736c', '#827e76', '#605c56'].map(H);
 const SAND = ['#c8b08a', '#d2ba92', '#bca47e', '#dcc6a0'].map(H);
 const CRUST = ['#e6e0d2', '#ddd6c6', '#efe9dc', '#d2cab8'].map(H);
 
 /** Ground glyphs the Span adds to the region painter: '#' dry edge scrub, 's' sand,
  *  'W' the White Bowl's salt crust, cracked into plates. */
 export function spanPaint(glyph: string, x: number, z: number, fine: number): RGB | undefined {
+  if (glyph === 'd') {
+    // old asphalt, sun-greyed: cracks full of blown dust and dead tufts, never green
+    const n = fbm(x * 0.6, z * 0.6, 31, 3);
+    let c = ASPHALT[Math.min(3, Math.floor(n * 3.2 + fine * 0.9))]!;
+    const cr = fbm(x * 0.55, z * 0.55, 33, 3);
+    if (Math.abs(cr - 0.5) < 0.012 || Math.abs(fbm(x * 1.3, z * 1.3, 34, 2) - 0.5) < 0.008) c = vnoise(x * 3, z * 3, 35) > 0.6 ? H(fine > 0.5 ? '#a89060' : '#8a7a54') : H('#3e3a34');
+    if (fbm(x * 0.35, z * 0.35, 37, 2) > 0.74) c = fine > 0.5 ? H('#8d7a5c') : H('#7a6a50'); // dust drifted over it
+    return c;
+  }
   if (glyph === '#') return SCRUB_DRY[Math.min(3, Math.floor(fbm(x * 0.7, z * 0.7, 41, 2) * 3 + fine * 1.2))]!;
   if (glyph === 's') return SAND[Math.min(3, Math.floor(fbm(x * 0.4, z * 0.4, 51, 2) * 3 + fine * 1.2))]!;
   if (glyph === 'W') {

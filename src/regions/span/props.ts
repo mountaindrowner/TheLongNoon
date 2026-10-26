@@ -61,6 +61,8 @@ export function swaySpan(t: number): void { for (const s of sways) s.obj.rotatio
 export interface Occluder { mats: THREE.Material[]; rect: [number, number, number, number]; k: number }
 export const occluders: Occluder[] = [];
 export function resetSpan(): void { sways.length = 0; occluders.length = 0; }
+/** Forget the swaying fronds of maps taken out of the scene (a streamed region drops far maps). */
+export function pruneSpan(attached: (o: THREE.Object3D) => boolean): void { for (let i = sways.length - 1; i >= 0; i--) if (!attached(sways[i]!.obj)) sways.splice(i, 1); }
 export function fadeOccluders(px: number, pz: number, dt: number): void {
   for (const o of occluders) {
     const [x0, z0, x1, z1] = o.rect;
@@ -579,16 +581,31 @@ export function skull(scene: THREE.Scene, x: number, z: number, rot: number): vo
   scene.add(shade(g));
 }
 
-/** The land beyond the map's edge in the Span: caliche and dry brush, a little green. */
+/** The land beyond and between the Span's maps: thorn brush seen from above, clumps of dark
+ *  olive canopy with dust showing between them. Drawn with wraparound, so it tiles with no seam. */
 export function spanApron(): THREE.Texture {
-  return once('span-apron', () => {
-    const S = 64, p = new Pix(S, S), r = rng(501);
-    const dirt = ['#9c8a6a', '#a8946e', '#8e7c5e', '#b09c78'].map(H), brush = ['#5c5a3a', '#6a6440', '#4e5034', '#787048'].map(H);
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-      const n = fbm(x * 0.09, y * 0.09, 502, 3);
-      const pal = n > 0.56 ? brush : dirt;
-      p.set(x, y, pal[Math.min(3, Math.floor(r() * 1.3 + n * 3))]!);
-    }
+  return once('span-apron-brush', () => {
+    const S = 96, p = new Pix(S, S), r = rng(501);
+    const dust = ['#7a6a4e', '#86755a', '#6c5e46'].map(H);
+    const leaf = ['#3a3c26', '#46482e', '#525436', '#5e5e3e', '#6a6844'].map(H);
+    const grid: RGB[] = [];
+    for (let i = 0; i < S * S; i++) grid.push(dust[Math.floor(r() * 3)]!);
+    const set = (x: number, y: number, c: RGB): void => { grid[(((y % S) + S) % S) * S + (((x % S) + S) % S)] = c; };
+    // shadows first (down-right of each clump), then the clumps over them
+    const clumps: Array<[number, number, number]> = [];
+    for (let i = 0; i < 70; i++) clumps.push([r() * S, r() * S, 4 + r() * 8]);
+    for (const [cx, cy, rad] of clumps)
+      for (let y = -rad - 3; y <= rad + 3; y++) for (let x = -rad - 3; x <= rad + 3; x++)
+        if (Math.hypot(x - 2, y - 2) < rad) set(Math.floor(cx + x), Math.floor(cy + y), H('#2a2618'));
+    for (const [cx, cy, rad] of clumps)
+      for (let y = -rad; y <= rad; y++) for (let x = -rad; x <= rad; x++) {
+        const d = Math.hypot(x, y) / rad;
+        if (d > 1 - r() * 0.12) continue;
+        const light = (-x - y) / (rad * 2); // lit from the upper left
+        const k = Math.min(4, Math.max(0, Math.floor(2 + light * 2.4 + (r() - 0.5) * 1.4 - d)));
+        set(Math.floor(cx + x), Math.floor(cy + y), leaf[k]!);
+      }
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) p.set(x, y, grid[y * S + x]!);
     return p.texture();
   });
 }

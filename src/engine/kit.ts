@@ -198,7 +198,7 @@ export type { RGB };
 
 // -------------------------------------------------------------- lamps
 
-export interface Lamp { pos: THREE.Vector3; color: THREE.Color; intensity: number; dist: number; flicker?: number }
+export interface Lamp { pos: THREE.Vector3; color: THREE.Color; intensity: number; dist: number; flicker?: number; /** Who added it (a streamed map), so it can be taken away again. */ tag?: string }
 
 /** A small pool of point lights moved each frame to the lamps nearest the
  *  camera — dozens of lamps for the price of a few lights. */
@@ -213,6 +213,8 @@ export class LightPool {
     }
   }
   add(l: Lamp): void { this.lamps.push(l); }
+  /** Take away every lamp a streamed-out map added. */
+  drop(tag: string): void { for (let i = this.lamps.length - 1; i >= 0; i--) if (this.lamps[i]!.tag === tag) this.lamps.splice(i, 1); }
   update(t: number, focus: THREE.Vector3): void {
     const near = this.lamps
       .map((l) => ({ l, d: (l.pos.x - focus.x) ** 2 + ((l.pos.z - focus.z) * 1.3) ** 2 }))

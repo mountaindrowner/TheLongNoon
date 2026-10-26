@@ -1,42 +1,49 @@
 import type { Grid, RGB, SectionSpec } from '../../engine/section';
-import { mesquite, bush, deadTree, tumbleweed } from '../../engine/foliage';
 import { rock, boardSign } from '../../engine/props';
 import { fbm, vnoise } from '../../engine/noise';
-import { insideSolid } from '../../engine/world';
-import { STRAW, nopal, desertScatter, skull } from './props';
-import { spanPaint, tracks, intakeTower, buoy, boatHull, trailer, picnicShelter, cairn } from './kit';
+import { STRAW, nopal, skull, lanternPost } from './props';
+import { spanPaint, tracks, intakeTower, buoy, boatHull, trailer, picnicShelter, cairn, headwall } from './kit';
+import { SPAN_FLORA, deadMesquite } from './brush';
+import { brushFill, openScatter, motte } from './fill';
+import { rubble } from './ruins';
 
 /**
- * THE WHITE BOWL (the Span, cell 2,2). The lake, gone: a bowl of white crust
- * cracked into plates, a boat ramp running down into nothing, the intake tower
- * standing where the water was deepest. Landmark stop, tier ruined, empty on purpose.
+ * THE WHITE BOWL (the Span; large, 132×96). The lake, gone: a bowl of white
+ * crust cracked into plates nearly the whole map wide, the boat ramps running
+ * down into nothing, the intake tower standing where the water was deepest,
+ * the dam along the west side holding back no water at all. Landmark stop,
+ * tier ruined, empty on purpose.
  *
  * - Hero: the intake tower, the old waterline still banded on it.
  * - Routine: a buoy tipped on its side on the bed, its lamp blinking every four seconds for boats.
  * - Signature: the white: the only ground in the Span that shines back at the moon.
  * - Seen, never said: big tracks across the crust, two treads and cross-bars, bigger than
- *   anything in town drives (Memo: "bigger than any Stray").
- * - Ways out: north to the East Road (the park road, or up the drain).
+ *   anything in town drives (Memo: "bigger than any Stray"); the dead trees on the old shore.
+ * - Ways out: north to the lake road (the park road, or up the drain).
  */
 
-export const COLS = 44, ROWS = 32;
-const BOWL = { cx: 24, cz: 19.6, rx: 16.6, rz: 9.4 };
-const DRAIN = { x0: 12, x1: 18 };
-const BIG: Array<[number, number]> = [[-1, 13.0], [10.0, 17.0], [22.0, 25.4], [34.0, 27.6], [45.0, 24.0]];
+export const COLS = 132, ROWS = 96;
+const BOWL = { cx: 68, cz: 54, rx: 54, rz: 33 };
+const DRAIN = { x0: 102, x1: 108 };
+const BIG: Array<[number, number]> = [[-1, 40], [24, 50], [52, 70], [80, 82], [110, 80], [133, 66]];
+const RAMPS = [{ ax: 92, az: 18, bx: 84, bz: 30, half: 1.6 }, { ax: 30, az: 22, bx: 38, bz: 32, half: 1.4 }];
+const PARK: Array<[number, number]> = [[80, -1], [82, 10], [92, 16]];
 
 /** How far into the bowl a point is: <1 inside, a little noise on the shore. */
-const bowlK = (x: number, z: number): number => Math.hypot((x - BOWL.cx) / BOWL.rx, (z - BOWL.cz) / BOWL.rz) - (vnoise(x * 0.35, z * 0.35, 77) - 0.5) * 0.14;
-/** The boat ramp, from the lot down into the bowl: where along it and how far across, or null. */
-const RAMP = { ax: 33.0, az: 9.4, bx: 28.6, bz: 16.4, half: 1.3 };
-function rampAt(x: number, z: number): { along: number; across: number } | null {
-  const dx = RAMP.bx - RAMP.ax, dz = RAMP.bz - RAMP.az, L = Math.hypot(dx, dz);
-  const along = ((x - RAMP.ax) * dx + (z - RAMP.az) * dz) / L;
-  const across = ((x - RAMP.ax) * -dz + (z - RAMP.az) * dx) / L;
-  return along >= 0 && along <= L && Math.abs(across) <= RAMP.half ? { along, across } : null;
-}
+const bowlK = (x: number, z: number): number => Math.hypot((x - BOWL.cx) / BOWL.rx, (z - BOWL.cz) / BOWL.rz) - (vnoise(x * 0.18, z * 0.18, 77) - 0.5) * 0.12;
 const smooth = (a: number, b: number, v: number): number => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+/** A boat ramp: where along it and how far across, or null. */
+function rampAt(x: number, z: number): { along: number; across: number } | null {
+  for (const R of RAMPS) {
+    const dx = R.bx - R.ax, dz = R.bz - R.az, L = Math.hypot(dx, dz);
+    const along = ((x - R.ax) * dx + (z - R.az) * dz) / L;
+    const across = ((x - R.ax) * -dz + (z - R.az) * dx) / L;
+    if (along >= 0 && along <= L && Math.abs(across) <= R.half) return { along, across };
+  }
+  return null;
+}
 
-export function whiteBowl(): SectionSpec {
+export function whiteBowl(night: boolean): SectionSpec {
   let grid: Grid;
   return {
     id: 'white-bowl',
@@ -46,73 +53,88 @@ export function whiteBowl(): SectionSpec {
     cols: COLS,
     rows: ROWS,
     seed: 85,
+    flora: SPAN_FLORA,
     ground(g) {
       grid = g;
       g.rect(0, 0, COLS, ROWS, 'x');
       for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) {
         const k = bowlK(x + 0.5, z + 0.5);
         if (k < 1) g.set(x, z, 'W');
-        else if (k < 1.18) g.set(x, z, 's');
+        else if (k < 1.12) g.set(x, z, 's');
       }
-      g.rect(DRAIN.x0, 0, DRAIN.x1 - DRAIN.x0, 11, 'b'); // the drain comes down and opens onto the bed
-      g.blob(15, 10.6, 2.6, 1.6, 'g', 41, (q) => q === 'b' || q === 's' || q === 'W'); // it still seeps
-      g.line([[33.6, -1], [34.4, 5.0]], 3.4, 'd'); // the park road
-      g.rect(30, 4, 12, 6, 'b'); // the shore lot
-      // the boat ramp is painted, not gridded (see paint): a cell-stepped diagonal slab reads as noise
+      // brush on the old shore, thick where nobody goes
+      for (const [cx, cz, rx, rz, s] of [[10, 8, 9, 6, 81], [120, 10, 10, 7, 82], [124, 60, 6, 14, 83], [8, 88, 8, 6, 84], [66, 92, 14, 3, 85], [116, 90, 10, 5, 86], [52, 6, 8, 4, 87]] as Array<[number, number, number, number, number]>) motte(g, cx, cz, rx, rz, s);
+      g.rect(DRAIN.x0, 0, DRAIN.x1 - DRAIN.x0, 22, 'b'); // the drain comes down and opens onto the bed
+      g.blob(105, 22, 3, 2, 'g', 41, (q) => q === 'b' || q === 's' || q === 'W'); // it still seeps
+      g.line(PARK, 4, 'd'); // the park road
+      g.rect(70, 8, 22, 9, 'b'); // the shore lot
+      g.line([[30, 14], [30, 22]], 2.6, 'e');
+      g.rect(20, 8, 16, 7, 'v'); // the picnic ground
     },
     height(x, z, h) {
-      let out = h - 1.7 * smooth(1.12, 0.78, bowlK(x, z));
+      let out = h - 2.4 * smooth(1.1, 0.72, bowlK(x, z));
       // the drain keeps its depth until it meets the bowl
-      if (z < 12) {
+      if (z < 23) {
         const k = 1 - Math.min(1, Math.max(0, Math.max(DRAIN.x0 - x, x - DRAIN.x1) / 1.0));
         const inner = 1 - Math.min(1, Math.max(0, Math.max(DRAIN.x0 + 1.2 - x, x - (DRAIN.x1 - 1.2)) / 1.2));
         out = Math.min(out, h - 0.8 * k - 0.7 * inner);
       }
+      // the dam along the west: a long earth bank
+      if (x < 9) out += (9 - x) * 0.32 * smooth(0, 6, Math.min(z, ROWS - z));
       return out;
     },
     grassTint: (x, z) => (grid.get(Math.floor(x), Math.floor(z)) === '#' ? STRAW[Math.floor(fbm(x * 3, z * 3, 65, 1) * 4) % 4] : undefined),
     paint(glyph, x, z, fine) {
-      // the boat ramp: a straight concrete slab, scored across every half unit for grip
+      // the boat ramps: straight concrete slabs, scored across every half unit for grip
       const r = rampAt(x, z);
       if (r) return r.along % 0.5 < 0.05 ? [112, 106, 96] : fine > 0.8 ? [146, 140, 128] : [132, 126, 116];
       // the shore follows the true curve, not the grid cells it was laid out on
       if (glyph === 'W' || glyph === 's' || glyph === 'x') {
         const k = bowlK(x, z);
-        const g = k < 1 ? 'W' : k < 1.18 ? 's' : glyph;
+        const g = k < 1 ? 'W' : k < 1.12 ? 's' : glyph;
         const base = spanPaint(g, x, z, fine);
         if (g === 'W' || g === 's') return tracks(x, z, BIG, 'big', base ?? [200, 190, 170]) ?? base;
         return base;
       }
       return spanPaint(glyph, x, z, fine);
     },
-    edges: { w: 'bluff', s: 'trees', e: 'scrub', n: 'none' },
-    exits: [],
+    edges: { w: 'bluff', s: 'brush', e: 'brush', n: 'brush' },
+    exits: [
+      { side: 'n', at: 80, w: 8, to: 'lake-road', spawn: 'lake', name: 'road' },
+      { side: 'n', at: 105, w: 6, to: 'lake-road', spawn: 'drain', name: 'drain' },
+    ],
     dress(d) {
-      const { scene, night } = d;
+      const { scene } = d;
       const seed = (): number => d.seed();
-      intakeTower(scene, 21.0, 18.4);
-      d.built.push(buoy(scene, 27.6, 23.2, night));
-      boatHull(scene, 31.6, 20.4, 5.0, 0.5, 0.16, '#d8d4c8');
-      boatHull(scene, 13.4, 23.4, 2.6, -0.3, -0.24, '#3f6a8a');
-      trailer(scene, 30.6, 13.4, 2.15);
-      picnicShelter(scene, 40.4, 13.6, 0.1);
-      picnicShelter(scene, 5.4, 6.0, -0.12);
-      boardSign(scene, 36.8, 3.2, 'EAST RD ^', 0.2, 51);
-      cairn(scene, 23.4, 30.0, seed());
-      skull(scene, 35.4, 25.8, 1.2);
-      for (const [x, z, s] of [[2.6, 22.0, 1.1], [42.0, 22.6, 1.2], [43.0, 6.6, 1.0], [8.0, 30.4, 1.0], [38.6, 30.6, 1.1], [2.4, 2.6, 1.0]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.25);
-      for (const [x, z, s] of [[7.0, 11.6, 1.1], [39.6, 9.0, 1.0], [5.6, 26.8, 0.95], [30.0, 29.2, 1.0]] as Array<[number, number, number]>) d.tree(deadTree(x, z, s, seed()), 0.2);
-      for (const [x, z, s] of [[25.4, 5.6, 0.9], [3.0, 16.6, 0.8], [42.6, 17.0, 1.0], [17.6, 30.0, 0.8]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
-      for (const [x, z, s] of [[20.6, 4.2, 0.8], [9.6, 7.0, 0.7], [27.0, 30.6, 0.8]] as Array<[number, number, number]>) d.tree(bush(x, z, s, seed()), 0);
-      for (const [x, z, s] of [[18.4, 26.6, 0.35], [29.0, 17.0, 0.3], [10.6, 18.6, 0.4], [36.0, 15.6, 0.45]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
-      tumbleweed(scene, 24.6, 13.6, 9); tumbleweed(scene, 16.4, 21.0, 10);
-      desertScatter(scene, COLS, ROWS, 81, (x, z) => ['x', 's', '#'].includes(d.grid.get(Math.floor(x), Math.floor(z))) && !insideSolid(x, z, 0.3));
+      intakeTower(scene, 62, 50);
+      d.built.push(buoy(scene, 84, 62, night));
+      boatHull(scene, 96, 54, 5.0, 0.5, 0.16, '#d8d4c8');
+      boatHull(scene, 44, 66, 2.6, -0.3, -0.24, '#3f6a8a');
+      boatHull(scene, 76, 40, 3.4, 1.9, 0.1, '#a84a3a');
+      boatHull(scene, 30, 44, 4.2, 2.6, -0.12, '#d8d4c8');
+      trailer(scene, 86, 22, 2.15);
+      trailer(scene, 76, 14, 0.4);
+      picnicShelter(scene, 24, 11, 0.1); picnicShelter(scene, 32, 11.4, -0.08);
+      picnicShelter(scene, 118, 30, -0.12);
+      headwall(scene, 105, 22.6, DRAIN.x1 - DRAIN.x0 + 0.6, 1.2, 1);
+      boardSign(scene, 78, 4, 'LAKE RD ^', 0.2, 51);
+      d.built.push(lanternPost(scene, 84, 8, night, false)); // a post with its lantern long gone dark
+      cairn(scene, 40, 84, seed()); cairn(scene, 16, 30, seed());
+      skull(scene, 70, 70, 1.2); skull(scene, 106, 66, 2.4);
+      rubble(scene, 112, 18, 1.2, seed());
+      // the old shore's trees, dead where they stood when the water went
+      for (const [x, z, s] of [[18, 26, 1.2], [14, 46, 1.1], [22, 72, 1.3], [46, 18, 1.0], [112, 40, 1.2], [118, 72, 1.1], [98, 86, 1.0], [40, 86, 1.1], [60, 18, 1.0]] as Array<[number, number, number]>) d.tree(deadMesquite(x, z, s, seed()), 0.25);
+      for (const [x, z, s] of [[66, 54, 0.5], [90, 74, 0.4], [36, 54, 0.55], [100, 44, 0.45], [54, 36, 0.4]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
+      for (const [x, z, s] of [[100, 12, 0.9], [14, 18, 0.8], [124, 44, 1.0]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
+      brushFill(d, 85, 1);
+      openScatter(d, 81, ['x', 's'], 0.5, (x, z) => !(x > 66 && x < 96 && z < 20) && !(x > 18 && x < 38 && z < 18));
       d.things.push(
-        { x: 21.0, z: 20.2, r: 2.4, label: 'Tower', lines: ['A concrete tower standing out in the white. Halfway up, a dark band all the way round. Above it, the concrete is pale.'] },
-        { x: 27.6, z: 24.2, r: 1.6, label: 'Buoy', lines: ['A buoy on its side on the dry bed. Every few breaths, its lamp blinks.'] },
-        { x: 31.6, z: 22.0, r: 2.4, label: 'Boat', lines: ['A boat, sitting level on the crust as if it were floating.'] },
-        { x: 29.6, z: 15.4, r: 1.8, label: 'Ramp', lines: ['A concrete ramp runs down into the bowl, and keeps going, under the crust.'] },
-        { x: 21.4, z: 25.6, r: 2.0, label: 'Tracks', lines: ['Two treads, wide as a door, with cross-bars. They cross the whole bowl.'] },
+        { x: 62, z: 52.4, r: 2.8, label: 'Tower', lines: ['A concrete tower standing out in the white. Halfway up, a dark band all the way round. Above it, the concrete is pale.'] },
+        { x: 84, z: 63, r: 1.8, label: 'Buoy', lines: ['A buoy on its side on the dry bed. Every few breaths, its lamp blinks.'] },
+        { x: 96, z: 56, r: 2.6, label: 'Boat', lines: ['A boat, sitting level on the crust as if it were floating.'] },
+        { x: 88, z: 24, r: 2.0, label: 'Ramp', lines: ['A concrete ramp runs down into the bowl, and keeps going, under the crust.'] },
+        { x: 52, z: 72, r: 2.4, label: 'Tracks', lines: ['Two treads, wide as a door, with cross-bars. They cross the whole bowl.'] },
+        { x: 6, z: 40, r: 3.0, label: 'Dam', lines: ['A long bank of earth along the west side, a concrete lip along its top. On this side, nothing to hold.'] },
       );
     },
   };

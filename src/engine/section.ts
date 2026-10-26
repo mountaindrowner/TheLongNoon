@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { fbm, rng, vnoise } from './noise';
-import { setWorld, cell, heightAt, hitsSolid, addSolid, type TileWorld } from './world';
+import { setWorld, cell, heightAt, hitsSolid, addSolid, currentChunk, useChunk, type TileWorld } from './world';
 import { buildGround, buildGrass, buildWater, setAprons } from './terrain';
 import { maskAt } from './layout';
 import { cottonwood, mesquite, deadTree, bush, motes, swayTrees } from './foliage';
@@ -9,6 +9,7 @@ import type { Built } from './buildings';
 import { DAY, NIGHT, type Mood } from './mood';
 import type { Area, AreaBuilder, NPC, SectionKind, Spot, Thing, Travel, Trigger } from './area';
 import { rock } from './props';
+import { mergeBatched } from './batch';
 
 /**
  * One section of a region (docs/design/regions.md): a hand-dressed map built
@@ -22,7 +23,16 @@ import { rock } from './props';
  */
 
 export type Side = 'n' | 's' | 'e' | 'w';
-export type EdgeStyle = 'trees' | 'scrub' | 'fence' | 'bluff' | 'open' | 'none';
+export type EdgeStyle = 'trees' | 'scrub' | 'brush' | 'fence' | 'bluff' | 'open' | 'none';
+
+/** The plants a region frames its maps with (the engine's defaults are prairie trees). */
+export interface Flora {
+  tree(x: number, z: number, s: number, seed: number): THREE.Object3D;
+  bush(x: number, z: number, s: number, seed: number): THREE.Object3D;
+  dead(x: number, z: number, s: number, seed: number): THREE.Object3D;
+  /** A clump of thorny thicket for 'brush' edges: wide, low, impassable. */
+  thicket(x: number, z: number, s: number, seed: number): THREE.Object3D;
+}
 
 export interface Exit {
   side: Side;
@@ -36,6 +46,8 @@ export interface Exit {
   /** This exit's own spawn name (arrivals from `to` land here). */
   name: string;
   travel?: Travel;
+  /** Inside a region: the road runs straight on into the neighbouring map, with no cut (no trigger). */
+  seam?: boolean;
 }
 
 /** The glyph grid a section draws on. */
@@ -176,6 +188,8 @@ export interface SectionSpec {
   aprons?: boolean;
   /** Skip this map's motes (a region runs one set around the player). */
   noMotes?: boolean;
+  /** The region's plants for the edges (default: the engine's prairie trees). */
+  flora?: Flora;
 }
 
 const ROAD = new Set(['d', 'e', 'v']);
@@ -194,7 +208,7 @@ export function sectionGrid(spec: SectionSpec): Grid {
   for (const side of ['n', 's', 'w', 'e'] as const) {
       const st = edges[side] ?? 'trees';
       if (st === 'none') continue;
-      const depth = st === 'bluff' ? 2 : 1;
+      const depth = st === 'bluff' || st === 'brush' ? 2 : 1;
       const len = side === 'n' || side === 's' ? COLS : ROWS;
       for (let a = 0; a < len; a++) {
         if (exitAt(side, a + 0.5)) continue;
@@ -207,7 +221,9 @@ export function sectionGrid(spec: SectionSpec): Grid {
   return grid;
 }
 
-export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
+/** `pace` is awaited between the heavy stages of a build (a region streaming maps in
+ *  while you walk spreads the work over several frames). */
+export function section(spec: SectionSpec, pre?: Grid, pace?: () => Promise<void>): AreaBuilder {
   return async (scene, night) => {
     const { cols: COLS, rows: ROWS } = spec;
     const grid = pre ?? sectionGrid(spec);
@@ -230,6 +246,7 @@ export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
         const along = side === 'n' || side === 's' ? x : z;
         if (st === 'none' || st === 'open' || exitAt(side, along, 0.6)) continue;
         if (st === 'bluff') { if (d[side] < 3.4) h += Math.pow((3.4 - d[side]) / 3.4, 1.4) * 1.9; }
+        else if (st === 'brush') { if (d[side] < 2.6) h += (2.6 - d[side]) * 0.32; }
         else if (d[side] < 1.6) h += (1.6 - d[side]) * 0.5;
       }
       // exits stay level with the road running off the map
@@ -242,6 +259,9 @@ export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
     const openings = spec.exits.map((e) => ({ side: e.side, x0: e.at - (e.w ?? 3) / 2 - 0.4, x1: e.at + (e.w ?? 3) / 2 + 0.4 }));
     const W: TileWorld = { cols: COLS, rows: ROWS, cell: get, height, seed: spec.seed, paint: (g, x, z, f) => spec.paint?.(g, x, z, f) ?? regionPaint(g, x, z, f), openings, grassTint: spec.grassTint };
     setWorld(W);
+    const chunk = currentChunk();
+    // after any pause, this map's ground and solids are current again (other maps may have been queried meanwhile)
+    const step = async (): Promise<void> => { if (pace) { await pace(); useChunk(chunk); } };
 
     const r = rng(spec.seed * 13 + 7);
     let seedN = spec.seed * 100;
@@ -256,22 +276,30 @@ export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
     for (const e of spec.exits) {
       const w = e.w ?? 3, a0 = e.at - w / 2 - 0.4, a1 = e.at + w / 2 + 0.4;
       const go = { to: e.to, spawn: e.spawn, travel: e.travel };
-      if (e.side === 'n') { d.spawns[e.name] = { x: e.at, z: 1.1, face: 'S' }; d.triggers.push({ x0: a0, x1: a1, z0: -3, z1: 0.3, go }); }
-      if (e.side === 's') { d.spawns[e.name] = { x: e.at, z: ROWS - 1.1, face: 'N' }; d.triggers.push({ x0: a0, x1: a1, z0: ROWS - 0.3, z1: ROWS + 3, go }); }
-      if (e.side === 'w') { d.spawns[e.name] = { x: 1.1, z: e.at, face: 'E' }; d.triggers.push({ x0: -3, x1: 0.3, z0: a0, z1: a1, go }); }
-      if (e.side === 'e') { d.spawns[e.name] = { x: COLS - 1.1, z: e.at, face: 'W' }; d.triggers.push({ x0: COLS - 0.3, x1: COLS + 3, z0: a0, z1: a1, go }); }
+      const trig = (t: Trigger): void => { if (!e.seam) d.triggers.push(t); };
+      if (e.side === 'n') { d.spawns[e.name] = { x: e.at, z: 1.1, face: 'S' }; trig({ x0: a0, x1: a1, z0: -3, z1: 0.3, go }); }
+      if (e.side === 's') { d.spawns[e.name] = { x: e.at, z: ROWS - 1.1, face: 'N' }; trig({ x0: a0, x1: a1, z0: ROWS - 0.3, z1: ROWS + 3, go }); }
+      if (e.side === 'w') { d.spawns[e.name] = { x: 1.1, z: e.at, face: 'E' }; trig({ x0: -3, x1: 0.3, z0: a0, z1: a1, go }); }
+      if (e.side === 'e') { d.spawns[e.name] = { x: COLS - 1.1, z: e.at, face: 'W' }; trig({ x0: COLS - 0.3, x1: COLS + 3, z0: a0, z1: a1, go }); }
     }
 
+    await step();
     await spec.dress(d);
+    useChunk(chunk);
+    await step();
     frameEdges(d, spec, exitAt);
+    await step();
 
     setAprons(spec.aprons ?? true);
     buildGround(scene);
     setAprons(true);
+    await step();
     const water: Array<[number, number]> = [];
     for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (get(x, z) === 'w') water.push([x, z]);
     const waterTick = water.length ? buildWater(scene, night, 0, 0, COLS, ROWS, spec.waterY ?? -0.32, water) : null;
     const grass = buildGrass(scene);
+    useChunk(chunk);
+    mergeBatched(scene); // the static brush, a few draw calls instead of thousands
     const dust = spec.noMotes ? null : motes(scene, night);
 
     const inExit = (x: number, z: number): boolean => {
@@ -328,9 +356,17 @@ export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
 }
 
 /** Natural edges: a broken tree line, scrub and a fence, a bluff with rocks, or nothing but grass. */
+const PRAIRIE: Flora = {
+  tree: (x, z, s, seed) => (seed % 10 < 7 ? cottonwood(x, z, s, seed) : mesquite(x, z, s, seed)),
+  bush: (x, z, s, seed) => bush(x, z, s, seed, seed % 2 === 0),
+  dead: deadTree,
+  thicket: (x, z, s, seed) => bush(x, z, s * 1.3, seed, true),
+};
+
 function frameEdges(d: Dress, spec: SectionSpec, exitAt: (side: Side, a: number, pad?: number) => Exit | undefined): void {
   const { cols: COLS, rows: ROWS } = spec;
   const r = rng(spec.seed * 31 + 3);
+  const F = spec.flora ?? PRAIRIE;
   for (const side of ['n', 's', 'w', 'e'] as const) {
     const st = spec.edges[side] ?? 'trees';
     if (st === 'none' || st === 'open') continue;
@@ -344,16 +380,27 @@ function frameEdges(d: Dress, spec: SectionSpec, exitAt: (side: Side, a: number,
         if (!clearOf(a) || r() < 0.18) continue; // gaps: you can see past the trees
         const [x, z] = P(a, 0.5 + r() * 0.5);
         const k = r();
-        d.tree(k < 0.65 ? cottonwood(x, z, 0.95 + r() * 0.45, d.seed()) : k < 0.85 ? mesquite(x, z, 1.05, d.seed()) : deadTree(x, z, 1.0, d.seed()), 0);
+        d.tree(k < 0.85 ? F.tree(x, z, 0.95 + r() * 0.45, d.seed()) : F.dead(x, z, 1.0, d.seed()), 0);
         const [ox, oz] = P(a + r(), -1.2 - r() * 2.8);
-        if (r() > 0.25) d.scene.add(cottonwood(ox, oz, 1.0 + r() * 0.5, d.seed()));
+        if (r() > 0.25) d.scene.add(F.tree(ox, oz, 1.0 + r() * 0.5, d.seed()));
       }
     } else if (st === 'scrub') {
       for (let a = 0.5; a < len; a += 1.3 + r() * 2.2) {
         if (!clearOf(a)) continue;
         const [x, z] = P(a, 0.4 + r() * 0.6);
-        d.tree(r() > 0.35 ? bush(x, z, 0.8 + r() * 0.6, d.seed(), r() > 0.5) : mesquite(x, z, 0.9 + r() * 0.3, d.seed()), 0);
-        if (r() > 0.6) { const [ox, oz] = P(a, -1.5 - r() * 2.5); d.scene.add(mesquite(ox, oz, 1.0 + r() * 0.3, d.seed())); }
+        d.tree(r() > 0.35 ? F.bush(x, z, 0.8 + r() * 0.6, d.seed()) : F.tree(x, z, 0.9 + r() * 0.3, d.seed()), 0);
+        if (r() > 0.6) { const [ox, oz] = P(a, -1.5 - r() * 2.5); d.scene.add(F.tree(ox, oz, 1.0 + r() * 0.3, d.seed())); }
+      }
+    } else if (st === 'brush') {
+      // a wall of thorn: two rows of thicket inside the band, more beyond, the odd tree standing out of it
+      for (let a = 0.3; a < len; a += 0.9 + r() * 0.9) {
+        if (!clearOf(a)) continue;
+        const [x, z] = P(a, 0.5 + r() * 0.9);
+        d.tree(F.thicket(x, z, 0.9 + r() * 0.5, d.seed()), 0);
+        const [x2, z2] = P(a + r() * 0.6, -0.6 - r() * 2.4);
+        d.scene.add(F.thicket(x2, z2, 1.0 + r() * 0.6, d.seed()));
+        if (r() > 0.78) { const [tx, tz] = P(a + 0.4, -1.2 - r() * 3); d.scene.add(r() > 0.3 ? F.tree(tx, tz, 1.0 + r() * 0.4, d.seed()) : F.dead(tx, tz, 1.0, d.seed())); }
+        if (r() > 0.55) { const [bx, bz] = P(a + 0.3, 1.6 + r() * 0.8); d.tree(F.bush(bx, bz, 0.6 + r() * 0.4, d.seed()), 0); }
       }
     } else if (st === 'fence') {
       // a fence line along the edge, broken where the exits pass; a few trees beyond
@@ -366,16 +413,16 @@ function frameEdges(d: Dress, spec: SectionSpec, exitAt: (side: Side, a: number,
       for (let a = 0.5; a < len; a += 1.8 + r() * 3) {
         if (!clearOf(a)) continue;
         const [x, z] = P(a, 0.45);
-        if (r() > 0.45) d.tree(bush(x, z, 0.7 + r() * 0.5, d.seed(), r() > 0.5), 0);
+        if (r() > 0.45) d.tree(F.bush(x, z, 0.7 + r() * 0.5, d.seed()), 0);
         const [ox, oz] = P(a + r(), -1.6 - r() * 3);
-        if (r() > 0.5) d.scene.add(r() > 0.5 ? cottonwood(ox, oz, 1.0 + r() * 0.4, d.seed()) : mesquite(ox, oz, 1.1, d.seed()));
+        if (r() > 0.5) d.scene.add(F.tree(ox, oz, 1.0 + r() * 0.4, d.seed()));
       }
     } else if (st === 'bluff') {
       for (let a = 0.3; a < len; a += 0.7 + r() * 1.1) {
         if (!clearOf(a)) continue;
         const [x, z] = P(a, 1.0 + r() * 2.0);
         rock(d.scene, x, z, 0.35 + r() * 0.55, d.seed());
-        if (r() > 0.8) { const [tx, tz] = P(a, 0.4); d.tree(mesquite(tx, tz, 0.9, d.seed()), 0); }
+        if (r() > 0.8) { const [tx, tz] = P(a, 0.4); d.tree(F.tree(tx, tz, 0.9, d.seed()), 0); }
       }
     }
   }

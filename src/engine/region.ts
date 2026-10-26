@@ -1,36 +1,43 @@
 import * as THREE from 'three';
-import { section, sectionGrid, type Grid, type SectionSpec, type Side } from './section';
+import { section, sectionGrid, type Grid, type SectionSpec } from './section';
 import { currentChunk, useChunk, hitsSolid, type Chunk } from './world';
 import { checkDoors, clearDoorMarks } from './doorway';
 import { LightPool } from './kit';
-import { motes } from './foliage';
+import { motes, pruneSways } from './foliage';
 import { planeGeo } from './geo';
 import type { Area, NPC, Roamer, Spot, Thing, Trigger } from './area';
 import type { Mood } from './mood';
 
 /**
- * A region (docs/design/world-methodology.md §2.4, option C): sections laid
- * side by side on a grid and walked between with no cut. Each section is
- * still its own map, designed and built with the section kit (its own
- * hero, routine, signature and edges), so any of them can be split out and
- * joined by a dissolve instead if the open version doesn't feel right.
+ * A region (docs/design/world-methodology.md §2.4, option C): a web of maps
+ * laid out on one ground and walked between with no cut. Each map is still
+ * its own section (its own hero, routine, signature and edges) and can be
+ * any size: a road long in the direction of travel, a town twice the size of
+ * a farm. Between the maps is brush you can't walk; the maps meet where a
+ * road runs from one into the next.
  *
  * How the seams disappear:
- * - every section's glyph grid is drawn first, and a section's lookups past
- *   its own edge read its neighbour's ground, so roads, paint and height
- *   flattening carry straight across;
+ * - every map's glyph grid is drawn first, and a map's lookups past its own
+ *   edge read whichever map lies there, so a road, its paint and its level
+ *   carry straight across;
  * - base terrain noise is sampled in region coordinates;
- * - sides with a neighbour use edge style 'none' (no frame, no berm) and stay walkable;
- * - the region, not the section, frames the outside: aprons fill every empty
- *   cell around it, level with the framed edges' berm.
+ * - an exit whose target is another map in the region is a seam: the edge is
+ *   cut open there and you walk straight on (no trigger, no dissolve). A side
+ *   two maps share completely can use edge style 'none' and be open its whole length;
+ * - the region, not the map, fills the gaps: aprons cover every 4-unit square
+ *   no map covers.
  *
- * Lights: every point light the sections build becomes a lamp in one shared
- * LightPool (spec §5: many lamps, few lights), so a whole lit town costs a
- * fixed number of lights.
+ * Streaming: only the maps near the player exist. A map is built when you
+ * come within LOAD units of it (its work spread over a few frames) and taken
+ * down past DROP. People, lamps and anything a region registers per map come
+ * and go with it (`onChange`, `dropPiece`).
+ *
+ * Lights: every point light a map builds becomes a lamp in one shared
+ * LightPool (spec §5: many lamps, few lights).
  */
 
 export interface RegionPiece {
-  /** Grid cell in the region (each cell is one section). */
+  /** Where the map's top-left corner sits in the region (world units). */
   at: [number, number];
   spec: SectionSpec;
 }
@@ -40,17 +47,20 @@ export interface RegionSpec {
   title: string;
   sub: string;
   mood: Mood;
-  /** Section size in world units; every piece shares it so seams line up. */
-  cell: [number, number];
   pieces: RegionPiece[];
   heightSeed: number;
   start: Spot;
-  /** Land beyond the region's edge. */
+  /** Land beyond and between the maps. */
   apron: THREE.Texture;
-  /** Called after each piece builds (shift region-specific registries into world space…). */
+  /** Called after each map builds (shift region-specific registries into world space…). */
   afterPiece?(piece: BuiltPiece): void;
+  /** Called when a map is taken down (forget what afterPiece registered). */
+  dropPiece?(piece: BuiltPiece): void;
   /** How many pooled lights the region gets. */
   lights?: number;
+  /** Streaming distances from a map's edge (default 26 to build, 44 to drop). */
+  load?: number;
+  drop?: number;
 }
 
 export interface BuiltPiece {
@@ -65,115 +75,206 @@ export interface BuiltPiece {
   area: Area;
   chunk: Chunk;
   group: THREE.Group;
-}
-
-export interface Region extends Area {
-  pieces: BuiltPiece[];
-  /** The section a point lies in (for name tags, music, encounters). */
-  pieceAt(x: number, z: number): BuiltPiece | null;
+  /** The map's things, people, roamers, triggers and spawns, in region coordinates. */
+  things: Thing[];
+  npcs: NPC[];
+  roamers: Roamer[];
+  triggers: Trigger[];
   doorIssues: string[];
 }
 
-const SIDES: Array<[Side, number, number]> = [['n', 0, -1], ['s', 0, 1], ['w', -1, 0], ['e', 1, 0]];
+/** A map of the region, built or not: its place and size are always known. */
+export interface PiecePlan { id: string; title: string; sub: string; ox: number; oz: number; cols: number; rows: number }
+
+export interface Region extends Area {
+  /** Every map in the region, built or not. */
+  plan: PiecePlan[];
+  /** The maps built right now. */
+  pieces: BuiltPiece[];
+  /** The map a point lies in (for name tags, music, encounters). */
+  pieceAt(x: number, z: number): PiecePlan | null;
+  /** Door promises broken in any map built so far. */
+  doorIssues: string[];
+  /** Build every map within reach of (x, z) now, and wait for them. */
+  settle(x: number, z: number): Promise<void>;
+  /** Build every map in the region (checks, overview). */
+  buildAll(): Promise<void>;
+  /** Make sure a spawn (`map:name`) exists: build its map and what's around it. */
+  prepare(spawn: string): Promise<void>;
+  /** Resolves when no map is being built (other worlds can then be built safely). */
+  idle(): Promise<void>;
+  /** How long each map took to build, last time (ms, wall clock, including paced pauses). */
+  buildMs: Record<string, number>;
+  /** While set, nothing is taken down (checks and the overview build everything at once). */
+  hold: boolean;
+  /** Told whenever a map is built or taken down. */
+  onChange?: (added: BuiltPiece | null, removed: BuiltPiece | null) => void;
+}
+
+const inside = (p: PiecePlan, x: number, z: number): boolean => x >= p.ox && x < p.ox + p.cols && z >= p.oz && z < p.oz + p.rows;
+const distTo = (p: PiecePlan, x: number, z: number): number => Math.hypot(Math.max(p.ox - x, 0, x - (p.ox + p.cols)), Math.max(p.oz - z, 0, z - (p.oz + p.rows)));
+/** Let a frame through (a build in progress hands the browser back its turn). */
+const nextFrame = (): Promise<void> => new Promise((res) => setTimeout(res, 0));
 
 export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionSpec): Promise<Region> {
-  const [CW, CH] = r.cell;
-  const at = new Map<string, RegionPiece>();
-  for (const p of r.pieces) at.set(p.at.join(','), p);
-  const has = (cx: number, cz: number): boolean => at.has(`${cx},${cz}`);
+  const LOAD = r.load ?? 26, DROP = r.drop ?? 44;
+  const plan: PiecePlan[] = r.pieces.map((p) => ({ id: p.spec.id, title: p.spec.title, sub: p.spec.sub, ox: p.at[0], oz: p.at[1], cols: p.spec.cols, rows: p.spec.rows }));
+  const ids = new Set(plan.map((p) => p.id));
+  const planAt = (x: number, z: number): PiecePlan | null => plan.find((p) => inside(p, x, z)) ?? null;
 
-  // 1. every section's grid, so neighbours can read across seams
-  const grids = new Map<RegionPiece, Grid>();
+  // 1. every map's grid first, so neighbours can read across seams
+  const grids = new Map<string, Grid>();
+  const specs = new Map<string, SectionSpec>();
   const cellAt = (wx: number, wz: number): string => {
-    const cx = Math.floor(wx / CW), cz = Math.floor(wz / CH);
-    const p = at.get(`${cx},${cz}`);
-    const g = p && grids.get(p);
-    return g ? g.get(Math.floor(wx - cx * CW), Math.floor(wz - cz * CH)) : '#';
+    const p = planAt(wx, wz);
+    const g = p && grids.get(p.id);
+    return g ? g.get(Math.floor(wx - p.ox), Math.floor(wz - p.oz)) : '#';
   };
-  for (const p of r.pieces) {
-    const [cx, cz] = p.at;
-    const edges = { ...p.spec.edges };
-    for (const [side, dx, dz] of SIDES) if (has(cx + dx, cz + dz)) edges[side] = 'none';
-    p.spec = {
-      ...p.spec, edges, origin: [cx * CW, cz * CH], heightSeed: r.heightSeed, aprons: false, noMotes: true,
-      cols: CW, rows: CH,
-      outside: (x, z) => cellAt(x + cx * CW, z + cz * CH),
+  r.pieces.forEach((p, i) => {
+    const pl = plan[i]!;
+    const spec: SectionSpec = {
+      ...p.spec, origin: [pl.ox, pl.oz], heightSeed: r.heightSeed, aprons: false, noMotes: true,
+      exits: p.spec.exits.map((e) => (ids.has(e.to) ? { ...e, seam: true } : e)),
+      outside: (x, z) => cellAt(x + pl.ox, z + pl.oz),
     };
-    grids.set(p, sectionGrid(p.spec));
-  }
+    specs.set(pl.id, spec);
+    grids.set(pl.id, sectionGrid(spec));
+  });
 
-  // 2. build each section in its own group, offset into place
-  const built: BuiltPiece[] = [];
-  const doorIssues: string[] = [];
-  for (const p of r.pieces) {
-    const [cx, cz] = p.at;
-    const group = new THREE.Group();
-    group.position.set(cx * CW, 0, cz * CH);
-    scene.add(group);
-    clearDoorMarks();
-    // the section kit adds to whatever it's given; a group placed in the region is enough
-    const area = await section(p.spec, grids.get(p)!)(group as unknown as THREE.Scene, night);
-    const bp: BuiltPiece = { id: p.spec.id, title: p.spec.title, sub: p.spec.sub, ox: cx * CW, oz: cz * CH, cols: CW, rows: CH, grid: grids.get(p)!, area, chunk: currentChunk(), group };
-    for (const issue of checkDoors(area)) doorIssues.push(issue);
-    clearDoorMarks();
-    built.push(bp);
-    r.afterPiece?.(bp);
-  }
-
-  // 3. aprons: every empty cell in and around the region's grid, level with the framed edges' berm
-  const cxs = r.pieces.map((p) => p.at[0]), czs = r.pieces.map((p) => p.at[1]);
+  // 2. aprons: every 4-unit square in and around the region that no map covers, in runs along each row
+  const T = 4;
+  const x0 = Math.min(...plan.map((p) => p.ox)) - 2 * T, x1 = Math.max(...plan.map((p) => p.ox + p.cols)) + 2 * T;
+  const z0 = Math.min(...plan.map((p) => p.oz)) - 2 * T, z1 = Math.max(...plan.map((p) => p.oz + p.rows)) + 2 * T;
   const apronMat = new THREE.MeshStandardMaterial({ map: r.apron, roughness: 1 });
-  for (let cz = Math.min(...czs) - 1; cz <= Math.max(...czs) + 1; cz++)
-    for (let cx = Math.min(...cxs) - 1; cx <= Math.max(...cxs) + 1; cx++) {
-      if (has(cx, cz)) continue;
-      const a = new THREE.Mesh(planeGeo(CW + 0.02, CH + 0.02), apronMat);
-      a.rotation.x = -Math.PI / 2;
-      a.position.set(cx * CW + CW / 2, 0.66, cz * CH + CH / 2);
-      a.receiveShadow = true;
-      scene.add(a);
+  const covered = (ax: number, az: number): boolean => plan.some((p) => ax + T > p.ox && ax < p.ox + p.cols && az + T > p.oz && az < p.oz + p.rows);
+  for (let az = z0; az < z1; az += T) {
+    let run = -1;
+    for (let ax = x0; ax <= x1; ax += T) {
+      const free = ax < x1 && !covered(ax, az);
+      if (free && run < 0) run = ax;
+      if (!free && run >= 0) {
+        const a = new THREE.Mesh(planeGeo(ax - run + 0.02, T + 0.02), apronMat);
+        a.rotation.x = -Math.PI / 2;
+        a.position.set((run + ax) / 2, 0.66, az + T / 2);
+        a.receiveShadow = true;
+        scene.add(a);
+        run = -1;
+      }
     }
-
-  // 4. one light pool for the whole region; every built point light becomes a lamp in it
-  const pool = new LightPool(scene, r.lights ?? 10);
-  const lights: THREE.PointLight[] = [];
-  scene.traverse((o) => { if ((o as THREE.PointLight).isPointLight) lights.push(o as THREE.PointLight); });
-  const own = new Set<THREE.Object3D>();
-  scene.children.forEach((c) => { if ((c as THREE.PointLight).isPointLight) own.add(c); });
-  for (const l of lights) {
-    if (own.has(l)) continue; // the pool's own lights
-    l.updateWorldMatrix(true, false);
-    const pos = new THREE.Vector3().setFromMatrixPosition(l.matrixWorld);
-    if (l.intensity > 0) pool.add({ pos, color: l.color.clone(), intensity: l.intensity, dist: l.distance || 6, flicker: 0.12 });
-    l.parent?.remove(l);
   }
+
+  // 3. the light pool and the air, shared by every map
+  const pool = new LightPool(scene, r.lights ?? 10);
   const dust = motes(scene, night);
 
-  // ---------------------------------------------------------------- queries in region space
-  const pieceAt = (x: number, z: number): BuiltPiece | null => {
-    const cx = Math.floor(x / CW), cz = Math.floor(z / CH);
-    return built.find((b) => b.ox === cx * CW && b.oz === cz * CH) ?? null;
-  };
-  const nearestPiece = (x: number, z: number): BuiltPiece =>
-    built.reduce((best, b) => {
-      const d = Math.hypot(Math.max(b.ox - x, 0, x - (b.ox + CW)), Math.max(b.oz - z, 0, z - (b.oz + CH)));
-      const bd = Math.hypot(Math.max(best.ox - x, 0, x - (best.ox + CW)), Math.max(best.oz - z, 0, z - (best.oz + CH)));
-      return d < bd ? b : best;
-    });
-  const shift = <T extends { x: number; z: number }>(b: BuiltPiece, o: T): T => ({ ...o, x: o.x + b.ox, z: o.z + b.oz });
+  // 4. building and taking down maps
+  const built = new Map<string, BuiltPiece>();
+  const buildMs: Record<string, number> = {};
+  const building = new Map<string, Promise<BuiltPiece>>();
+  let streaming = false; // pace builds over frames once the first view is up
+  const shift = <T extends { x: number; z: number }>(b: { ox: number; oz: number }, o: T): T => ({ ...o, x: o.x + b.ox, z: o.z + b.oz });
 
-  const things: Thing[] = [], npcs: NPC[] = [], roamers: Roamer[] = [], triggers: Trigger[] = [];
-  const spawns: Record<string, Spot> = { start: r.start };
-  for (const b of built) {
-    for (const t of b.area.things) things.push({ ...shift(b, t), go: t.go });
-    for (const n of b.area.npcs) npcs.push({ ...shift(b, n), wander: n.wander && [n.wander[0] + b.ox, n.wander[1] + b.oz, n.wander[2] + b.ox, n.wander[3] + b.oz] });
-    for (const ro of b.area.roamers ?? []) roamers.push({ ...shift(b, ro), area: [ro.area[0] + b.ox, ro.area[1] + b.oz, ro.area[2] + b.ox, ro.area[3] + b.oz] });
-    for (const tr of b.area.triggers) triggers.push({ ...tr, x0: tr.x0 + b.ox, x1: tr.x1 + b.ox, z0: tr.z0 + b.oz, z1: tr.z1 + b.oz });
-    for (const [k, s] of Object.entries(b.area.spawns)) spawns[`${b.id}:${k}`] = shift(b, s);
+  async function build(pl: PiecePlan): Promise<BuiltPiece> {
+    const t0 = performance.now();
+    const spec = specs.get(pl.id)!;
+    const group = new THREE.Group();
+    group.position.set(pl.ox, 0, pl.oz);
+    clearDoorMarks();
+    // the section kit adds to whatever it's given; a group placed in the region is enough
+    const area = await section(spec, grids.get(pl.id)!, streaming ? nextFrame : undefined)(group as unknown as THREE.Scene, night);
+    const chunk = currentChunk();
+    const doorIssues = checkDoors(area).map((i) => `${pl.id}: ${i}`);
+    clearDoorMarks();
+    // its point lights become lamps in the pool
+    group.traverse((o) => {
+      const l = o as THREE.PointLight;
+      if (!l.isPointLight) return;
+      l.updateWorldMatrix(true, false);
+      const pos = new THREE.Vector3().setFromMatrixPosition(l.matrixWorld);
+      if (l.intensity > 0) pool.add({ pos, color: l.color.clone(), intensity: l.intensity, dist: l.distance || 6, flicker: 0.12, tag: pl.id });
+    });
+    const dead: THREE.Object3D[] = [];
+    group.traverse((o) => { if ((o as THREE.PointLight).isPointLight) dead.push(o); });
+    for (const l of dead) l.parent?.remove(l);
+    const bp: BuiltPiece = {
+      ...pl, grid: grids.get(pl.id)!, area, chunk, group, doorIssues,
+      things: area.things.map((t) => ({ ...shift(pl, t), go: t.go })),
+      npcs: area.npcs.map((n) => ({ ...shift(pl, n), wander: n.wander && [n.wander[0] + pl.ox, n.wander[1] + pl.oz, n.wander[2] + pl.ox, n.wander[3] + pl.oz] })),
+      roamers: (area.roamers ?? []).map((ro) => ({ ...shift(pl, ro), area: [ro.area[0] + pl.ox, ro.area[1] + pl.oz, ro.area[2] + pl.ox, ro.area[3] + pl.oz] })),
+      triggers: area.triggers.map((tr) => ({ ...tr, x0: tr.x0 + pl.ox, x1: tr.x1 + pl.ox, z0: tr.z0 + pl.oz, z1: tr.z1 + pl.oz })),
+    };
+    for (const issue of doorIssues) console.warn('[door promise]', issue);
+    scene.add(group);
+    built.set(pl.id, bp);
+    buildMs[pl.id] = Math.round(performance.now() - t0);
+    r.afterPiece?.(bp);
+    refresh();
+    region.onChange?.(bp, null);
+    return bp;
   }
-  const xs = built.map((b) => b.ox), zs = built.map((b) => b.oz);
+
+  function take(id: string): void {
+    const bp = built.get(id);
+    if (!bp) return;
+    built.delete(id);
+    scene.remove(bp.group);
+    pool.drop(id);
+    r.dropPiece?.(bp);
+    pruneSways();
+    // free what only this map used: its geometry, and big one-off textures (its painted ground)
+    bp.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) {
+        const map = (mat as THREE.MeshStandardMaterial).map;
+        const img = map?.image as { width?: number } | undefined;
+        if (map && (img?.width ?? 0) > 512) { map.dispose(); mat.dispose(); }
+      }
+    });
+    refresh();
+    region.onChange?.(null, bp);
+  }
+
+  function ensure(pl: PiecePlan): Promise<BuiltPiece> {
+    const b = built.get(pl.id);
+    if (b) return Promise.resolve(b);
+    let p = building.get(pl.id);
+    if (!p) {
+      p = build(pl).finally(() => building.delete(pl.id));
+      building.set(pl.id, p);
+    }
+    return p;
+  }
+
+  /** Keep the maps near (x, z) built and the far ones down; one build at a time. */
+  function stream(x: number, z: number): void {
+    if (region.hold) return;
+    for (const b of [...built.values()]) if (distTo(b, x, z) > DROP && !building.has(b.id)) take(b.id);
+    if (building.size) return;
+    const want = plan.filter((p) => !built.has(p.id) && distTo(p, x, z) < LOAD).sort((a, b) => distTo(a, x, z) - distTo(b, x, z))[0];
+    if (want) void ensure(want);
+  }
+
+  // ---------------------------------------------------------------- queries in region space
+  const things: Thing[] = [], npcs: NPC[] = [], roamers: Roamer[] = [], triggers: Trigger[] = [], doorIssues: string[] = [];
+  const spawns: Record<string, Spot> = { start: r.start };
+  // every map's spawns are known before it's built (they're where its exits are, or set in its dress, once built)
+  function refresh(): void {
+    things.length = npcs.length = roamers.length = triggers.length = doorIssues.length = 0;
+    for (const b of built.values()) {
+      things.push(...b.things); npcs.push(...b.npcs); roamers.push(...b.roamers); triggers.push(...b.triggers); doorIssues.push(...b.doorIssues);
+      for (const [k, s] of Object.entries(b.area.spawns)) spawns[`${b.id}:${k}`] = shift(b, s);
+    }
+  }
+  const builtAt = (x: number, z: number): BuiltPiece | null => { const p = planAt(x, z); return p ? built.get(p.id) ?? null : null; };
+  const nearestBuilt = (x: number, z: number): BuiltPiece | null => {
+    let best: BuiltPiece | null = null, bd = Infinity;
+    for (const b of built.values()) { const d = distTo(b, x, z); if (d < bd) { bd = d; best = b; } }
+    return best;
+  };
   const focusLocal = new THREE.Vector3();
 
-  return {
+  const region: Region = {
     id: r.id,
     title: r.title,
     sub: r.sub,
@@ -181,36 +282,58 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     region: r.id,
     mood: r.mood,
     sky: true,
-    cam: { x0: Math.min(...xs) + 8.2, x1: Math.max(...xs) + CW - 8.2, z0: Math.min(...zs) + 4.4, z1: Math.max(...zs) + CH - 4.6 },
-    pieces: built,
-    pieceAt,
+    cam: { x0: x0 + 2 * T + 8.2, x1: x1 - 2 * T - 8.2, z0: z0 + 2 * T + 4.4, z1: z1 - 2 * T - 4.6 },
+    plan,
+    hold: false,
+    buildMs,
+    get pieces() { return [...built.values()]; },
+    pieceAt: planAt,
     doorIssues,
     blocked(x, z, rad) {
-      // each probe asks the section it falls in (or the nearest, past the region's edge: that one knows its exits)
+      // each probe asks the map it falls in; past every map's edge, the nearest one (it knows its exits).
+      // Ground that isn't built yet is never walkable.
       for (const [dx, dz] of [[-rad, -rad], [rad, -rad], [-rad, rad], [rad, rad], [0, 0]] as Array<[number, number]>) {
         const px = x + dx, pz = z + dz;
-        const b = pieceAt(px, pz) ?? nearestPiece(px, pz);
+        const b = planAt(px, pz) ? builtAt(px, pz) : nearestBuilt(px, pz);
+        if (!b) return true;
         useChunk(b.chunk);
         if (b.area.blocked(px - b.ox, pz - b.oz, 0)) return true;
       }
-      const b = pieceAt(x, z) ?? nearestPiece(x, z);
+      const b = builtAt(x, z) ?? nearestBuilt(x, z);
+      if (!b) return true;
       useChunk(b.chunk);
       return hitsSolid(x - b.ox, z - b.oz, rad);
     },
     ground(x, z) {
-      const b = pieceAt(x, z) ?? nearestPiece(x, z);
+      const b = builtAt(x, z) ?? nearestBuilt(x, z);
+      if (!b) return 0;
       useChunk(b.chunk);
       return b.area.ground(x - b.ox, z - b.oz);
     },
-    water(x, z) { const b = pieceAt(x, z); return !!b && !!b.area.water?.(x - b.ox, z - b.oz); },
-    wild(x, z) { const b = pieceAt(x, z); return !!b && !!b.area.wild?.(x - b.ox, z - b.oz); },
+    water(x, z) { const b = builtAt(x, z); return !!b && !!b.area.water?.(x - b.ox, z - b.oz); },
+    wild(x, z) { const b = builtAt(x, z); return !!b && !!b.area.wild?.(x - b.ox, z - b.oz); },
     spawns,
     triggers,
     things,
     npcs,
     roamers,
+    async settle(x, z) {
+      const near = plan.filter((p) => distTo(p, x, z) < LOAD).sort((a, b) => distTo(a, x, z) - distTo(b, x, z));
+      for (const p of near) await ensure(p);
+      streaming = true;
+    },
+    async buildAll() { for (const p of plan) await ensure(p); },
+    async prepare(key) {
+      const id = key.split(':')[0]!;
+      const p = plan.find((q) => q.id === id);
+      if (p) await ensure(p);
+      const s = spawns[key];
+      if (s) await region.settle(s.x, s.z);
+    },
+    async idle() { while (building.size) await Promise.allSettled([...building.values()]); },
     update(t, focus, camT) {
-      for (const b of built) {
+      stream(focus.x, focus.z);
+      for (const b of built.values()) {
         focusLocal.set(focus.x - b.ox, focus.y, focus.z - b.oz);
         b.area.update(t, focusLocal, camT);
       }
@@ -218,4 +341,6 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
       dust(t, focus);
     },
   };
+  await region.settle(r.start.x, r.start.z);
+  return region;
 }

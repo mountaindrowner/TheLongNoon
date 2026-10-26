@@ -1,29 +1,58 @@
+import * as THREE from 'three';
 import type { Grid, SectionSpec } from '../../engine/section';
-import { building } from '../../engine/buildings';
-import { mesquite, deadTree, bush, powerLine, crates, tumbleweed } from '../../engine/foliage';
-import { rock, boardSign } from '../../engine/props';
+import { building, M } from '../../engine/buildings';
+import { powerLine, crates } from '../../engine/foliage';
+import { boardSign } from '../../engine/props';
+import { box, shade } from '../../engine/geo';
+import { addSolid, heightAt } from '../../engine/world';
 import { fbm } from '../../engine/noise';
-import { texMat } from '../../engine/geo';
-import { insideSolid } from '../../engine/world';
-import { STRAW, palm, nopal, lanternPost, shadeSail, jugs, drum, clothesline, desertScatter, blockWall, carHulk } from './props';
-import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry } from './kit';
+import { STRAW, palm, nopal, lanternPost, shadeSail, jugs, drum, clothesline, carHulk } from './props';
+import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, busShelter } from './kit';
 import { spanDoor } from './doors';
+import { SPAN_FLORA } from './brush';
+import { brushFill, openScatter, motte } from './fill';
+import { house, containerHome, salvageFence, yardTank, fireRing, rubble, ruinWall } from './ruins';
 
 /**
- * THE PLAZA (the Span, cell 1,1). The town body: the old park square on the
- * boulevard, the night market under strung bulbs, the chapel, the houses
- * round it. Hold, tier cluttered (the market) going lived_in at the edges.
+ * THE PLAZA (the Span; large, 132×96: the west half of the town). The town
+ * body: the old park square on the boulevard, the night market in rows
+ * under strung bulbs, the chapel at its head, the houses round it, and the
+ * long kitchen south of the road where everybody eats. Hold, tier cluttered
+ * (the market) going lived_in at the edges. It runs straight on east into
+ * the Colonia: the two halves are one town.
  *
  * - Hero: the seven flags, the tallest things in town.
  * - Routine: the Lawnkeeper, mowing the dust of a square it remembers.
- * - Signature: the market under the strung bulbs, every stall a different cloth.
- * - Ways out: the boulevard west to Mar Farm and east to the east road.
+ * - Signature: the market, twelve stalls under strung bulbs, every stall a different cloth.
+ * - Ways out: the boulevard west to Mar Farm and east through the Colonia; a lane north into the brush
+ *   (the Old Trail, not built); the road south to the Dead River (not built).
  * - Inside (lit): the Chapel (lantern), Doña Fina's (light under the door),
- *   Tavo and Nina's (lit window). Not inside: a house shut for the night, a house boarded.
+ *   Tavo and Nina's (lit window). Not inside: houses shut for the night, a house boarded.
  */
 
-export const COLS = 44, ROWS = 32;
-const SQ = { x0: 9, z0: 9, x1: 33, z1: 25 };
+export const COLS = 132, ROWS = 96;
+const SQ = { x0: 34, z0: 16, x1: 98, z1: 54 };
+const BLVD = { z0: 57, z1: 63 };
+
+/** The kitchen: long tables under a tin roof on posts, a fire, the big pots. */
+function comedor(s: THREE.Scene, x: number, z: number, w: number, dd: number): void {
+  const g = new THREE.Group();
+  g.position.set(x, heightAt(x, z), z);
+  for (let i = 0; i <= 4; i++) for (const sz of [-1, 1]) g.add(box(0.14, 2.6, 0.14, M.wood(), -w / 2 + (i * w) / 4, 0, (sz * dd) / 2));
+  const roof = box(w + 0.8, 0.07, dd + 0.9, M.tin(), 0, 2.62, 0);
+  roof.rotation.x = 0.06;
+  g.add(roof);
+  for (let row = 0; row < 3; row++) {
+    const tz = -dd / 2 + 1.1 + row * ((dd - 2.2) / 2);
+    g.add(box(w - 2.2, 0.08, 0.8, M.wood(), 0, 0.74, tz));
+    for (const lx of [-w / 2 + 1.6, 0, w / 2 - 1.6]) g.add(box(0.1, 0.74, 0.7, M.wood(), lx, 0, tz));
+    for (const bz of [-0.75, 0.75]) g.add(box(w - 2.4, 0.07, 0.3, M.wood(), 0, 0.42, tz + bz));
+  }
+  shade(g);
+  s.add(g);
+  for (let i = 0; i <= 4; i++) for (const sz of [-1, 1]) { const px = x - w / 2 + (i * w) / 4, pz = z + (sz * dd) / 2; addSolid(px - 0.12, pz - 0.12, px + 0.12, pz + 0.12); }
+  for (let row = 0; row < 3; row++) { const tz = z - dd / 2 + 1.1 + row * ((dd - 2.2) / 2); addSolid(x - w / 2 + 1.1, tz - 0.55, x + w / 2 - 1.1, tz + 0.55); }
+}
 
 export function plaza(night: boolean): SectionSpec {
   let grid: Grid;
@@ -35,102 +64,142 @@ export function plaza(night: boolean): SectionSpec {
     cols: COLS,
     rows: ROWS,
     seed: 52,
+    flora: SPAN_FLORA,
     ground(g) {
       grid = g;
       g.rect(0, 0, COLS, ROWS, 'x');
-      g.rect(0, 27, COLS, 4, 'd'); // the boulevard
+      motte(g, 14, 4, 12, 4, 51); motte(g, 112, 5, 14, 4, 52); motte(g, 6, 88, 6, 6, 53); motte(g, 126, 90, 5, 4, 54); motte(g, 80, 90, 8, 3, 55);
+      g.rect(0, BLVD.z0, COLS, BLVD.z1 - BLVD.z0, 'd'); // the boulevard
+      g.rect(0, BLVD.z0 - 1, COLS, 1, 'v'); g.rect(0, BLVD.z1, COLS, 1, 'v');
       g.rect(SQ.x0, SQ.z0, SQ.x1 - SQ.x0, SQ.z1 - SQ.z0, 'e'); // the square: a park once, packed dirt now
-      g.rect(SQ.x0 - 1, SQ.z0 - 1, SQ.x1 - SQ.x0 + 2, 1, 'v');
-      g.rect(SQ.x0 - 1, SQ.z1, SQ.x1 - SQ.x0 + 2, 2, 'v');
-      g.rect(SQ.x0 - 1, SQ.z0, 1, SQ.z1 - SQ.z0, 'v');
-      g.rect(SQ.x1, SQ.z0, 1, SQ.z1 - SQ.z0, 'v');
-      g.blob(21, 22.4, 2.6, 1.6, 'g', 11, (q) => q === 'e'); // the well spills
-      g.blob(14, 11.5, 3.2, 2, 'g', 12, (q) => q === 'e'); // the Lawnkeeper's patch, mown to stubble
-      g.rect(2, 9, 10, 2, 'b'); // the chapel's yard
-      g.line([[7, 10], [7, SQ.z1 + 1]], 2.2, 'e', (q) => q === 'x');
-      g.line([[31.5, 9.5], [31.5, SQ.z0 - 1]], 1.8, 'e');
-      g.line([[38.5, 16.5], [36, 26.8]], 1.8, 'e', (q) => q === 'x');
-      g.blob(41, 22, 3, 2, 's', 13, (q) => q === 'x');
+      g.rect(SQ.x0 - 2, SQ.z0 - 2, SQ.x1 - SQ.x0 + 4, 2, 'v');
+      g.rect(SQ.x0 - 2, SQ.z1, SQ.x1 - SQ.x0 + 4, 3, 'v');
+      g.rect(SQ.x0 - 2, SQ.z0, 2, SQ.z1 - SQ.z0, 'v');
+      g.rect(SQ.x1, SQ.z0, 2, SQ.z1 - SQ.z0, 'v');
+      g.blob(66, 50, 3.4, 2, 'g', 11, (q) => q === 'e'); // the well spills
+      g.blob(43, 21, 5, 2.6, 'g', 12, (q) => q === 'e'); // the Lawnkeeper's patch, mown to stubble
+      g.rect(58, 11, 16, 3, 'b'); // the chapel's yard
+      // lanes: north past the chapel into the brush, south to the river road, alleys between the houses
+      g.line([[104, SQ.z0 - 2], [104, 4], [100, -1]], 2.6, 'e');
+      g.line([[40, BLVD.z1], [40, 80], [44, ROWS + 1]], 3.2, 'e');
+      g.line([[16, BLVD.z0], [16, 16], [SQ.x0 - 2, 16]], 2.4, 'e');
+      g.line([[118, BLVD.z0], [118, 20], [SQ.x1 + 2, 20]], 2.4, 'e');
+      g.line([[86, BLVD.z1], [86, 84]], 2.4, 'e');
+      g.rect(54, 66, 26, 14, 'v'); // the kitchen's yard
+      g.blob(112, 74, 4, 3, 's', 13, (q) => q === 'x');
     },
     grassTint: (x, z) => (grid.get(Math.floor(x), Math.floor(z)) === '#' ? STRAW[Math.floor(fbm(x * 3, z * 3, 62, 1) * 4) % 4] : undefined),
     paint(glyph, x, z, fine) {
-      if (glyph === 'd' && Math.abs(z - 29) < 0.07 && (x % 3) < 1.8 && fine > 0.25) return [180, 154, 82];
+      if (glyph === 'd' && Math.abs(z - 60) < 0.08 && (x % 3) < 1.8 && fine > 0.25) return [180, 154, 82];
       return spanPaint(glyph, x, z, fine);
     },
-    edges: { n: 'trees', s: 'scrub', w: 'none', e: 'none' },
-    exits: [],
+    edges: { n: 'brush', s: 'brush', w: 'brush', e: 'none' },
+    exits: [
+      { side: 'w', at: 60, w: 10, to: 'mar-farm', spawn: 'plaza', name: 'farm' },
+      { side: 'n', at: 100, w: 3, to: 'old-trail', spawn: 'south', name: 'north' },
+      { side: 's', at: 44, w: 4, to: 'dead-river', spawn: 'north', name: 'south' },
+    ],
     dress(d) {
       const { scene } = d;
       const seed = (): number => d.seed();
 
-      // ------------------------------------------------ the chapel: lantern at the door, the bell in its tower
-      d.built.push(...building(scene, { x: 6.5, z: 5.0, w: 7.0, d: 6.0, h: 3.6, wall: 'white', roof: 'gable', seed: 21, doors: [{ x: 0, w: 1.5, h: 2.3, ...spanDoor('lantern', night) }], windows: [{ x: -2.4, kind: night ? 'lit' : 'glass', w: 0.6, h: 1.1 }, { x: 2.4, kind: night ? 'lit' : 'glass', w: 0.6, h: 1.1 }], vines: [-3.2, 3.1] }, night));
-      d.built.push(belfry(scene, 10.9, 4.0, 5.2));
-      d.spawns.chapel = { x: 6.5, z: 8.9, face: 'S' };
+      // ------------------------------------------------ the chapel at the head of the square: lantern at the door, the bell in its tower
+      d.built.push(...building(scene, { x: 66, z: 6, w: 10, d: 8, h: 4.0, wall: 'white', roof: 'gable', seed: 21, doors: [{ x: 0, w: 1.6, h: 2.4, ...spanDoor('lantern', night) }], windows: [{ x: -3.2, kind: night ? 'lit' : 'glass', w: 0.6, h: 1.2 }, { x: 3.2, kind: night ? 'lit' : 'glass', w: 0.6, h: 1.2 }], vines: [-4.4] }, night));
+      d.built.push(belfry(scene, 72.6, 4.4, 6.0));
+      d.spawns.chapel = { x: 66, z: 11.6, face: 'S' };
+      d.built.push(lanternPost(scene, 59, 13, night, night));
+      d.built.push(lanternPost(scene, 73, 13, night, night));
 
       // ------------------------------------------------ the houses round the square
-      d.built.push(...building(scene, { x: 31.5, z: 6.4, w: 6.0, d: 5.0, h: 2.8, wall: texMat('block1', blockWall(1)), roof: 'flat', seed: 22, doors: [{ x: 0, ...spanDoor('under', night) }], windows: [{ x: -2.0, kind: 'boarded', w: 0.8, h: 0.8 }], vines: [2.4] }, night));
-      d.spawns.fina = { x: 31.5, z: 9.8, face: 'S' };
-      d.built.push(...building(scene, { x: 38.5, z: 13.6, w: 6.0, d: 5.0, h: 2.7, wall: 'tin', roof: 'shed', seed: 23, doors: [{ x: -1.2, ...spanDoor('window', night) }], vines: [2.6] }, night));
-      d.spawns.kids = { x: 37.3, z: 16.9, face: 'S' };
-      d.built.push(...building(scene, { x: 39.0, z: 4.6, w: 5.0, d: 4.4, h: 2.6, wall: 'white', roof: 'gable', seed: 24, doors: [{ x: 0.6, ...spanDoor('shut', night) }], windows: [{ x: -1.4, kind: 'glass', w: 0.7, h: 0.7 }] }, night));
-      d.built.push(...building(scene, { x: 4.4, z: 18.6, w: 5.4, d: 4.4, h: 2.6, wall: texMat('block2', blockWall(2)), roof: 'flat', seed: 25, doors: [{ x: 0.8, ...spanDoor('boarded', night) }], windows: [{ x: -1.4, kind: 'boarded', w: 0.8, h: 0.8 }], vines: [-2.2, 1.9] }, night));
-      d.built.push(clothesline(scene, 34.2, 9.6, 36.6, 10.6, seed()));
-      jugs(scene, 34.0, 8.8, 9, seed()); // Doña Fina's stock, out front
+      d.built.push(...house(scene, { x: 22, z: 26, w: 7, d: 5.4, h: 2.8, base: 'block', door: { x: 0, kind: 'under' }, windows: [{ x: -2.2, kind: 'boarded' }], seed: 22 }, night));
+      d.spawns.fina = { x: 22, z: 30.2, face: 'S' };
+      jugs(scene, 25.6, 29.6, 9, seed()); // Doña Fina's stock, out front
+      d.built.push(...house(scene, { x: 112, z: 30, w: 7, d: 5.4, h: 2.7, base: 'tin', door: { x: -1.4, kind: 'window' }, seed: 23 }, night));
+      d.spawns.kids = { x: 110.6, z: 34.2, face: 'S' };
+      d.built.push(clothesline(scene, 106, 35.4, 109, 36.4, seed()));
+      d.built.push(...house(scene, { x: 112, z: 44, w: 6, d: 5, h: 2.6, base: 'stucco', door: { x: 0.8, kind: 'shut' }, windows: [{ x: -1.4, kind: 'glass' }], porch: true, seed: 24 }, night));
+      d.built.push(...house(scene, { x: 22, z: 44, w: 6.4, d: 5, h: 2.6, base: 'block', door: { x: 0.8, kind: 'boarded' }, windows: [{ x: -1.6, kind: 'boarded' }], seed: 25 }, night));
+      d.built.push(...containerHome(scene, 8, 26, 1, 'shut', night, 26));
+      d.built.push(...house(scene, { x: 10, z: 44, w: 5.6, d: 4.6, h: 2.5, base: 'ply', door: { x: 0, kind: 'shut' }, tarp: true, seed: 27 }, night));
+      d.built.push(...house(scene, { x: 124, z: 30, w: 5.6, d: 5, h: 2.6, base: 'block', door: { x: -0.6, kind: 'shut' }, porch: true, seed: 28 }, night));
+      d.built.push(...containerHome(scene, 126, 44, 1, 'shut', night, 29));
+      d.built.push(...house(scene, { x: 24, z: 10, w: 7.4, d: 5, h: 2.8, base: 'stucco', door: { x: 1, kind: 'shut' }, windows: [{ x: -2, kind: 'glass' }], seed: 30 }, night));
+      d.built.push(...house(scene, { x: 110.6, z: 13, w: 6, d: 5, h: 2.6, base: 'block', door: { x: -1, kind: 'shut' }, tarp: true, seed: 31 }, night));
+      salvageFence(scene, [[17.6, 33.6], [17.6, 38.6], [28, 38.6]], seed());
+      salvageFence(scene, [[104, 37.6], [119, 37.6], [119, 33]], seed());
+      yardTank(scene, 28.4, 22.6, seed()); yardTank(scene, 118.6, 26, seed());
+      fireRing(scene, 116, 50.6); fireRing(scene, 14, 50.4);
+      rubble(scene, 30, 48.6, 1.2, seed());
+      ruinWall(scene, 124, 52, 5, 2.2, 0, seed());
 
       // ------------------------------------------------ the seven flags (hero) and the Lawnkeeper (routine)
-      d.built.push(sevenFlags(scene, 21, 10.2));
-      d.built.push(lawnkeeper(scene, [[11.2, 10.6], [17.2, 10.6], [17.2, 12.6], [11.2, 12.6], [11.2, 10.6]]));
+      d.built.push(sevenFlags(scene, 66, 22));
+      d.built.push(lawnkeeper(scene, [[39.6, 19.6], [47, 19.6], [47, 22.6], [39.6, 22.6], [39.6, 19.6]]));
 
-      // ------------------------------------------------ the night market (signature)
-      const CLOTH = ['#a8402e', '#3f6a8a', '#d8b23a', '#6a8a4a', '#8a3a4a', '#c86a3a'];
-      const stalls: Array<[number, number]> = [[12.4, 17.2], [16.2, 17.2], [26.0, 17.2], [29.8, 17.2], [12.4, 21.6], [29.8, 21.6]];
-      stalls.forEach(([x, z], i) => stall(scene, x, z, CLOTH[i]!, seed()));
-      d.built.push(stringLights(scene, [[10.2, 15.6], [21, 14.8], [31.8, 15.6]], night));
-      d.built.push(stringLights(scene, [[10.2, 20.4], [21, 19.6], [31.8, 20.4]], night));
-      shadeSail(scene, 21, 16.6, 4.2, 2.6, 2.6, '#7a5a3a');
-      crates(scene, 23.6, 22.6);
-      drum(scene, 33.6, 21.0);
-      well(scene, 21, 22.6);
-      bench(scene, 35.6, 23.0, -0.2);
-      d.built.push(lanternPost(scene, 8.4, 24.6, night, night));
-      d.built.push(lanternPost(scene, 33.6, 24.8, night, night));
-      boardSign(scene, 1.6, 26.0, '< MAR FARM', 0.15, 31);
-      boardSign(scene, 42.4, 26.0, 'EAST RD >', -0.1, 32);
-      carHulk(scene, 25.0, 30.0, 3.12, seed());
-      powerLine(scene, [[0.6, 26.3, 0.04], [14.0, 26.4, -0.03], [28.0, 26.3, 0.07], [43.4, 26.3, 0.02]], [[0, 1], [1, 2], [2, 3]]);
+      // ------------------------------------------------ the night market (signature): two rows of stalls each side of the aisle
+      const CLOTH = ['#a8402e', '#3f6a8a', '#d8b23a', '#6a8a4a', '#8a3a4a', '#c86a3a', '#4a6a7a', '#9a7a3a'];
+      let ci = 0;
+      for (const sz of [33, 42]) for (const sx of [45, 50.4, 55.8, 76.2, 81.6, 87]) stall(scene, sx, sz, CLOTH[ci++ % CLOTH.length]!, seed());
+      for (const sz of [30.6, 39.6, 47]) d.built.push(stringLights(scene, [[41, sz], [53, sz - 0.6], [66, sz], [79, sz - 0.6], [91, sz]], night));
+      d.built.push(stringLights(scene, [[64.4, 28], [64.4, 46]], night));
+      shadeSail(scene, 66, 37, 4.4, 3, 2.8, '#7a5a3a');
+      crates(scene, 60.4, 44.6); crates(scene, 71.6, 30.4);
+      drum(scene, 92, 44); drum(scene, 40, 36);
+      well(scene, 66, 49.6);
+      bench(scene, 88, 51.4, -0.1); bench(scene, 44, 51.4, 0.1); bench(scene, 57, 26, 0); bench(scene, 75, 26, 0);
+      for (const [x, z] of [[35, 17], [97, 17], [35, 53], [97, 53]] as Array<[number, number]>) d.built.push(lanternPost(scene, x, z, night, night));
+      for (const [x, z, s] of [[37, 28, 1.1], [95, 28, 1.0], [38, 46, 0.95], [94, 46, 1.05]] as Array<[number, number, number]>) palm(scene, x, z, s, seed());
 
-      // ------------------------------------------------ growing things, at the edges
-      for (const [x, z, s] of [[1.6, 3.0, 1.1], [15.6, 3.2, 1.0], [24.6, 3.6, 1.15], [43.0, 9.4, 1.0], [2.2, 13.2, 1.0], [43.0, 18.6, 0.95]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.25);
-      d.tree(deadTree(26.4, 24.6, 1.0, seed()), 0.2);
-      for (const [x, z, s] of [[18.4, 3.4, 1.1], [35.4, 23.8, 0.95], [8.6, 14.4, 1.0]] as Array<[number, number, number]>) palm(scene, x, z, s, seed());
-      for (const [x, z, s] of [[1.4, 23.6, 0.9], [27.6, 6.2, 0.8], [42.4, 23.6, 1.0], [14.4, 6.8, 0.7]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
-      for (const [x, z, s] of [[9.0, 8.6, 0.7], [34.2, 12.6, 0.8], [3.0, 16.0, 0.7], [41.6, 7.6, 0.8]] as Array<[number, number, number]>) d.tree(bush(x, z, s, seed()), 0);
-      for (const [x, z, s] of [[43.0, 15.0, 0.4], [1.6, 6.6, 0.35]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
-      tumbleweed(scene, 40.6, 30.2, 4);
-      desertScatter(scene, COLS, ROWS, 78, (x, z) => ['x', 's', '#'].includes(d.grid.get(Math.floor(x), Math.floor(z))) && !insideSolid(x, z, 0.3));
+      // ------------------------------------------------ the boulevard
+      for (const x of [8, 30, 52, 80, 102, 124]) d.built.push(lanternPost(scene, x, BLVD.z0 - 1.6, night, night));
+      boardSign(scene, 3, 55.4, '< MAR FARM', 0.15, 31);
+      busShelter(scene, 100, 55.2);
+      carHulk(scene, 60, 61.6, 3.12, seed()); carHulk(scene, 110, 58.6, 0.05, seed());
+      powerLine(scene, [[0.6, 55.4, 0.04], [26, 55.6, -0.03], [52, 55.4, 0.07], [78, 55.6, 0.02], [104, 55.4, -0.04], [131.4, 55.6, 0.03]], [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]);
+
+      // ------------------------------------------------ south of the road: the kitchen, more homes, the river road
+      comedor(scene, 67, 72, 20, 9);
+      fireRing(scene, 56.6, 77.6);
+      d.built.push(stringLights(scene, [[55.6, 66.6], [67, 66], [78.4, 66.6]], night));
+      jugs(scene, 79.6, 77.4, 8, seed());
+      d.built.push(...house(scene, { x: 22, z: 72, w: 7, d: 5, h: 2.7, base: 'block', door: { x: 1.4, kind: 'shut' }, porch: true, seed: 32 }, night));
+      d.built.push(...containerHome(scene, 24, 84, 0, 'shut', night, 33));
+      d.built.push(...house(scene, { x: 100, z: 72, w: 6.6, d: 5.2, h: 2.7, base: 'stucco', door: { x: -1, kind: 'shut' }, tarp: true, seed: 34 }, night));
+      d.built.push(...house(scene, { x: 118, z: 76, w: 6, d: 5, h: 2.6, base: 'tin', door: { x: 0.6, kind: 'boarded' }, seed: 35 }, night));
+      salvageFence(scene, [[16, 66.4], [16, 78], [30, 78]], seed());
+      salvageFence(scene, [[94, 66.4], [94, 80], [108, 80]], seed());
+      d.built.push(clothesline(scene, 96, 77, 104, 77.6, seed()));
+      yardTank(scene, 12.6, 70, seed()); yardTank(scene, 108.6, 68, seed());
+      boardSign(scene, 37.4, 86, 'RIVER v', 0.1, 36);
+
+      // ------------------------------------------------ brush and open ground
+      brushFill(d, 52, 1);
+      for (const [x, z, s] of [[30, 6, 0.9], [100, 88, 1.0], [8, 62, 0.8]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
+      openScatter(d, 78, ['x', 's'], 0.45, (x, z) => !(x > SQ.x0 - 4 && x < SQ.x1 + 4 && z > SQ.z0 - 4 && z < SQ.z1 + 4) && !(z > BLVD.z0 - 3 && z < BLVD.z1 + 3) && !(x > 50 && x < 84 && z > 62 && z < 82));
 
       // ------------------------------------------------ doors, things, people
       d.things.push(
-        { x: 6.5, z: 8.4, label: 'Go in', go: { to: 'chapel', spawn: 'door' } },
-        { x: 31.5, z: 9.4, label: 'Knock', go: { to: 'fina-house', spawn: 'door' } },
-        { x: 37.3, z: 16.5, label: 'Go in', go: { to: 'kids-house', spawn: 'door' } },
-        { x: 39.6, z: 7.4, label: 'Door', lines: ['Shut. No light inside. Whoever lives here is out, or asleep.'] },
-        { x: 21, z: 24.0, r: 1.8, label: 'Well', lines: ["The bucket comes up wet. Somebody's lucky night."] },
-        { x: 21, z: 12.4, r: 2.6, label: 'Flags', lines: ['Seven flags on seven poles. The colors have all gone the same gray-pink.'] },
-        { x: 14.2, z: 13.4, r: 1.6, label: 'Machine', lines: ['A small machine on four wheels, mowing the same square of dust it always has. Its blade isn’t turning.'] },
-        { x: 35.6, z: 23.8, r: 1.3, label: 'Bench', lines: ['A concrete bench. The dust is worn off one end, where somebody sits every night.'] },
+        { x: 66, z: 10.8, label: 'Go in', go: { to: 'chapel', spawn: 'door' } },
+        { x: 22, z: 29.4, label: 'Knock', go: { to: 'fina-house', spawn: 'door' } },
+        { x: 110.6, z: 33.4, label: 'Go in', go: { to: 'kids-house', spawn: 'door' } },
+        { x: 112.8, z: 47.2, label: 'Door', lines: ['Shut. No light inside. Whoever lives here is out, or asleep.'] },
+        { x: 66, z: 51.2, r: 2.0, label: 'Well', lines: ["The bucket comes up wet. Somebody's lucky night."] },
+        { x: 66, z: 24.4, r: 3.0, label: 'Flags', lines: ['Seven flags on seven poles. The colors have all gone the same gray-pink.'] },
+        { x: 43, z: 22.6, r: 1.8, label: 'Machine', lines: ['A small machine on four wheels, mowing the same square of dust it always has. Its blade isn’t turning.'] },
+        { x: 88, z: 52.2, r: 1.3, label: 'Bench', lines: ['A concrete bench. The dust is worn off one end, where somebody sits every night.'] },
+        { x: 67, z: 77.6, r: 3.0, label: 'Tables', lines: ['Long tables under a tin roof. Enough benches for everybody, if everybody squeezes.'] },
       );
       d.npcs.push(
-        { id: 'chayo', name: 'Doña Chayo', sprite: 'chayo', x: 12.4, z: 16.6, face: 'S', lines: ["White's not for looking at, mija. Put it on before you leave, not when you feel it."] },
-        { id: 'beto', name: 'Don Beto', sprite: 'beto', x: 16.2, z: 16.6, face: 'S', lines: ['You hear her last night? La Llorona. Down in the Dead River.', "My abuela said if you hear her crying, you don't go look. You don't help. You go home."] },
-        { id: 'ruben', name: 'Rubén', sprite: 'ruben', x: 18.2, z: 12.6, face: 'N', lines: ['Seven flags. Seven nations owned this ground once, they say.', "Can't name a single one of them. Doesn't matter. They're gone, and we're still here."] },
-        { id: 'kit', name: 'Kit', sprite: 'kit', x: 23.4, z: 12.8, face: 'W', lines: ['Does rain make a noise? Like, when it hits stuff?', 'Your papá said his abuelo heard it once. He said it sounds like applause.'] },
-        { id: 'tavo', name: 'Tavo', sprite: 'tavo', x: 19.4, z: 24.2, face: 'E', lines: ['Did you know the Old Trail is the oldest place in the whole world?', 'Abuelo Nacho says the first people walked it. It’s north. It has benches.'] },
-        { id: 'nina', name: 'Nina', sprite: 'nina', x: 22.8, z: 24.4, face: 'W', lines: ['Tavo says the Old Trail is the oldest place in the world. I say it’s the drain.', 'The drain has bones in it. That’s how you know it’s old.'] },
-        { id: 'nacho', name: 'Abuelo Nacho', sprite: 'nacho', x: 34.4, z: 23.6, face: 'S', lines: ["There's a bench up the way. Somebody carved a heart in it. Ancient."] },
+        { id: 'chayo', name: 'Doña Chayo', sprite: 'chayo', x: 45, z: 35.2, face: 'S', lines: ["White's not for looking at, mija. Put it on before you leave, not when you feel it."] },
+        { id: 'beto', name: 'Don Beto', sprite: 'beto', x: 50.4, z: 35.2, face: 'S', lines: ['You hear her last night? La Llorona. Down in the Dead River.', "My abuela said if you hear her crying, you don't go look. You don't help. You go home."] },
+        { id: 'ruben', name: 'Rubén', sprite: 'ruben', x: 62.4, z: 24.6, face: 'N', lines: ['Seven flags. Seven nations owned this ground once, they say.', "Can't name a single one of them. Doesn't matter. They're gone, and we're still here."] },
+        { id: 'kit', name: 'Kit', sprite: 'kit', x: 69.6, z: 24.8, face: 'W', lines: ['Does rain make a noise? Like, when it hits stuff?', 'Your papá said his abuelo heard it once. He said it sounds like applause.'] },
+        { id: 'tavo', name: 'Tavo', sprite: 'tavo', x: 64.2, z: 51.6, face: 'E', lines: ['Did you know the Old Trail is the oldest place in the whole world?', 'Abuelo Nacho says the first people walked it. It’s north. It has benches.'] },
+        { id: 'nina', name: 'Nina', sprite: 'nina', x: 67.8, z: 51.8, face: 'W', lines: ['Tavo says the Old Trail is the oldest place in the world. I say it’s the drain.', 'The drain has bones in it. That’s how you know it’s old.'] },
+        { id: 'nacho', name: 'Abuelo Nacho', sprite: 'nacho', x: 86.8, z: 52.4, face: 'S', lines: ["There's a bench up the way. Somebody carved a heart in it. Ancient."] },
       );
-      for (const [x, z] of [[24.5, 23.0], [14.0, 23.4], [30.5, 24.0]] as Array<[number, number]>) d.roamers.push({ sprite: 'chicken', frames: [], x, z, area: [SQ.x0 + 1, 22, SQ.x1 - 1, 25], speed: 0.9, height: 0.34 });
+      for (const [x, z] of [[60, 50], [72, 52], [50, 48], [84, 49]] as Array<[number, number]>) d.roamers.push({ sprite: 'chicken', frames: [], x, z, area: [SQ.x0 + 2, 47, SQ.x1 - 2, 53], speed: 0.9, height: 0.34 });
+      for (const [x, z] of [[20, 74], [12, 76]] as Array<[number, number]>) d.roamers.push({ sprite: 'chicken', frames: [], x, z, area: [17, 67, 29, 77], speed: 0.9, height: 0.34 });
     },
   };
 }

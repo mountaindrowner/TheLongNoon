@@ -49,6 +49,10 @@ export function leafMat(tint: string, olive = false): THREE.MeshStandardMaterial
 type Sway = { obj: THREE.Object3D; phase: number; amp: number };
 const sways: Sway[] = [];
 onWorldReset(() => { sways.length = 0; });
+/** True while `o` is still part of a scene (a streamed-out map's plants are not). */
+export function attached(o: THREE.Object3D): boolean { let p: THREE.Object3D | null = o; while (p) { if ((p as THREE.Scene).isScene) return true; p = p.parent; } return false; }
+/** Forget the plants of maps that have been taken out of the scene. */
+export function pruneSways(): void { for (let i = sways.length - 1; i >= 0; i--) if (!attached(sways[i]!.obj)) sways.splice(i, 1); }
 /** Sway every tree/bush crown built for the current area. */
 export function swayTrees(t: number): void {
   for (const s of sways) s.obj.rotation.z = Math.sin(t * 0.9 + s.phase) * s.amp;

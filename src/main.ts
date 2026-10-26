@@ -86,8 +86,8 @@ interface World {
   scene: THREE.Scene;
   area: Area;
   lights: Lights;
-  people: Array<{ npc: NPC; actor: Actor }>;
-  roamers: Array<{ actor: Actor; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number }>;
+  people: Array<{ npc: NPC; actor: Actor; tag: string }>;
+  roamers: Array<{ actor: Actor; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number; tag: string }>;
   tint: THREE.Color;
   issues: string[];
 }
@@ -98,15 +98,17 @@ let player: Actor;
 let loaded = false;
 let busy = false;
 
-async function buildWorld(id: string): Promise<World> {
+async function buildWorld(id: string, at?: Spot): Promise<World> {
   const scene = new THREE.Scene();
   let area: Area, issues: string[];
   if (id === SPAN) {
     beginArea();
-    const region = await buildRegion(scene, night, spanRegion(sky(), night));
+    const region = await buildRegion(scene, night, spanRegion(sky(), night, at));
     area = region;
     issues = region.doorIssues;
   } else {
+    // a map half-built in the region shares the builders' state; let it finish first
+    await (worlds.get(SPAN)?.area as Region | undefined)?.idle();
     clearDoorMarks();
     area = await ROOMS[id]!(scene, night);
     issues = checkDoors(area);
@@ -115,21 +117,39 @@ async function buildWorld(id: string): Promise<World> {
   const lights = applyMood(scene, renderer, post, area.mood);
   const tint = new THREE.Color().setRGB(...area.mood.sprite);
   const w: World = { id, scene, area, lights, people: [], roamers: [], tint, issues };
-  for (const npc of area.npcs) {
-    const a = await Actor.person(npc.sprite, tint);
-    a.place(npc.x, area.ground(npc.x, npc.z), npc.z);
-    a.dir = npc.face ?? 'S';
-    scene.add(a.root);
-    w.people.push({ npc, actor: a });
-  }
-  for (const r of area.roamers ?? []) {
-    const a = await Actor.critter(r.sprite, tint, r.height);
-    a.place(r.x, area.ground(r.x, r.z), r.z);
-    scene.add(a.root);
-    w.roamers.push({ actor: a, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3 });
-  }
+  if (id === SPAN) {
+    // the region streams: its people and animals come and go with their maps
+    const region = area as Region;
+    for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
+    region.onChange = (added, removed) => {
+      if (removed) unpopulate(w, removed.id);
+      if (added) void populate(w, added.npcs, added.roamers, added.id);
+    };
+  } else await populate(w, area.npcs, area.roamers ?? [], id);
   worlds.set(id, w);
   return w;
+}
+
+async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamers']>, tag: string): Promise<void> {
+  for (const npc of npcs) {
+    const a = await Actor.person(npc.sprite, w.tint);
+    a.place(npc.x, w.area.ground(npc.x, npc.z), npc.z);
+    a.dir = npc.face ?? 'S';
+    w.scene.add(a.root);
+    w.people.push({ npc, actor: a, tag });
+  }
+  for (const r of roamers) {
+    const a = await Actor.critter(r.sprite, w.tint, r.height);
+    a.place(r.x, w.area.ground(r.x, r.z), r.z);
+    w.scene.add(a.root);
+    w.roamers.push({ actor: a, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3, tag });
+  }
+}
+function unpopulate(w: World, tag: string): void {
+  for (const p of w.people.filter((q) => q.tag === tag)) w.scene.remove(p.actor.root);
+  for (const r of w.roamers.filter((q) => q.tag === tag)) w.scene.remove(r.actor.root);
+  w.people = w.people.filter((q) => q.tag !== tag);
+  w.roamers = w.roamers.filter((q) => q.tag !== tag);
 }
 
 function placeAt(s: Spot): void {
@@ -185,7 +205,7 @@ async function turnOfDay(lit: boolean): Promise<void> {
   if (outdoors) {
     worlds.delete(SPAN);
     const at: Spot = { x: player.x, z: player.z };
-    const w = await buildWorld(SPAN);
+    const w = await buildWorld(SPAN, at);
     enter(w, at);
     dispose(here);
     await ui.dissolve(false);
@@ -206,6 +226,7 @@ async function go(to: string, spawn: string): Promise<void> {
   ui.showPrompt(null);
   await ui.dissolve(true);
   const w = worlds.get(to) ?? (await buildWorld(to));
+  if (to === SPAN) await (w.area as Region).prepare(spawn);
   enter(w, spawn);
   if (staleRoom && staleRoom !== w) { dispose(staleRoom); staleRoom = null; }
   lastPiece = '';
@@ -375,6 +396,8 @@ load().then(() => {
     get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
     get busy() { return busy; },
+    get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },
+    get built() { return cur.id === SPAN ? (cur.area as Region).pieces.map((p) => p.id) : []; },
     get clock() { return time.minute; },
     get phase() { return time.phase; },
     get lit() { return night; },
@@ -384,14 +407,24 @@ load().then(() => {
     face(dx: number, dz: number) { player.face(dx, dz); },
     go: (to: string, spawn: string) => go(to, spawn),
     /** Build every room and return any broken door promise across the whole region. */
-    async checkAllRooms() { for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id); return [...worlds.values()].flatMap((w) => w.issues); },
+    /** Build every map of the region and every room, and return any broken door promise. */
+    async checkAllRooms() {
+      const region = worlds.get(SPAN)?.area as Region | undefined;
+      if (region) { region.hold = true; await region.buildAll(); }
+      const issues = [...region?.doorIssues ?? []];
+      if (region) region.hold = false;
+      for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id);
+      for (const w of worlds.values()) if (w.id !== SPAN) issues.push(...w.issues);
+      return issues;
+    },
     rooms: Object.keys(ROOMS),
     /** A map of the current world drawn straight down, north up, `ppu` pixels per unit, with what's placed on it.
      *  For the overview (docs/design/regions/): no fog, no post, the shadow stretched over the whole map. */
-    overview(ppu = 10, bounds?: [number, number, number, number]) {
+    async overview(ppu = 10, bounds?: [number, number, number, number]) {
       const region = cur.id === SPAN ? (cur.area as Region) : null;
+      if (region) { region.hold = true; await region.buildAll(); }
       const [x0, z0, x1, z1] = bounds ?? (region
-        ? [Math.min(...region.pieces.map((p) => p.ox)), Math.min(...region.pieces.map((p) => p.oz)), Math.max(...region.pieces.map((p) => p.ox + p.cols)), Math.max(...region.pieces.map((p) => p.oz + p.rows))]
+        ? [Math.min(...region.plan.map((p) => p.ox)), Math.min(...region.plan.map((p) => p.oz)), Math.max(...region.plan.map((p) => p.ox + p.cols)), Math.max(...region.plan.map((p) => p.oz + p.rows))]
         : [0, 0, 20, 14]);
       const W = Math.round((x1 - x0) * ppu), H = Math.round((z1 - z0) * ppu);
       const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
@@ -422,10 +455,11 @@ load().then(() => {
       (sun.shadow.map as THREE.WebGLRenderTarget | null)?.dispose(); sun.shadow.map = null;
       renderer.setPixelRatio(keep.pr);
       resize();
+      if (region) region.hold = false;
       const a = cur.area;
       return {
         img, w: W, h: H, bounds: [x0, z0, x1, z1], ppu,
-        pieces: region?.pieces.map((p) => ({ id: p.id, title: p.title, sub: p.sub, x: p.ox, z: p.oz, w: p.cols, h: p.rows })) ?? [],
+        pieces: region?.plan.map((p) => ({ id: p.id, title: p.title, sub: p.sub, x: p.ox, z: p.oz, w: p.cols, h: p.rows })) ?? [],
         things: a.things.map((t) => ({ label: t.label, x: t.x, z: t.z, go: t.go?.to ?? null, lines: t.lines ?? [] })),
         npcs: a.npcs.map((n) => ({ name: n.name, x: n.x, z: n.z })),
         exits: a.triggers.filter((t) => t.go).map((t) => ({ to: t.go!.to, x: (t.x0 + t.x1) / 2, z: (t.z0 + t.z1) / 2 })),
