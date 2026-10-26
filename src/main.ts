@@ -386,6 +386,52 @@ load().then(() => {
     /** Build every room and return any broken door promise across the whole region. */
     async checkAllRooms() { for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id); return [...worlds.values()].flatMap((w) => w.issues); },
     rooms: Object.keys(ROOMS),
+    /** A map of the current world drawn straight down, north up, `ppu` pixels per unit, with what's placed on it.
+     *  For the overview (docs/design/regions/): no fog, no post, the shadow stretched over the whole map. */
+    overview(ppu = 10, bounds?: [number, number, number, number]) {
+      const region = cur.id === SPAN ? (cur.area as Region) : null;
+      const [x0, z0, x1, z1] = bounds ?? (region
+        ? [Math.min(...region.pieces.map((p) => p.ox)), Math.min(...region.pieces.map((p) => p.oz)), Math.max(...region.pieces.map((p) => p.ox + p.cols)), Math.max(...region.pieces.map((p) => p.oz + p.rows))]
+        : [0, 0, 20, 14]);
+      const W = Math.round((x1 - x0) * ppu), H = Math.round((z1 - z0) * ppu);
+      const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+      const cam = new THREE.OrthographicCamera(-(x1 - x0) / 2, (x1 - x0) / 2, (z1 - z0) / 2, -(z1 - z0) / 2, 1, 200);
+      cam.position.set(cx, 80, cz);
+      cam.up.set(0, 0, -1);
+      cam.lookAt(cx, 0, cz);
+      const scene = cur.scene, fog = scene.fog, sun = cur.lights.sun, sc = sun.shadow.camera;
+      const keep = { l: sc.left, r: sc.right, t: sc.top, b: sc.bottom, far: sc.far, size: sun.shadow.mapSize.x, pr: renderer.getPixelRatio() };
+      scene.fog = null;
+      const S = Math.max(x1 - x0, z1 - z0) * 0.75;
+      Object.assign(sc, { left: -S, right: S, top: S, bottom: -S, far: 260 });
+      sc.updateProjectionMatrix();
+      sun.shadow.mapSize.set(4096, 4096);
+      sun.shadow.map?.dispose(); sun.shadow.map = null;
+      cur.lights.follow(new THREE.Vector3(cx, 0, cz));
+      sun.position.y *= 4; sun.position.x = cx + (sun.position.x - cx) * 4; sun.position.z = cz + (sun.position.z - cz) * 4;
+      renderer.setPixelRatio(1);
+      renderer.setSize(W, H, false);
+      cur.area.update(clock.elapsedTime, new THREE.Vector3(cx, 0, cz), new THREE.Vector3(cx, 0, cz));
+      renderer.render(scene, cam);
+      const img = renderer.domElement.toDataURL('image/webp', 0.9);
+      // put everything back
+      scene.fog = fog;
+      Object.assign(sc, { left: keep.l, right: keep.r, top: keep.t, bottom: keep.b, far: keep.far });
+      sc.updateProjectionMatrix();
+      sun.shadow.mapSize.set(keep.size, keep.size);
+      (sun.shadow.map as THREE.WebGLRenderTarget | null)?.dispose(); sun.shadow.map = null;
+      renderer.setPixelRatio(keep.pr);
+      resize();
+      const a = cur.area;
+      return {
+        img, w: W, h: H, bounds: [x0, z0, x1, z1], ppu,
+        pieces: region?.pieces.map((p) => ({ id: p.id, title: p.title, sub: p.sub, x: p.ox, z: p.oz, w: p.cols, h: p.rows })) ?? [],
+        things: a.things.map((t) => ({ label: t.label, x: t.x, z: t.z, go: t.go?.to ?? null, lines: t.lines ?? [] })),
+        npcs: a.npcs.map((n) => ({ name: n.name, x: n.x, z: n.z })),
+        exits: a.triggers.filter((t) => t.go).map((t) => ({ to: t.go!.to, x: (t.x0 + t.x1) / 2, z: (t.z0 + t.z1) / 2 })),
+        spawns: a.spawns,
+      };
+    },
   };
   document.getElementById('boot')?.remove();
 }).catch((e) => {

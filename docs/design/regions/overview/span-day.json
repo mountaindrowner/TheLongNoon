@@ -1,0 +1,451 @@
+{
+ "w": 1320,
+ "h": 960,
+ "bounds": [
+  0,
+  0,
+  132,
+  96
+ ],
+ "ppu": 10,
+ "pieces": [
+  {
+   "id": "ramp",
+   "title": "The Ramp",
+   "sub": "The road to the Thirty-Five",
+   "x": 0,
+   "z": 0,
+   "w": 44,
+   "h": 32
+  },
+  {
+   "id": "mar-farm",
+   "title": "Mar Farm",
+   "sub": "Home",
+   "x": 0,
+   "z": 32,
+   "w": 44,
+   "h": 32
+  },
+  {
+   "id": "plaza",
+   "title": "The Plaza",
+   "sub": "The Span",
+   "x": 44,
+   "z": 32,
+   "w": 44,
+   "h": 32
+  },
+  {
+   "id": "east-road",
+   "title": "The East Road",
+   "sub": "The Span",
+   "x": 88,
+   "z": 32,
+   "w": 44,
+   "h": 32
+  },
+  {
+   "id": "white-bowl",
+   "title": "The White Bowl",
+   "sub": "Where the lake was",
+   "x": 88,
+   "z": 64,
+   "w": 44,
+   "h": 32
+  }
+ ],
+ "things": [
+  {
+   "label": "Sign",
+   "x": 25.2,
+   "z": 19,
+   "go": null,
+   "lines": [
+    "A highway sign, face down in the caliche.",
+    "Underneath, where the sun never reached, the letters are still white: NORTH 35. SAN ANTONIO 154."
+   ]
+  },
+  {
+   "label": "Gantry",
+   "x": 19.525,
+   "z": 17.21,
+   "go": null,
+   "lines": [
+    "A steel frame over the ramp. Something on it turns to watch whatever passes. A red light says STOP."
+   ]
+  },
+  {
+   "label": "The end of the road",
+   "x": 6.5,
+   "z": 25.4,
+   "go": null,
+   "lines": [
+    "The highway just stops. The rest of it is down there, in pieces, rebar hanging out like roots."
+   ]
+  },
+  {
+   "label": "Door",
+   "x": 40.4,
+   "z": 18,
+   "go": null,
+   "lines": [
+    "Shut. Cool air comes from under it."
+   ]
+  },
+  {
+   "label": "Stones",
+   "x": 5.4,
+   "z": 13.2,
+   "go": null,
+   "lines": [
+    "Stones stacked waist high, bleached white. Bones between them, set with care."
+   ]
+  },
+  {
+   "label": "Canopy",
+   "x": 34.6,
+   "z": 12.6,
+   "go": null,
+   "lines": [
+    "A roof on four legs over dead pumps. Open on every side."
+   ]
+  },
+  {
+   "label": "Go in",
+   "x": 24,
+   "z": 44.3,
+   "go": "mar-home",
+   "lines": []
+  },
+  {
+   "label": "Shutter",
+   "x": 17,
+   "z": 44.2,
+   "go": null,
+   "lines": [
+    "The shutter is down. Rust has locked the bottom slats to the sill."
+   ]
+  },
+  {
+   "label": "Water tower",
+   "x": 27.6,
+   "z": 58.2,
+   "go": null,
+   "lines": [
+    "AGUA, painted by hand. Under it, older letters, painted by a different hand.",
+    "The pipe down the leg is sweating. The ground under it is green."
+   ]
+  },
+  {
+   "label": "Windmill",
+   "x": 37.6,
+   "z": 46.4,
+   "go": null,
+   "lines": [
+    "The wheel turns. On every upstroke the pump coughs water into the trough."
+   ]
+  },
+  {
+   "label": "Garden",
+   "x": 34.6,
+   "z": 56.6,
+   "go": null,
+   "lines": [
+    "Squash, beans, and something with purple flowers. Every row has been watered today."
+   ]
+  },
+  {
+   "label": "Platform",
+   "x": 6.4,
+   "z": 57.6,
+   "go": null,
+   "lines": [
+    "A shroud on the boards, sewn shut with white thread."
+   ]
+  },
+  {
+   "label": "Water jugs",
+   "x": 27,
+   "z": 45.4,
+   "go": null,
+   "lines": [
+    "Six jugs. Two full."
+   ]
+  },
+  {
+   "label": "Go in",
+   "x": 50.5,
+   "z": 40.4,
+   "go": "chapel",
+   "lines": []
+  },
+  {
+   "label": "Knock",
+   "x": 75.5,
+   "z": 41.4,
+   "go": "fina-house",
+   "lines": []
+  },
+  {
+   "label": "Go in",
+   "x": 81.3,
+   "z": 48.5,
+   "go": "kids-house",
+   "lines": []
+  },
+  {
+   "label": "Door",
+   "x": 83.6,
+   "z": 39.4,
+   "go": null,
+   "lines": [
+    "Shut. No light inside. Whoever lives here is out, or asleep."
+   ]
+  },
+  {
+   "label": "Well",
+   "x": 65,
+   "z": 56,
+   "go": null,
+   "lines": [
+    "The bucket comes up wet. Somebody's lucky night."
+   ]
+  },
+  {
+   "label": "Flags",
+   "x": 65,
+   "z": 44.4,
+   "go": null,
+   "lines": [
+    "Seven flags on seven poles. The colors have all gone the same gray-pink."
+   ]
+  },
+  {
+   "label": "Machine",
+   "x": 58.2,
+   "z": 45.4,
+   "go": null,
+   "lines": [
+    "A small machine on four wheels, mowing the same square of dust it always has. Its blade isn’t turning."
+   ]
+  },
+  {
+   "label": "Bench",
+   "x": 79.6,
+   "z": 55.8,
+   "go": null,
+   "lines": [
+    "A concrete bench. The dust is worn off one end, where somebody sits every night."
+   ]
+  },
+  {
+   "label": "Culvert",
+   "x": 103,
+   "z": 57,
+   "go": null,
+   "lines": [
+    "The drain goes under the road here. The pipe is black all the way in. Something in there drips."
+   ]
+  },
+  {
+   "label": "Billboard",
+   "x": 112.6,
+   "z": 54.8,
+   "go": null,
+   "lines": [
+    "A billboard on two legs. Paper on paper on paper, all of it peeled. Not one word left."
+   ]
+  },
+  {
+   "label": "Light",
+   "x": 118.6,
+   "z": 57.4,
+   "go": null,
+   "lines": [
+    "Green, then yellow, then red. Then green again."
+   ]
+  },
+  {
+   "label": "Tracks",
+   "x": 105.6,
+   "z": 53,
+   "go": null,
+   "lines": [
+    "Little tracks in the dust. Six wheels. They come up out of the drain and go east."
+   ]
+  },
+  {
+   "label": "Stones",
+   "x": 126.6,
+   "z": 46.2,
+   "go": null,
+   "lines": [
+    "Stones stacked waist high, bleached white. Bones between them, set with care."
+   ]
+  },
+  {
+   "label": "Tower",
+   "x": 109,
+   "z": 84.2,
+   "go": null,
+   "lines": [
+    "A concrete tower standing out in the white. Halfway up, a dark band all the way round. Above it, the concrete is pale."
+   ]
+  },
+  {
+   "label": "Buoy",
+   "x": 115.6,
+   "z": 88.2,
+   "go": null,
+   "lines": [
+    "A buoy on its side on the dry bed. Every few breaths, its lamp blinks."
+   ]
+  },
+  {
+   "label": "Boat",
+   "x": 119.6,
+   "z": 86,
+   "go": null,
+   "lines": [
+    "A boat, sitting level on the crust as if it were floating."
+   ]
+  },
+  {
+   "label": "Ramp",
+   "x": 117.6,
+   "z": 79.4,
+   "go": null,
+   "lines": [
+    "A concrete ramp runs down into the bowl, and keeps going, under the crust."
+   ]
+  },
+  {
+   "label": "Tracks",
+   "x": 109.4,
+   "z": 89.6,
+   "go": null,
+   "lines": [
+    "Two treads, wide as a door, with cross-bars. They cross the whole bowl."
+   ]
+  }
+ ],
+ "npcs": [
+  {
+   "name": "Hermana Lupe",
+   "x": 8.9,
+   "z": 57.4
+  },
+  {
+   "name": "Doña Chayo",
+   "x": 56.4,
+   "z": 48.6
+  },
+  {
+   "name": "Don Beto",
+   "x": 60.2,
+   "z": 48.6
+  },
+  {
+   "name": "Rubén",
+   "x": 62.2,
+   "z": 44.6
+  },
+  {
+   "name": "Kit",
+   "x": 67.4,
+   "z": 44.8
+  },
+  {
+   "name": "Tavo",
+   "x": 63.4,
+   "z": 56.2
+  },
+  {
+   "name": "Nina",
+   "x": 66.8,
+   "z": 56.4
+  },
+  {
+   "name": "Abuelo Nacho",
+   "x": 78.4,
+   "z": 55.6
+  },
+  {
+   "name": "Memo",
+   "x": 95.6,
+   "z": 58
+  }
+ ],
+ "exits": [
+  {
+   "to": "thirty-five",
+   "x": 6.5,
+   "z": -1.35
+  },
+  {
+   "to": "east-loop",
+   "x": 133.35,
+   "z": 61
+  }
+ ],
+ "spawns": {
+  "start": {
+   "x": 21.5,
+   "z": 53,
+   "face": "N"
+  },
+  "ramp:north": {
+   "x": 6.5,
+   "z": 1.1,
+   "face": "S"
+  },
+  "ramp:start": {
+   "x": 6.5,
+   "z": 1.1,
+   "face": "S"
+  },
+  "mar-farm:home": {
+   "x": 24,
+   "z": 45,
+   "face": "S"
+  },
+  "mar-farm:start": {
+   "x": 22,
+   "z": 48
+  },
+  "plaza:chapel": {
+   "x": 50.5,
+   "z": 40.9,
+   "face": "S"
+  },
+  "plaza:fina": {
+   "x": 75.5,
+   "z": 41.8,
+   "face": "S"
+  },
+  "plaza:kids": {
+   "x": 81.3,
+   "z": 48.9,
+   "face": "S"
+  },
+  "plaza:start": {
+   "x": 66,
+   "z": 48
+  },
+  "east-road:east": {
+   "x": 130.9,
+   "z": 61,
+   "face": "W"
+  },
+  "east-road:start": {
+   "x": 130.9,
+   "z": 61,
+   "face": "W"
+  },
+  "white-bowl:start": {
+   "x": 110,
+   "z": 80
+  }
+ }
+}

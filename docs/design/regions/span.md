@@ -33,6 +33,11 @@ Items marked **[ASK]** are my guesses and need the owner's sign-off.
   z 96                            └────────────┘
 ```
 
+The region from straight above, as built (regenerate with
+`npm run build && node tools/overview.mjs`):
+
+![The Span from above](overview/span-day.webp)
+
 ## Sections
 
 | Section | Kind and tier | Hero | Routine | Signature |
