@@ -1,5 +1,10 @@
 # Screens, devices and input
 
+> **Rebuild note (2026-10-26):** the rebuild renders full-window (no letterbox, no 540-line grid): the camera keeps
+> its fixed angle and the UI is CSS sized for desktop, with a compact layout below 500 px tall (spec §15). Pixel
+> ratio is capped at 1.5 (spec §3). There's no rotate prompt yet. The sections below describe the proof of
+> concept (`legacy/poc2`) and still hold for it.
+
 **Owner's targets:** a 1080p computer screen is the primary target. Phones are where the
 game is played and tested day to day, so the game has to stay fully playable on them.
 

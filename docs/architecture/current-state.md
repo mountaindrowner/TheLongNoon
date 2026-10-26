@@ -1,97 +1,90 @@
-# Current state of The Long Noon (Phase 0 audit)
+# Current state: the rebuild
 
-Audited 2026-10-10 against `src/` as unpacked from `The-Long-Noon-offline_2.html`.
-This describes the game **as it is**, not as the research brief proposes. Section
-numbers like §5.4 refer to [`docs/research/engineering-brief.md`](../research/engineering-brief.md).
+Updated 2026-10-26. The game is being rebuilt from the ground up on the world
+style spec (`docs/style/world-style-spec.md`), one playable, screenshot-checked
+piece at a time. The proof of concept it replaces is in `legacy/poc2/` (its
+audit is `legacy/poc2/AUDIT.md`).
 
-## How the game is built today
+## Stack
 
-- **Source of truth until now:** a single HTML file edited in Claude chat sessions.
-  From here on, `src/` is the source and the HTML file is a build output:
-  `tools/unpack.py` splits an HTML build into `src/`, and `tools/build.py` reverses it
-  **byte for byte** (verified with `cmp`).
-- **No package manager, no dependencies, no module system.** three.js r128 is loaded as a
-  global script (`src/vendor/three.min.js`). Python 3 is the only build tool.
-- **Game code:** one 117 KB IIFE (immediately invoked function) split into 25 files
-  `src/js/00-…24-*.js` at its own section banners. These files share closure variables
-  and only work when concatenated in `src/js/ORDER`.
-- **Content:** six JSON blobs, unpacked to `src/data/*.json`, read at boot from
-  `<script type="application/json">` tags.
-- **Assets:** five hand-packed PNG atlases, with frame coordinates stored in
-  `data/manifest.json`. Four woff2 fonts. Three MP3 tracks make up **9.1 MB of the
-  10.1 MB file**. All sound effects are synthesized in `22-audio.js`.
-- **Debug:** loading the page with `#debug` shows text instantly and exposes `window.__LN`
-  (`tp`, `setStep`, `setClock`, `runScript`, `save`, `loadGame`, live state).
+Vite 6 + TypeScript 5.9 (strict) + three.js r170, as the spec's reference
+source requires. `npm run build` makes one self-contained `dist/index.html`
+(about 0.8 MB) that runs offline. When the game outgrows one file, drop
+`vite-plugin-singlefile` for a normal site build; nothing else changes.
 
-## Systems, and how close they already are to the brief
+## Piece 1 (done): the engine and Mar Farm
 
-| System | What exists | Brief's recommendation | Gap |
-|---|---|---|---|
-| Rendering (`01–04`, `06`, `09`) | HD-2D sprites in three.js, 3 quality tiers, tilt-shift, bloom, grade, shadows, day/night presets | Keep three.js (§2.2) | None; protect it |
-| World (`06`) | One 128×64 map, 32×32 chunks streamed by distance, static meshes merged per chunk, procedural outer ring | Regions loaded on demand (§5.1–5.3) | Only one map; no transitions or interiors |
-| Events (`12` `doCmd`) | 22 commands: `wait item take white water page step flag sfx checkHome hint choice rest ending cam spawnEnemies battle join salvage lookUp tale waitDrone` | Small command vocabulary, FFVI-style (§3.6, §5.5) | **Already this model.** Some commands are mission-specific (`checkHome`, `salvage`, `lookUp`, `waitDrone`) |
-| Dialogue selection (`12` `resolveDlg`) | Per NPC/object: a list of lines, or an object keyed by conditions like `home&!fed`, with `*` as fallback | State-driven candidates, Stardew-style (§3.7) | **Already this model.** Conditions are untyped strings and nothing validates them |
-| Quests (`14`, `quests.json`) | One mission, 7 linear steps (`burial → home → market → kit → pancha → home2 → free`), each with an objective and a marker | Declarative quests (§5.7) | No multiple or side quests; no reward transactions |
-| Battle (`17`, `08`, `battles.json`) | Charge-time initiative, part targeting (soft and armor), eye break stuns, timed-ring parry (window 78–122% of 900 ms, 1200 ms the first time), brace, drink water, flee threshold, pipe durability, separate arena scene | Preserve, then split rules from presentation (§5.8) | Rules and animation are interleaved; enemy AI is chosen by enemy ID in code |
-| Staybook (`13`) | 5 pages, unlocked by commands | — | — |
-| Saves (`20`) | `localStorage['longnoon.poc2.save']` holds the whole `ST` object (`v:1`), a small domain object with no renderer state. Saves on step change and rest | Versioned save, migrations, export/import (§5.10) | Any save that isn't `v:1` is rejected. No migrations, no export, one slot |
-| Flags | `fed tank drainStarted drainDone qteSeen armorHint shutterWarn`, created freely at runtime | Registry of declared flags (§5.4) | No registry. `shutterWarn` holds a day number, not a true/false value |
-| Tests | `npm test`: Playwright playtests on desktop 1080p, phone landscape and phone portrait (boot, layout, scenes loaded from saves, drain fight setup, no console errors). Run in CI by `.github/workflows/test.yml` | Playwright and CI (§6.8, §8) | No battle-rule unit tests yet; no visual comparison against `docs/baseline/` |
+- **Engine (`src/engine/`):** the spec's appendix, ported. The files that are
+  ported verbatim, with import paths changed: noise, geo, textures, post, mood,
+  world, terrain, section, interior, doorway, kit, plus the generic parts of
+  foliage, props and sprites.
+  - **Removed:** OHMFRONT's own maps, its one-off scenes at fixed coordinates,
+    and its lore threads (Garrison stencil, Redbed hand, brass tag, husk).
+  - **Written new**, because the appendix uses them without listing them:
+    `area.ts` (map types), `buildings.ts` (shared materials `M`, `vines`,
+    `windowAt`, and a general `building()` recipe), `fence.ts`, and
+    `layout.ts` (`maskAt`).
+  - **Completed:** two files the spec cuts short. `ui.ts` stops at `say()`, so
+    dialogue and touch controls were written here; `kit.ts` stops inside
+    `pendant`.
+- **The Span (`src/regions/span/`):**
+  - **Moods:** LAMP (evening, warm, long shadows), NIGHT (spec), and WHITE
+    (day: bleached, sun overhead, short shadows).
+  - **Prop kit:**
+    - Plants: fan palm, nopal.
+    - Water and machines: water tower, windmill pump.
+    - Lighting and power: lantern post, solar panels.
+    - Yard life: clothesline, shade sail, water jugs, drum, tires, plastic
+      chairs round a spool.
+    - Wrecks and markers: car hulk, burial platform, roof letters,
+      whitewashed tire kerb, mailbox, cow skull.
+    - Surfaces: desert scatter (pebbles, dry tufts), a concrete-block wall
+      texture, the desert apron.
+  - **Mar Farm (44×32, tier lived_in):**
+    - Hero: the water tower.
+    - Routine: the windmill pump filling the trough.
+    - Signature: the store with MAR on the roof and the lit door.
+    - Also: the goat pen, the watered garden, the burial platform with
+      Hermana Lupe, and a lantern-lit lane home.
+    - Four edge styles, two exits.
+- **Runtime (`src/main.ts`):**
+  - Camera (spec §3): fixed angle, follows Juno, clamped to the map.
+  - Movement: walk 3.1, run 5.0 (Shift, or the stick pushed fully).
+  - Light and post: mood lighting with a texel-snapped shadow that follows
+    Juno; the tilt-shift band tracks her height on screen.
+  - Interaction: talk and inspect.
+  - Exits: walking off an exit dissolves the screen. Unbuilt roads turn you
+    back with a note.
+  - Occluders: overhead things (the sails, the tank) fade when Juno walks
+    behind them.
+- **Checks:**
+  - `npm test` builds both games and playtests Mar Farm at desktop 1080p and
+    phone landscape: it builds in all three moods, the door-promise check is
+    clean, walking and collision work, Lupe's dialogue works, and an unbuilt
+    exit turns you back.
+  - Screenshots were reviewed against spec §20 at 1280×720 and 844×340.
 
-## Mission-specific code that blocks a second mission
+## Where this departs from the spec, on purpose
 
-- `16-exploration.js:17`: "sheltered" means within 3.4 units of (13, 27), which is only Mar Farm's door.
-- `17-battle.js:88`: the battle intro line is hard-coded: "A Stray and a coyote block the drain!"
-- `17-battle.js:63` onward: coyote and Stray AI are picked by `f.id`; the Stray's eye light and sounds are tied to the `'stray'` ID.
-- `12-dialogue.js:41`: the `join` command always shows "Kit joined the party". Party slots assume Juno plus Kit.
-- `10-game-state.js` `makeWreck`, plus `drainDone` checks in `applyState`, `update` and `exploreUpdate`, are drain-battle aftermath written into the engine.
-- `18-rest-faint-ending.js`: fainting, the ending and `continueAfterEnding` contain Mar Farm coordinates and mission 1 values.
-- `ITEM_NAMES` (`10`) and `PAGE_ORDER` (`13`) are lists in code, not content.
+| Spec says | The Long Noon does | Why |
+|---|---|---|
+| One fixed mood per scene, no clock (§5) | A mood per phase of the day (Lamp, Night, White); the clock will move between them | The clock is The Long Noon's core mechanic: daylight burns water, Shutter sends you under a roof. **Owner to confirm.** |
+| Prairie ground, lush green as the norm | Desert ground (caliche, sand, old asphalt); green only where water has been | The Span is a desert. The spec's mood line still holds: bleak, with bright life where it's tended. |
+| 64px, 8-direction PixelLab sprites (§13) | The proof of concept's 16×24, 4-direction sprites, sized by measurement to 1.65 units | Generating new sprites needs a PixelLab API key and its per-figure cost. The engine's `RotHero` already plays 8-direction sprites when they exist. |
+| Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
+| Every exit lands on its target (§9.4, §20 #12) | Unbuilt targets turn you back with a note | Only one map exists so far. |
+| No old-world names (§1) | MAR stays on the store roof; Del Mar Park stays | They're The Long Noon's own canon: the letters left of an old name are where the farm's name comes from. **Owner to confirm.** |
 
-## ID conventions
+## Next pieces (proposed order)
 
-- Short bare IDs (`kit`, `stray`, `milk`, `drain`), no namespaces.
-- **Display names are used as keys.** Dialogue speakers are written as display names (`"Hermana Lupe"`), and `PORTRAIT` (`12`) and `VOICES` (`22`) map those names to sprites and voices. The brief warns against exactly this (§4.4).
-- Map props are positional arrays (`[kind, x, z, scale, flagIndex, y]`) with no IDs.
-
-**Opinion, differing from the brief:** the brief says never to rename persistent IDs. That
-is right once players have saves. Today nobody but the owner has a save, so this is the
-cheapest time the IDs will ever be to fix. Do it once, early, with a v1→v2 save migration
-so the migration path gets exercised.
-
-## Brief recommendations, sorted
-
-**Already implemented:** keeping three.js; content separated from code; a command-based
-event interpreter; condition-driven dialogue; a save that holds domain state only; chunk
-streaming; quality tiers; synthesized sound effects.
-
-**Missing but important (do soon):** a module build with a dev server (Vite); an automated
-playthrough plus CI; a save version, migrations and export/import; content schemas with a
-validator; generalizing the mission-specific code listed above; stable namespaced IDs;
-multiple maps with transitions.
-
-**Optional, pilot when a need appears:** Ink, once dialogue actually branches heavily (it is
-nearly linear today); Tiled or LDtk for maps (a small in-browser editor that writes our own
-JSON may fit better); CSV balance tables, once there are more than two enemies; TypeScript,
-gradually; Aseprite exports.
-
-**Not appropriate yet:** IndexedDB/Dexie (a save is about 1 KB, so localStorage plus
-export/import is enough); localization string keys (they move text out of the scene,
-which makes writing harder for the owner; add them only when a translation is planned);
-splitting work across multiple agent roles; a Three.js upgrade.
-
-## Proposed first three changes
-
-Changes 1 and 3 touch game code, so they wait until the owner's latest build is imported (see `CLAUDE.md`).
- (each small, each checked against the baselines)
-
-1. **Module build.** Move `src/js/*` to real ES modules under Vite, with behavior unchanged.
-   Builds produce (a) a website build for the full game and (b) the current
-   single-file demo. Success means the baseline screenshots and smoke run still match.
-2. **Test harness, CI and play link.** *Done:* `npm test`, `.github/workflows/test.yml`,
-   and `.github/workflows/deploy.yml` (GitHub Pages from `main`).
-3. **Save v2.** An explicit save schema with `schemaVersion`, a v1→v2 migration with saved
-   test files, Export/Import save buttons in the pause menu, and a declared flag registry.
-
-After these: content schemas plus `validate` (Phase 2 in the brief), then generalizing the
-mission-specific code, driven by what mission 2, "The White Bowl", needs.
+1. **Clock and moods.** Time moves; light blends Lamp → Night → Shutter → White;
+   the HUD clock is live; shelter and water rules apply.
+2. **The second map:** the road out (`long-road`) or the night market
+   (`del-mar-park`), with real exits between them.
+3. **Story runtime:** the legacy dialogue and quest data (`legacy/poc2/src/data`)
+   brought across: conditional dialogue, quest steps, the staybook.
+4. **Saves:** versioned from the start, with export and import.
+5. **Battle stage** in the spec's language (§14): local ground for panels, not a grid.
+6. **Sprites:** the cast regenerated in the spec's locked style once a PixelLab
+   key is available.
+7. **Sound:** the legacy synthesized effects and the three music tracks.

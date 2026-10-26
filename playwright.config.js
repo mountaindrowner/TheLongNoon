@@ -3,11 +3,13 @@
 // the owner plays and tests most. WebGL is software-rendered here, so frame rates in
 // these runs mean nothing; real-device performance has to be checked on real devices.
 const { defineConfig } = require('@playwright/test');
+// The rebuild (tests/rebuild.spec.js) and the proof of concept it replaces (tests/legacy).
 
-const gl = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+const gl = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 
 module.exports = defineConfig({
   testDir: 'tests',
+  testMatch: '**/*.spec.js',
   timeout: 120_000,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],

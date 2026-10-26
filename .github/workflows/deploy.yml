@@ -21,9 +21,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/build.py src site/index.html
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build && npm run build:legacy
+      # the rebuild at /, the proof of concept it replaces at /legacy/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4

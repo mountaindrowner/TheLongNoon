@@ -1,5 +1,5 @@
 const path = require('path');
-const GAME = 'file://' + path.resolve(__dirname, '../dist/The-Long-Noon.html') + '#debug';
+const GAME = 'file://' + path.resolve(__dirname, '../../dist/legacy/The-Long-Noon-poc2.html') + '#debug';
 
 // A save in the game's current format (v1). Tests start scenes by loading one of these
 // through the real Continue button, the same path a player takes.

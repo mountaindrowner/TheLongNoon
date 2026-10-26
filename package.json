@@ -3,11 +3,22 @@
   "private": true,
   "description": "The Long Noon, a browser JRPG",
   "scripts": {
-    "build": "python3 tools/build.py",
-    "test": "python3 tools/build.py && playwright test",
-    "test:desktop": "python3 tools/build.py && playwright test --project=desktop-1080p"
+    "dev": "vite",
+    "build": "vite build",
+    "build:legacy": "python3 tools/build.py legacy/poc2/src dist/legacy/The-Long-Noon-poc2.html",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && npm run build && npm run build:legacy && playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.56.1"
+    "@fontsource/alegreya-sans": "5.2.8",
+    "@fontsource/cormorant-sc": "5.2.8",
+    "@playwright/test": "1.56.1",
+    "@types/three": "0.170.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.5",
+    "vite-plugin-singlefile": "2.3.0"
+  },
+  "dependencies": {
+    "three": "0.170.0"
   }
 }

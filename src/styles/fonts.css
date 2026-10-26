@@ -1,0 +1,7 @@
+/* Interface type (spec §15): Cormorant SC for names and titles, Alegreya Sans for everything else.
+   Latin subsets only, so the single-file build stays small. */
+@font-face { font-family: 'Cormorant SC'; font-weight: 600; font-display: swap; src: url('@fontsource/cormorant-sc/files/cormorant-sc-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Cormorant SC'; font-weight: 700; font-display: swap; src: url('@fontsource/cormorant-sc/files/cormorant-sc-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya Sans'; font-weight: 400; font-display: swap; src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya Sans'; font-weight: 500; font-display: swap; src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya Sans'; font-weight: 400; font-style: italic; font-display: swap; src: url('@fontsource/alegreya-sans/files/alegreya-sans-latin-400-italic.woff2') format('woff2'); }

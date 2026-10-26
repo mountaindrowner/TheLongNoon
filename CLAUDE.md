@@ -1,44 +1,38 @@
 # The Long Noon: rules for coding sessions
 
-A browser JRPG (HD-2D: pixel sprites in a lit three.js world). Every session starts fresh,
-so read these before changing anything:
+A browser JRPG in HD-2D, being **rebuilt from the ground up** on the world style
+spec. Every session starts fresh, so read these first:
 
-- `docs/architecture/current-state.md`: how the game is actually built today. Keep it updated when that changes.
-- `docs/research/engineering-brief.md`: the agreed direction. These are recommendations, not existing APIs.
-- `README.md`: how each system works.
-- `docs/architecture/display-and-input.md`: screen targets (1080p desktop first; phones are
-  where the owner tests) and input.
-
-## Waiting on the owner's latest build
-
-The owner is still developing the game in Claude chat and will hand over a newer single-file
-build. **Until it is imported, don't edit game code or content in `src/`**, because
-`tools/unpack.py` replaces `src/` wholesale. Tooling, tests and docs are fine.
-To import: `python3 tools/unpack.py new.html src`, review `git diff`, run `npm test`, then
-re-check `docs/architecture/current-state.md` against the new code.
+- `docs/style/world-style-spec.md`: **the rules for how the world looks and is built.** MUST rules are hard.
+- `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
+- `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
+- `docs/research/engineering-brief.md`: the agreed technical direction.
+- `legacy/poc2/`: the original proof of concept: its story, dialogue and quest data, sprites and music to bring across.
 
 ## Commands
 
 ```
-python3 tools/build.py                 # src/ -> dist/The-Long-Noon.html (open it in a browser)
-python3 tools/unpack.py file.html src  # import a single-file build made elsewhere
-npm install && npm test                # build, then playtest on desktop-1080p, phone-landscape, phone-portrait
+npm install
+npm run dev            # dev server
+npm run build          # dist/index.html, the whole game in one offline file
+npm test               # typecheck, build (rebuild + legacy), Playwright at 1080p and phone landscape
 ```
 
-Append `#debug` to the URL for instant text and `window.__LN` (tp, setStep, setClock, runScript).
-The play link (GitHub Pages, deployed from `main`): https://mountaindrowner.github.io/TheLongNoon/
+`?time=lamp|night|white|day` picks the light. `window.__LN` (pos, tp, face, talking, doorIssues) is there for tests and checks.
+Headless Chromium needs `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; it renders a frame or two
+a second, so tests wait on outcomes, never fixed durations.
 
 ## Rules
 
-1. **Preserve the working game.** The owner loves how it looks, plays and sounds. Never
-   change art, writing, camera, lighting, battle timing or sound as a side effect of a refactor.
-2. Check visual changes by building and screenshotting in headless Chromium, and compare
-   with `docs/baseline/`. Unit tests alone are not enough.
-3. Content (dialogue, quests, map, battles) lives in `src/data/`; reusable logic lives in
-   `src/js/`. Don't write mission-specific facts into engine code.
-4. Never invent game systems (XP, gold, crafting, shops) without the owner's approval.
+1. **Follow the spec.** Port, don't reinterpret. Every textured surface at 16 px per world unit with world-unit UVs.
+   Props from primitives. One hero, one routine, one signature per map. Glow only where it promises something.
+2. **Prove it by looking.** Build, screenshot at 1280×720 and 844×340, and check against spec §20 before calling a map done.
+3. **The door language is enforced:** `checkDoors` must come back empty (the playtests assert it).
+4. Engine code (`src/engine`) stays region-agnostic. Region kits and maps live in `src/regions/<region>/`.
+5. Never invent game systems (XP, gold, crafting, shops) without the owner's approval.
    The in-world economy is **water** and **tins of white**, not gold.
-5. Save compatibility: any change to the save shape needs a version bump and a migration.
-6. Keep changes small and on a branch. Explain what changed, how it was checked, and what's left.
-7. No three.js upgrade or new major library without a separate, approved change.
-8. New writing matches the voice already in `src/data/dialogue.json` and `pages.json`.
+6. Departures from the spec are written down in `current-state.md` with the reason; open ones wait for the owner.
+7. Text describes, never interprets. Signs are what a local would paint. New writing matches the voice in
+   `legacy/poc2/src/data/dialogue.json` and `pages.json`.
+8. Save compatibility: once saves exist, any change to their shape needs a version bump and a migration.
+9. Small changes on a branch. Say what changed, how it was checked, and what's left.
