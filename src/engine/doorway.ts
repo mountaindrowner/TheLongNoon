@@ -15,7 +15,8 @@ import type { Area } from './area';
  * must be lit (checkDoors, run on every area load in development).
  */
 
-export type DoorState = 'open' | 'boarded' | 'chained' | 'dark';
+/** open: lit, always goes in · boarded: never · chained: later, by the story · dark: needs a light · shut: closed, no light, promises nothing. */
+export type DoorState = 'open' | 'boarded' | 'chained' | 'dark' | 'shut';
 export interface DoorMark { x: number; z: number; state: DoorState }
 
 const marks: DoorMark[] = [];
@@ -23,6 +24,8 @@ onWorldReset(() => { marks.length = 0; });
 /** Record a door at world (x, z) for the promise check. */
 export function markDoor(x: number, z: number, state: DoorState): void { marks.push({ x, z, state }); }
 export const doorMarks = (): readonly DoorMark[] => marks;
+/** Forget recorded doors (a region checks each section's doors as it's built). */
+export function clearDoorMarks(): void { marks.length = 0; }
 
 let poolTex: THREE.CanvasTexture | null = null;
 function poolTexture(): THREE.CanvasTexture {

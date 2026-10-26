@@ -2,25 +2,29 @@ import * as THREE from 'three';
 import './styles/fonts.css';
 import './styles/ui.css';
 import { createPost } from './engine/post';
-import { applyMood, type Lights } from './engine/mood';
+import { applyMood, moodPost, type Lights } from './engine/mood';
 import { beginArea } from './engine/world';
-import { checkDoors } from './engine/doorway';
+import { checkDoors, clearDoorMarks } from './engine/doorway';
+import { buildRegion, type Region } from './engine/region';
 import { UI } from './engine/ui';
-import type { Area, NPC, Thing } from './engine/area';
+import type { Area, NPC, Spot, Thing } from './engine/area';
 import { Actor } from './game/actors';
 import { MOODS } from './regions/span/moods';
-import { marFarm } from './regions/span/mar-farm';
-import { fadeOccluders } from './regions/span/props';
+import { fadeOccluders, swaySpan } from './regions/span/props';
+import { SPAN, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
 
 /**
- * The Long Noon, rebuilt on the world style spec (docs/style/world-style-spec.md).
- * This file is the runtime: renderer and camera (§3), post (§4), the mood (§5),
- * walking, talking, exits. Maps live in src/regions; the engine in src/engine.
+ * The Long Noon, rebuilt on the world style spec (docs/style/world-style-spec.md)
+ * and laid out by the world methodology (docs/design/world-methodology.md).
+ * This file is the runtime: renderer and camera (spec §3), post (§4), the
+ * mood (§5), walking, talking, doors, and moving between worlds: the open
+ * region (sections walked between with no cut) and the rooms behind its lit
+ * doors (a quick pixel dissolve, spec §9.4).
  */
 
 const params = new URLSearchParams(location.search);
-const timeKey = params.get('time') ?? 'lamp';
-const mood = MOODS[timeKey] ?? MOODS.lamp!;
+const timeKey = params.get('time') ?? 'night'; // night is the default and is designed first (methodology §5.3)
+const mood = MOODS[timeKey] ?? MOODS.night!;
 const night = timeKey !== 'white' && timeKey !== 'day';
 const CLOCK: Record<string, [string, string]> = { lamp: ['7:20 pm', 'Lamp'], night: ['11:40 pm', 'Long night'], white: ['12:10 pm', 'Day'], day: ['5:30 pm', 'Day'] };
 
@@ -37,9 +41,7 @@ host.appendChild(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.5, 220);
 const CAM_OFFSET = new THREE.Vector3(0, 12.5, 14.5); // ≈ 41° down, looking north (−z). The camera never rotates.
 const camTarget = new THREE.Vector3();
-
-const scene = new THREE.Scene();
-const post = createPost(renderer, scene, camera);
+const post = createPost(renderer, new THREE.Scene(), camera);
 const ui = new UI(host);
 
 function resize(): void {
@@ -73,65 +75,113 @@ function moveInput(): { x: number; z: number; run: boolean } {
   return { x, z, run: keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(ui.stick.x, ui.stick.y) > 0.92 };
 }
 
-// ------------------------------------------------------------ the area
-let area: Area;
-let lights: Lights;
+// ------------------------------------------------------------ worlds: the region, and each room
+interface World {
+  id: string;
+  scene: THREE.Scene;
+  area: Area;
+  lights: Lights;
+  people: Array<{ npc: NPC; actor: Actor }>;
+  roamers: Array<{ actor: Actor; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number }>;
+  tint: THREE.Color;
+  issues: string[];
+}
+const ROOMS = spanRooms(night);
+const worlds = new Map<string, World>();
+let cur: World;
 let player: Actor;
-const people: Array<{ npc: NPC; actor: Actor }> = [];
-const roamers: Array<{ actor: Actor; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number }> = [];
-const tint = new THREE.Color().setRGB(...mood.sprite);
-let doorIssues: string[] = [];
 let loaded = false;
+let busy = false;
 
-async function load(): Promise<void> {
-  beginArea();
-  area = await marFarm(mood)(scene, night);
-  lights = applyMood(scene, renderer, post, area.mood);
-  doorIssues = checkDoors(area);
-  for (const issue of doorIssues) console.warn('[door promise]', issue);
-
-  player = await Actor.person('juno', tint);
-  scene.add(player.root);
-  const s = area.spawns.start!;
-  player.place(s.x, area.ground(s.x, s.z), s.z);
-  player.face(s.face === 'N' ? 0 : s.face === 'W' ? -1 : s.face === 'E' ? 1 : 0, s.face === 'N' ? -1 : 1);
-
+async function buildWorld(id: string): Promise<World> {
+  const scene = new THREE.Scene();
+  let area: Area, issues: string[];
+  if (id === SPAN) {
+    beginArea();
+    const region = await buildRegion(scene, night, spanRegion(mood, night));
+    area = region;
+    issues = region.doorIssues;
+  } else {
+    clearDoorMarks();
+    area = await ROOMS[id]!(scene, night);
+    issues = checkDoors(area);
+  }
+  for (const issue of issues) console.warn('[door promise]', issue);
+  const lights = applyMood(scene, renderer, post, area.mood);
+  const tint = new THREE.Color().setRGB(...area.mood.sprite);
+  const w: World = { id, scene, area, lights, people: [], roamers: [], tint, issues };
   for (const npc of area.npcs) {
     const a = await Actor.person(npc.sprite, tint);
     a.place(npc.x, area.ground(npc.x, npc.z), npc.z);
     a.dir = npc.face ?? 'S';
     scene.add(a.root);
-    people.push({ npc, actor: a });
+    w.people.push({ npc, actor: a });
   }
   for (const r of area.roamers ?? []) {
     const a = await Actor.critter(r.sprite, tint, r.height);
     a.place(r.x, area.ground(r.x, r.z), r.z);
     scene.add(a.root);
-    roamers.push({ actor: a, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3 });
+    w.roamers.push({ actor: a, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3 });
   }
+  worlds.set(id, w);
+  return w;
+}
+
+function placeAt(s: Spot): void {
+  player.place(s.x, cur.area.ground(s.x, s.z), s.z);
+  if (s.face) player.face(s.face === 'W' ? -1 : s.face === 'E' ? 1 : 0, s.face === 'N' ? -1 : s.face === 'S' ? 1 : 0);
   camTarget.copy(clampCam(player.x, player.z));
   camera.position.copy(camTarget).add(CAM_OFFSET);
   camera.lookAt(camTarget);
+}
+
+function enter(w: World, spawn: string): void {
+  cur = w;
+  post.setScene(w.scene, camera);
+  moodPost(renderer, post, w.area.mood);
+  w.scene.add(player.root);
+  player.setTint(w.tint);
+  placeAt(w.area.spawns[spawn] ?? w.area.spawns.start!);
+}
+
+/** Through a door or out of a room: a quick pixel dissolve, then a small name tag (spec §9.4). */
+async function go(to: string, spawn: string): Promise<void> {
+  busy = true;
+  ui.showPrompt(null);
+  await ui.dissolve(true);
+  const w = worlds.get(to) ?? (await buildWorld(to));
+  enter(w, spawn);
+  lastPiece = '';
+  await ui.dissolve(false);
+  if (to !== SPAN) ui.nameTag(w.area.title, w.area.sub);
+  busy = false;
+}
+
+let lastPiece = '';
+async function load(): Promise<void> {
+  player = await Actor.person('juno', new THREE.Color(1, 1, 1));
+  const w = await buildWorld(SPAN);
+  enter(w, 'start');
   ui.badge(`<b>${CLOCK[timeKey]?.[0] ?? ''}</b><span>${CLOCK[timeKey]?.[1] ?? ''}</span>`);
-  ui.titleCard(area.title.toUpperCase(), area.sub);
+  ui.titleCard('THE SPAN', 'A town that stayed');
+  lastPiece = (cur.area as Region).pieceAt(player.x, player.z)?.id ?? '';
   loaded = true;
 }
 
 function clampCam(x: number, z: number): THREE.Vector3 {
-  const c = area.cam;
+  const c = cur.area.cam;
   return new THREE.Vector3(THREE.MathUtils.clamp(x, c.x0, c.x1), 0.8, THREE.MathUtils.clamp(z, c.z0, c.z1));
 }
 
-// ------------------------------------------------------------ talking and looking
-type Target = { kind: 'npc'; p: (typeof people)[number] } | { kind: 'thing'; t: Thing };
+// ------------------------------------------------------------ talking, looking, doors
+type Target = { kind: 'npc'; p: World['people'][number] } | { kind: 'thing'; t: Thing };
 function nearest(): Target | null {
   let best: Target | null = null, bd = Infinity;
-  for (const p of people) { const d = Math.hypot(p.actor.x - player.x, p.actor.z - player.z); if (d < 1.7 && d < bd) { bd = d; best = { kind: 'npc', p }; } }
-  for (const t of area.things) { const d = Math.hypot(t.x - player.x, t.z - player.z); if (d < (t.r ?? 1.6) && d < bd) { bd = d; best = { kind: 'thing', t }; } }
+  for (const p of cur.people) { const d = Math.hypot(p.actor.x - player.x, p.actor.z - player.z); if (d < 1.7 && d < bd) { bd = d; best = { kind: 'npc', p }; } }
+  for (const t of cur.area.things) { const d = Math.hypot(t.x - player.x, t.z - player.z); if (d < (t.r ?? 1.6) && d < bd) { bd = d; best = { kind: 'thing', t }; } }
   return best;
 }
 
-let busy = false;
 async function interact(tg: Target): Promise<void> {
   if (tg.kind === 'npc') {
     const { npc, actor } = tg.p;
@@ -142,37 +192,30 @@ async function interact(tg: Target): Promise<void> {
   }
   const t = tg.t;
   player.face(t.x - player.x, t.z - player.z);
-  if (t.script === 'rest') {
-    busy = true;
-    await ui.fade(true, 600);
-    await new Promise((r) => setTimeout(r, 700));
-    await ui.fade(false, 600);
-    busy = false;
-    ui.hint('Rested. <i>(Saving and the clock come in a later piece.)</i>');
-    return;
-  }
+  if (t.go) { await go(t.go.to, t.go.spawn); return; }
   if (t.lines) ui.say({ lines: t.lines });
 }
 
 // ------------------------------------------------------------ exits
-const BUILT = new Set(['mar-farm']);
+let safe: [number, number] = [0, 0];
 async function checkTriggers(): Promise<void> {
-  for (const tr of area.triggers) {
+  for (const tr of cur.area.triggers) {
     if (!tr.go || player.x < tr.x0 || player.x > tr.x1 || player.z < tr.z0 || player.z > tr.z1) continue;
+    if (tr.go.to === SPAN || ROOMS[tr.go.to]) { await go(tr.go.to, tr.go.spawn); return; }
+    // a road on to a piece not built yet: turn back at the edge rather than promise what isn't there
     busy = true;
     await ui.dissolve(true);
-    if (!BUILT.has(tr.go.to)) {
-      // not built yet: turn back at the edge rather than promise a road that isn't there
-      const back = area.spawns[area.triggers.indexOf(tr) === 0 ? 'south' : 'west'] ?? area.spawns.start!;
-      player.place(back.x, area.ground(back.x, back.z), back.z);
-      camTarget.copy(clampCam(player.x, player.z));
-      await ui.dissolve(false);
-      ui.hint(`The road to <b>${tr.go.to.replace(/-/g, ' ')}</b> isn't built yet.`);
-    }
+    const c = clampCam(safe[0], safe[1]);
+    const dx = c.x - safe[0], dz = c.z - safe[1], l = Math.hypot(dx, dz) || 1;
+    player.place(safe[0] + (dx / l) * 1.5, cur.area.ground(safe[0], safe[1]), safe[1] + (dz / l) * 1.5);
+    camTarget.copy(clampCam(player.x, player.z));
+    await ui.dissolve(false);
+    ui.hint(UNBUILT[tr.go.to] ?? 'The road goes on. Not yet.');
     busy = false;
     return;
   }
 }
+const inTrigger = (x: number, z: number): boolean => cur.area.triggers.some((tr) => x >= tr.x0 && x <= tr.x1 && z >= tr.z0 && z <= tr.z1);
 
 // ------------------------------------------------------------ frame
 const clock = new THREE.Clock();
@@ -183,6 +226,7 @@ function frame(): void {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
   if (!loaded) return;
+  const area = cur.area;
 
   const a = aQueued || ui.takeA();
   aQueued = false;
@@ -198,6 +242,7 @@ function frame(): void {
       const pz = area.blocked(px, nz, 0.28) ? player.z : nz;
       player.face(m.x, m.z);
       player.place(px, area.ground(px, pz), pz);
+      if (!inTrigger(px, pz)) safe = [px, pz];
       void checkTriggers();
     }
     player.animate(dt, m.run ? 1.6 : 1);
@@ -210,8 +255,14 @@ function frame(): void {
     } else ui.showPrompt(null);
   } else { player.moving = false; player.animate(dt); }
 
-  for (const p of people) p.actor.animate(dt);
-  for (const r of roamers) {
+  // crossing from one section of the region into the next: just the name tag, no cut
+  if (cur.id === SPAN) {
+    const p = (area as Region).pieceAt(player.x, player.z);
+    if (p && p.id !== lastPiece) { if (lastPiece) ui.nameTag(p.title, p.sub); lastPiece = p.id; }
+  }
+
+  for (const p of cur.people) p.actor.animate(dt);
+  for (const r of cur.roamers) {
     const ac = r.actor;
     r.wait -= dt;
     if (r.tx === null && r.wait <= 0) { r.tx = r.area[0] + Math.random() * (r.area[2] - r.area[0]); r.tz = r.area[1] + Math.random() * (r.area[3] - r.area[1]); }
@@ -223,12 +274,12 @@ function frame(): void {
     ac.animate(dt);
   }
 
-  // camera: follow the player, clamped so the map edge never shows a void
+  // camera: follow the player, clamped so the edge never shows a void
   camTarget.lerp(clampCam(player.x, player.z), 1 - Math.exp(-dt * 4.5));
   camera.position.copy(camTarget).add(CAM_OFFSET);
   camera.lookAt(camTarget);
-  lights.follow(player.root.position);
-  fadeOccluders(player.x, player.z, dt);
+  cur.lights.follow(player.root.position);
+  if (cur.id === SPAN) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
 
   // tilt-shift: the sharp band tracks the player's height on screen (spec §4)
   v.set(player.x, player.root.position.y + 0.8, player.z).project(camera);
@@ -247,14 +298,17 @@ load().then(() => {
   window.__LN = {
     ready: true,
     get pos() { return [player.x, player.z]; },
-    get areaId() { return area.id; },
-    get doorIssues() { return doorIssues; },
+    get areaId() { return cur.area.id; },
+    get piece() { return cur.id === SPAN ? (cur.area as Region).pieceAt(player.x, player.z)?.id ?? null : null; },
+    get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
-    tp(x: number, z: number) { player.place(x, area.ground(x, z), z); camTarget.copy(clampCam(x, z)); },
+    get busy() { return busy; },
+    tp(x: number, z: number) { player.place(x, cur.area.ground(x, z), z); camTarget.copy(clampCam(x, z)); safe = [x, z]; },
     face(dx: number, dz: number) { player.face(dx, dz); },
-    get player() { return player; },
-    get scene() { return scene; },
-    stats() { return { calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
+    go: (to: string, spawn: string) => go(to, spawn),
+    /** Build every room and return any broken door promise across the whole region. */
+    async checkAllRooms() { for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id); return [...worlds.values()].flatMap((w) => w.issues); },
+    rooms: Object.keys(ROOMS),
   };
   document.getElementById('boot')?.remove();
 }).catch((e) => {

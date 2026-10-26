@@ -54,7 +54,12 @@ export function windowAt(parent: THREE.Object3D, x: number, y: number, z: number
   parent.add(box(w + 0.14, 0.07, 0.1, M.wood(), x, y - h / 2 - 0.07, z + 0.04));
 }
 
-export interface DoorSpec { x: number; w?: number; h?: number; state: DoorState; fresh?: boolean }
+export interface DoorSpec {
+  x: number; w?: number; h?: number; state: DoorState; fresh?: boolean;
+  /** A region's own way of dressing this door (its light, its leaf), in the building's local
+   *  space: bottom-centre (x, 0, z) on a wall facing +z. Still marked with `state` for the promise check. */
+  dress?: (g: THREE.Object3D, x: number, z: number, w: number, h: number) => Built;
+}
 export interface BuildingSpec {
   x: number; z: number; w: number; d: number; h: number;
   /** A shared material key, or any material (a region's own wall texture). */
@@ -114,7 +119,7 @@ export function building(scene: THREE.Scene, b: BuildingSpec, night: boolean): B
   for (const wdw of b.windows ?? []) windowAt(g, wdw.x, wdw.y ?? b.h * 0.55, b.d / 2, wdw.kind ?? 'glass', wdw.w, wdw.h);
   for (const dr of b.doors ?? []) {
     const w = dr.w ?? 1.1, h = dr.h ?? 1.95;
-    built.push(dressDoor(g, dr.x, 0, b.d / 2 + 0.01, w, h, dr.state, night, 0, { fresh: dr.fresh }));
+    built.push(dr.dress ? dr.dress(g, dr.x, b.d / 2 + 0.01, w, h) : dressDoor(g, dr.x, 0, b.d / 2 + 0.01, w, h, dr.state, night, 0, { fresh: dr.fresh }));
     markDoor(b.x + dr.x, b.z + b.d / 2, dr.state);
   }
   for (const vx of b.vines ?? []) vines(g, vx, 0, b.d / 2 + 0.03, 0.9 + r() * 0.8, 0.9 + r() * 1.3);

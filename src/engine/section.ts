@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { fbm, rng, vnoise } from './noise';
 import { setWorld, cell, heightAt, hitsSolid, addSolid, type TileWorld } from './world';
-import { buildGround, buildGrass, buildWater } from './terrain';
+import { buildGround, buildGrass, buildWater, setAprons } from './terrain';
 import { maskAt } from './layout';
 import { cottonwood, mesquite, deadTree, bush, motes, swayTrees } from './foliage';
 import { fence } from './fence';
@@ -163,21 +163,35 @@ export interface SectionSpec {
   dress(d: Dress): void | Promise<void>;
   start?: Spot;
   mood?: Mood;
+  // ---- region use (engine/region.ts): sections that join their neighbours without a cut
+  /** This section's offset in its region (world units). Base terrain noise is sampled in
+   *  region coordinates, so two neighbours meet at the same height. */
+  origin?: [number, number];
+  /** The ground glyph beyond this section's own grid: a neighbour's, so seams paint,
+   *  flatten and walk as one place. Sides with a neighbour use edge style 'none'. */
+  outside?(x: number, z: number): string;
+  /** Seed for the base terrain noise (shared across a region). */
+  heightSeed?: number;
+  /** Build edge aprons (off inside a region, which frames its own outer edge). */
+  aprons?: boolean;
+  /** Skip this map's motes (a region runs one set around the player). */
+  noMotes?: boolean;
 }
 
 const ROAD = new Set(['d', 'e', 'v']);
 export type { RGB };
 
-export function section(spec: SectionSpec): AreaBuilder {
-  return async (scene, night) => {
-    const { cols: COLS, rows: ROWS } = spec;
-    const grid = new Grid(COLS, ROWS);
-    spec.ground(grid);
-    const edges = spec.edges;
-    // the edge band: one row of scrub (two under a bluff), cut open at the exits
-    const exitAt = (side: Side, a: number, pad = 0): Exit | undefined =>
-      spec.exits.find((e) => e.side === side && Math.abs(a - e.at) <= (e.w ?? 3) / 2 + pad);
-    for (const side of ['n', 's', 'w', 'e'] as const) {
+/** Draw a section's glyph grid: its ground, then the edge band (one row of
+ *  scrub, two under a bluff) cut open at the exits. A region draws every
+ *  section's grid first so neighbours can read across their seams. */
+export function sectionGrid(spec: SectionSpec): Grid {
+  const { cols: COLS, rows: ROWS } = spec;
+  const grid = new Grid(COLS, ROWS);
+  spec.ground(grid);
+  const edges = spec.edges;
+  const exitAt = (side: Side, a: number, pad = 0): Exit | undefined =>
+    spec.exits.find((e) => e.side === side && Math.abs(a - e.at) <= (e.w ?? 3) / 2 + pad);
+  for (const side of ['n', 's', 'w', 'e'] as const) {
       const st = edges[side] ?? 'trees';
       if (st === 'none') continue;
       const depth = st === 'bluff' ? 2 : 1;
@@ -189,11 +203,24 @@ export function section(spec: SectionSpec): AreaBuilder {
           grid.set(x, z, '#');
         }
       }
-    }
-    const get = (x: number, z: number): string => grid.get(x, z);
+  }
+  return grid;
+}
+
+export function section(spec: SectionSpec, pre?: Grid): AreaBuilder {
+  return async (scene, night) => {
+    const { cols: COLS, rows: ROWS } = spec;
+    const grid = pre ?? sectionGrid(spec);
+    const edges = spec.edges;
+    const exitAt = (side: Side, a: number, pad = 0): Exit | undefined =>
+      spec.exits.find((e) => e.side === side && Math.abs(a - e.at) <= (e.w ?? 3) / 2 + pad);
+    // inside a region, a side with a neighbour is a seam: open ground, no frame
+    const seam = (side: Side): boolean => !!spec.outside && edges[side] === 'none';
+    const get = (x: number, z: number): string => (grid.inb(x, z) ? grid.get(x, z) : spec.outside?.(x, z) ?? '#');
     const edgeDist = (x: number, z: number): Record<Side, number> => ({ n: z, s: ROWS - z, w: x, e: COLS - x });
     const height = (x: number, z: number): number => {
-      let h = (fbm(x * 0.09, z * 0.09, spec.seed, 3) - 0.5) * 0.45;
+      const [ox, oz] = spec.origin ?? [0, 0];
+      let h = (fbm((x + ox) * 0.09, (z + oz) * 0.09, spec.heightSeed ?? spec.seed, 3) - 0.5) * 0.45;
       const road = Math.max(maskAt(get, 'd', x, z), maskAt(get, 'e', x, z), maskAt(get, 'v', x, z));
       h *= 1 - road * 0.9;
       h -= maskAt(get, 'w', x, z) * 0.6;
@@ -238,18 +265,20 @@ export function section(spec: SectionSpec): AreaBuilder {
     await spec.dress(d);
     frameEdges(d, spec, exitAt);
 
+    setAprons(spec.aprons ?? true);
     buildGround(scene);
+    setAprons(true);
     const water: Array<[number, number]> = [];
     for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (get(x, z) === 'w') water.push([x, z]);
     const waterTick = water.length ? buildWater(scene, night, 0, 0, COLS, ROWS, spec.waterY ?? -0.32, water) : null;
     const grass = buildGrass(scene);
-    const dust = motes(scene, night);
+    const dust = spec.noMotes ? null : motes(scene, night);
 
     const inExit = (x: number, z: number): boolean => {
-      if (z < 0.4) return !!exitAt('n', x, -0.2);
-      if (z > ROWS - 0.4) return !!exitAt('s', x, -0.2);
-      if (x < 0.4) return !!exitAt('w', z, -0.2);
-      if (x > COLS - 0.4) return !!exitAt('e', z, -0.2);
+      if (z < 0.4) return seam('n') || !!exitAt('n', x, -0.2);
+      if (z > ROWS - 0.4) return seam('s') || !!exitAt('s', x, -0.2);
+      if (x < 0.4) return seam('w') || !!exitAt('w', z, -0.2);
+      if (x > COLS - 0.4) return seam('e') || !!exitAt('e', z, -0.2);
       return true;
     };
     const blocked = (x: number, z: number, rad: number): boolean => {
@@ -292,7 +321,7 @@ export function section(spec: SectionSpec): AreaBuilder {
         swayTrees(t);
         waterTick?.(t);
         for (const b of d.built) b.update?.(t);
-        dust(t, focus);
+        dust?.(t, focus);
       },
     };
   };
