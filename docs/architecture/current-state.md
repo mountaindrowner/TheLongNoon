@@ -68,12 +68,21 @@ source requires. `npm run build` makes one self-contained `dist/index.html`
 
 | Spec says | The Long Noon does | Why |
 |---|---|---|
-| One fixed mood per scene, no clock (§5) | A mood per phase of the day (Lamp, Night, White); the clock will move between them | The clock is The Long Noon's core mechanic: daylight burns water, Shutter sends you under a roof. **Owner to confirm.** |
+| One fixed mood per scene, no clock (§5) | A state per phase: Night (the default, designed first), Lamp and Shutter (gray hours), White (day, rare and lethal) | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The clock that moves between them is still to build. |
 | Prairie ground, lush green as the norm | Desert ground (caliche, sand, old asphalt); green only where water has been | The Span is a desert. The spec's mood line still holds: bleak, with bright life where it's tended. |
 | 64px, 8-direction PixelLab sprites (§13) | The proof of concept's 16×24, 4-direction sprites, sized by measurement to 1.65 units | Generating new sprites needs a PixelLab API key and its per-figure cost. The engine's `RotHero` already plays 8-direction sprites when they exist. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
 | Every exit lands on its target (§9.4, §20 #12) | Unbuilt targets turn you back with a note | Only one map exists so far. |
-| No old-world names (§1) | MAR stays on the store roof; Del Mar Park stays | They're The Long Noon's own canon: the letters left of an old name are where the farm's name comes from. **Owner to confirm.** |
+| No old-world names (§1) | Built on the real Laredo and I-35. Places carry survivors' names; real names appear only as Old Name hints where the sun never reached | Settled by the methodology §0 and §3. **Open:** MAR on the store roof is painted, but paint doesn't survive the sun (§3.3). Proposal: rebuild it as steel letters with the rest of the name fallen away. |
+
+## The world methodology (2026-10-26)
+
+`docs/design/world-methodology.md` is the owner's layout method for regions, maps and roads. It sits above the style
+spec: the spec says how a map looks, and the methodology says what maps exist and how they connect. Where they
+disagree, the methodology wins for The Long Noon. Open questions for the owner are in its §11. The one that shapes
+the engine most is the world model (§2.4): option C, open streamed regions joined by caravan legs, means building a
+region as many sections streamed side by side. The ported engine already has the hooks for that (`world.ts`
+chunks, `terrain.ts` `setAprons`), but streaming isn't written yet. Mar Farm is built today as a standalone section.
 
 ## Next pieces (proposed order)
 

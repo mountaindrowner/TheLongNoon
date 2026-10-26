@@ -4,6 +4,8 @@ A browser JRPG in HD-2D, being **rebuilt from the ground up** on the world style
 spec. Every session starts fresh, so read these first:
 
 - `docs/style/world-style-spec.md`: **the rules for how the world looks and is built.** MUST rules are hard.
+- `docs/design/world-methodology.md`: **how The Long Noon's world is laid out** (regions, roads, naming, day/night,
+  the lantern language). It overrides the style spec where they differ (real places, night first). `[PROPOSAL]` items await the owner.
 - `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
@@ -31,6 +33,7 @@ a second, so tests wait on outcomes, never fixed durations.
 4. Engine code (`src/engine`) stays region-agnostic. Region kits and maps live in `src/regions/<region>/`.
 5. Never invent game systems (XP, gold, crafting, shops) without the owner's approval.
    The in-world economy is **water** and **tins of white**, not gold.
+   Real place names never appear on screen except as Old Name hints where the sun never reached.
 6. Departures from the spec are written down in `current-state.md` with the reason; open ones wait for the owner.
 7. Text describes, never interprets. Signs are what a local would paint. New writing matches the voice in
    `legacy/poc2/src/data/dialogue.json` and `pages.json`.
