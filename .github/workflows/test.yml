@@ -6,7 +6,8 @@ on:
   pull_request:
 jobs:
   playtest:
-    runs-on: ubuntu-latest
+    # pinned: the pinned Playwright (1.56) can't install browsers on ubuntu-latest (26.04)
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
