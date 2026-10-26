@@ -45,7 +45,8 @@ function leafTex(key: string, pal: string[], gap: string, gapK: number, fleck?: 
   });
 }
 const MAT = {
-  mesquite: () => texMat('st-mesquite', leafTex('mesquite', ['#4f5636', '#5e6440', '#6c7248', '#7c7f52'], '#262818', 0.2), { roughness: 0.95, flatShading: true }),
+  // grey-olive and dusty: the grade lifts greens, so the brush starts drabber than it should end up
+  mesquite: () => texMat('st-mesquite2', leafTex('mesquite2', ['#4c5038', '#585c42', '#64664a', '#727254', '#5e5a44'], '#24241a', 0.24), { roughness: 0.95, flatShading: true }),
   huisache: () => texMat('st-huisache', leafTex('huisache', ['#5e6a32', '#6e7a3a', '#7e8a42', '#8e9450'], '#2a3018', 0.16, '#d8b830', 0.06), { roughness: 0.95, flatShading: true }),
   cenizo: () => texMat('st-cenizo', leafTex('cenizo', ['#7c8476', '#8e9686', '#a0a896', '#b0b6a4'], '#4a5048', 0.12, '#a888c0', 0.025), { roughness: 0.95, flatShading: true }),
   thicket: () => texMat('st-thicket', leafTex('thicket', ['#2c2a1c', '#3c3a26', '#48452e', '#545036'], '#1a1810', 0.22, '#6a5a3a', 0.05), { roughness: 1, flatShading: true }),
@@ -70,10 +71,12 @@ export function mesquite(x: number, z: number, s: number, seed: number): THREE.G
     const mid = V(Math.cos(a) * lean * s, (0.8 + r() * 0.3) * s, Math.sin(a) * lean * 0.7 * s);
     const top = V(Math.cos(a + (r() - 0.5)) * (lean + 0.45) * s, (1.55 + r() * 0.45) * s, Math.sin(a + (r() - 0.5)) * (lean + 0.3) * 0.7 * s);
     g.add(beam(V(0, -0.1, 0), mid, 0.13 * s, MAT.bark()), beam(mid, top, 0.09 * s, MAT.bark()));
-    for (let k = 0; k < 2; k++) {
-      const b = new THREE.Mesh(blobGeo((0.62 + r() * 0.3) * s, seed + i * 5 + k), MAT.mesquite());
-      b.scale.set(1.25, 0.38, 1.0);
-      b.position.copy(top).add(V((r() - 0.5) * 0.8 * s, 0.12 * s + k * 0.12 * s, (r() - 0.5) * 0.6 * s));
+    // a crown of several small, ragged clumps at different heights, sky through the gaps
+    for (let k = 0; k < 4; k++) {
+      const b = new THREE.Mesh(blobGeo((0.32 + r() * 0.2) * s, seed + i * 5 + k), MAT.mesquite());
+      b.scale.set(1.2, 0.5 + r() * 0.2, 1.0);
+      b.rotation.y = r() * 3;
+      b.position.copy(top).add(V((r() - 0.5) * 1.2 * s, (r() - 0.3) * 0.35 * s, (r() - 0.5) * 0.8 * s));
       g.add(b);
     }
   }

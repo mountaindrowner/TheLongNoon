@@ -135,6 +135,57 @@ The whole of the region's design is in `docs/design/regions/span.md`. In short:
   wrong collision data, so you could walk through its furniture. Rooms now
   keep their own.
 
+## Piece 4 (done): the Span at the owner's scale
+
+The owner judged the first Span too small (2026-10-26). Their scale: a large
+map is the size the whole first region was (132 × 96), a medium is half to two
+thirds of that, the town is twice a large map, and the dry lake is a full
+large map, reached down a long road map stood on end. The look is South Texas:
+brush and bramble, harsh grey-green, no lush trees outdoors, and a village
+pieced together from ruins. `docs/design/regions/span.md` has the whole layout.
+
+- **Region engine v2** (`src/engine/region.ts`):
+  - **Layout:** maps of any size at any place, joined where a road runs
+    through a gap in the brush (an exit whose target is another map in the
+    region is a seam: no trigger, no cut).
+  - **Between maps:** a tileable brush apron fills the gaps.
+  - **Streaming:** maps are built within 26 units and dropped past 44. Builds
+    are paced over frames, and the section kit puts its own ground and solids
+    back after every pause.
+  - **What streams with a map:** people, animals, lamps, swaying plants and
+    fading props.
+  - **For checks:** `hold` plus `buildAll` builds everything at once (the
+    door checks, the overview). `settle` and `prepare` make sure a spawn's map
+    exists before you land in it.
+- **Batching** (`src/engine/batch.ts`): static scenery marked `batch()` is
+  merged per material when a map finishes. Thousands of brush clumps draw in a
+  handful of calls.
+- **Section kit:**
+  - edge style `brush` (walls of bramble);
+  - a region's own `flora` for the edges;
+  - `seam` exits;
+  - paced builds.
+- **The Span's kits:**
+  - `brush.ts`: mesquite, huisache, cenizo, thicket, yucca, tasajillo, dead
+    mesquite, and scatter.
+  - `ruins.ts`: patched houses, container homes, salvage fences, yard tanks,
+    fire rings, rubble, ruin walls.
+  - `fill.ts`: brush mottes and open-ground scatter.
+  - Dry asphalt paint, no weeds.
+- **Six maps:**
+  - the Ramp (medium);
+  - Mar Farm, the Plaza, the Colonia (large);
+  - the Lake Road (large, on end);
+  - the White Bowl (large).
+
+  The East Road map is gone. Its fork, culverts, billboard and Memo are now on
+  the Lake Road.
+- **Measured headless:**
+  - A large map builds in about 2.5 s unpaced, and about 10 s paced (wall
+    clock at one or two software-rendered frames a second).
+  - Memory peaked at 550 MB walking every map.
+  - Real-device hitches still need measuring on a phone.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
@@ -144,7 +195,9 @@ The whole of the region's design is in `docs/design/regions/span.md`. In short:
 | 64px, 8-direction PixelLab sprites (§13) | The proof of concept's 16×24, 4-direction sprites, sized by measurement to 1.65 units | Generating new sprites needs a PixelLab API key and its per-figure cost. The engine's `RotHero` already plays 8-direction sprites when they exist. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
 | Every exit lands on its target (§9.4, §20 #12) | Unbuilt targets turn you back with a note | The roads out of the Span (north up the Thirty-Five, east into the brush) lead to regions not built yet. |
-| One map per scene, exits between maps (§9) | A region is several sections walked between with no cut | The owner chose option C (methodology §2.4): open regions joined by caravan legs. Each section is still a full spec map and could be split out. |
+| One map per scene, exits between maps (§9) | A region is a web of maps on one ground, walked between with no cut, brush between them | The owner chose option C (methodology §2.4): open regions joined by caravan legs. Each map is still a full spec map and could be split out. |
+| Section sizes 40×30 to 58×28 (§9.2) | Large maps are 132×96; the town is two of them | The owner's scale (2026-10-26): the first Span's maps felt too small. |
+| Edge trees: cottonwood, mesquite, dead tree (§9.3) | Walls of bramble with mesquite standing out of them; no lush trees outdoors | South Texas brush country (owner, 2026-10-26). |
 | No old-world names (§1) | Built on the real Laredo and I-35. Places carry survivors' names; real names appear only as Old Name hints where the sun never reached | Settled by the methodology §0 and §3. **Open:** MAR on the store roof is painted, but paint doesn't survive the sun (§3.3). Proposal: rebuild it as steel letters with the rest of the name fallen away. |
 
 ## The world methodology (2026-10-26)

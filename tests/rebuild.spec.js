@@ -40,39 +40,41 @@ for (const time of ['lamp', 'night', 'white']) {
   });
 }
 
-test('every section is where the region says it is', async ({ page }) => {
+// Region coordinates (src/regions/span/region.ts PLACE): the Ramp (0,0) 88×64, Mar Farm (0,64), the Plaza (132,64),
+// the Colonia (264,64), all 132×96; the Lake Road (396,64) 96×132; the White Bowl (360,196) 132×96.
+test('every map is where the region says it is', async ({ page }) => {
   test.setTimeout(240_000);
   await boot(page, 'night');
-  const where = await page.evaluate(() => [[20, 20], [21.5, 53], [65, 50], [104, 56], [112, 82]].map(([x, z]) => { window.__LN.tp(x, z); return window.__LN.piece; }));
-  expect(where).toEqual(['ramp', 'mar-farm', 'plaza', 'east-road', 'white-bowl']);
+  const where = await page.evaluate(() => [[40, 30], [26, 114], [198, 100], [330, 110], [440, 170], [440, 250]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
+  expect(where).toEqual(['ramp', 'mar-farm', 'plaza', 'colonia', 'lake-road', 'white-bowl']);
 });
 
 test('Juno walks from the farm into the Plaza with no cut, and solid things stop her', async ({ page }) => {
   test.setTimeout(300_000);
   await boot(page);
-  // the boulevard runs east from the farm into the Plaza; the seam at x 44 is open ground
-  await page.evaluate(() => window.__LN.tp(43.4, 61));
+  // the boulevard runs east from the farm into the Plaza through a gap in the brush at x 132
+  await page.evaluate(() => window.__LN.tp(131.2, 124));
   await page.keyboard.down('KeyD');
-  await until(page, () => window.__LN.pos[0] > 44.6, undefined, 150_000);
+  await until(page, () => window.__LN.pos[0] > 132.4, undefined, 150_000);
   await page.keyboard.up('KeyD');
   expect(await page.evaluate(() => window.__LN.piece)).toBe('plaza');
   expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
-  // the store's front wall is solid: walking north from the lot stops at its face (z 32 + 11.5)
-  await page.evaluate(() => window.__LN.tp(14, 46));
+  // the store's front wall is solid: walking north from the lot stops at its face (z 64 + 42.5)
+  await page.evaluate(() => window.__LN.tp(28, 108.4));
   await page.keyboard.down('KeyW');
-  await until(page, () => window.__LN.pos[1] < 44.4);
-  let prev = 99;
+  await until(page, () => window.__LN.pos[1] < 107.4);
+  let prev = 999;
   for (;;) { const z = (await pos(page))[1]; if (Math.abs(z - prev) < 1e-4) break; prev = z; await page.waitForTimeout(1500); }
   await page.keyboard.up('KeyW');
-  expect((await pos(page))[1]).toBeGreaterThan(43.5);
+  expect((await pos(page))[1]).toBeGreaterThan(106.5);
 });
 
 test('a lit door is a way in: into the chapel and back out to its step', async ({ page }, info) => {
   test.setTimeout(300_000);
   const errors = watchErrors(page);
   await boot(page, 'night');
-  // stand on the chapel step (Plaza 6.5, 8.4) facing the door, and use it
-  await page.evaluate(() => { window.__LN.tp(44 + 6.5, 32 + 8.9); window.__LN.face(0, -1); });
+  // stand on the chapel step (Plaza 66, 11.6) facing the door, and use it
+  await page.evaluate(async () => { await window.__LN.tp(132 + 66, 64 + 11.6); window.__LN.face(0, -1); });
   await until(page, () => !!document.querySelector('.prompt.on'));
   await page.keyboard.press('KeyE');
   await until(page, () => window.__LN.areaId === 'chapel' && !window.__LN.busy);
@@ -82,15 +84,15 @@ test('a lit door is a way in: into the chapel and back out to its step', async (
   await until(page, () => window.__LN.areaId === 'span' && !window.__LN.busy);
   await page.keyboard.up('KeyS');
   const [x, z] = await pos(page);
-  expect(Math.abs(x - (44 + 6.5))).toBeLessThan(1.5);
-  expect(Math.abs(z - (32 + 8.9))).toBeLessThan(1.5);
+  expect(Math.abs(x - (132 + 66))).toBeLessThan(1.5);
+  expect(Math.abs(z - (64 + 11.6))).toBeLessThan(1.5);
   expect(errors).toEqual([]);
 });
 
 test('talking to Hermana Lupe opens her dialogue, and it closes', async ({ page }, info) => {
   test.setTimeout(240_000);
   await boot(page);
-  await page.evaluate(() => { window.__LN.tp(10.2, 32 + 25.4); window.__LN.face(-1, 0); });
+  await page.evaluate(async () => { await window.__LN.tp(12.3, 64 + 39.4); window.__LN.face(-1, 0); });
   await until(page, () => !!document.querySelector('.prompt.on'));
   await page.keyboard.press('KeyE');
   await until(page, () => window.__LN.talking);
@@ -107,13 +109,13 @@ test('an unbuilt road turns you back at the edge instead of breaking', async ({ 
   test.setTimeout(240_000);
   const errors = watchErrors(page);
   await boot(page);
-  // the East Road goes on east at z 32 + 29; the next piece isn't built
-  await page.evaluate(() => window.__LN.tp(131, 61));
+  // the boulevard goes on east past the lake road's fork (x 492, z 64 + 60); the next region isn't built
+  await page.evaluate(() => window.__LN.tp(490.6, 124));
   await page.keyboard.down('KeyD');
   await until(page, () => !!document.querySelector('.hint'), undefined, 150_000);
   await page.keyboard.up('KeyD');
   await expect(page.locator('.hint')).toContainText('east road');
-  expect((await pos(page))[0]).toBeLessThan(132);
+  expect((await pos(page))[0]).toBeLessThan(492);
   expect(errors).toEqual([]);
 });
 

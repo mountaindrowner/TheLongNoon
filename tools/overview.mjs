@@ -4,7 +4,7 @@ import path from 'path';
 // The region drawn straight down, north up, from the built game (npm run build first):
 //   node tools/overview.mjs [time=day] [pixels per unit=10] [out dir] [rooms]
 // Writes <out>/span-<time>.webp and a .json of what's placed on it (things, people, exits, sections).
-const [,, time = 'day', ppu = '10', out = 'docs/design/regions/overview'] = process.argv;
+const [,, time = 'day', ppu = '4', out = 'docs/design/regions/overview'] = process.argv;
 fs.mkdirSync(out, { recursive: true });
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 800, height: 450 } });

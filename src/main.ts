@@ -392,6 +392,7 @@ load().then(() => {
     ready: true,
     get pos() { return [player.x, player.z]; },
     get areaId() { return cur.area.id; },
+    pieceAtPoint(x: number, z: number) { return cur.id === SPAN ? (cur.area as Region).pieceAt(x, z)?.id ?? null : null; },
     get piece() { return cur.id === SPAN ? (cur.area as Region).pieceAt(player.x, player.z)?.id ?? null : null; },
     get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
@@ -403,7 +404,11 @@ load().then(() => {
     get lit() { return night; },
     /** Set the clock (minutes after midnight); `run` lets it move from there. */
     setClock(m: number, run = false) { time.set(m); time.frozen = !run; shownMinute = -1; showClock(); relight(true); },
-    tp(x: number, z: number) { player.place(x, cur.area.ground(x, z), z); camTarget.copy(clampCam(x, z)); safe = [x, z]; },
+    /** Put Juno at (x, z); in the region, the maps around her are built first. */
+    async tp(x: number, z: number) {
+      if (cur.id === SPAN) await (cur.area as Region).settle(x, z);
+      player.place(x, cur.area.ground(x, z), z); camTarget.copy(clampCam(x, z)); safe = [x, z];
+    },
     face(dx: number, dz: number) { player.face(dx, dz); },
     go: (to: string, spawn: string) => go(to, spawn),
     /** Build every room and return any broken door promise across the whole region. */

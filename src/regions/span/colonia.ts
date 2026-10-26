@@ -163,7 +163,7 @@ export function colonia(night: boolean): SectionSpec {
           const t = r();
           if (t < 0.35) yardTank(scene, lx1 - 2.2, hz - dd / 2 + 0.2, 6600 + n);
           else if (t < 0.6) d.built.push(clothesline(scene, lx0 + 1.6, yz + 1.6, lx0 + 5.2, yz + 2.0, 6700 + n));
-          else if (t < 0.8) fireRing(scene, cx + 2.4, yz + 2.2);
+          else if (t < 0.8) { fireRing(scene, cx + 2.4, yz + 2.2); d.built.push(lanternPost(scene, cx + 3.8, yz + 1.2, night, night)); } // somebody's sitting up by the fire
           else tires(scene, lx1 - 2, yz + 1.4, 3);
           if (r() > 0.7) drum(scene, lx0 + 1.4, hz, r() > 0.5);
           if (r() > 0.8) solarPanels(scene, cx, 2.9, hz, 2, 1);
