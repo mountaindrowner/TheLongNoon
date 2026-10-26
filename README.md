@@ -12,7 +12,7 @@ npm run build        # dist/index.html: the whole game in one offline file
 npm test             # typecheck, build, playtest at 1080p and on a phone
 ```
 
-Add `?time=lamp|night|white|day` to the URL to see Mar Farm in each light.
+Add `?time=lamp|night|white|day` to the URL to see the Span in each light (night is the default).
 
 ## Layout
 
@@ -28,12 +28,17 @@ src/
     buildings fence      building recipe and shared materials · fences
     doorway              the door language and its promise check
     sprites ui area      8-direction sprites · dialogue and transitions · map types
+    region               sections laid side by side as one walkable region, one light pool
   game/actors.ts       the cast, drawn from the proof of concept's atlas until regenerated
-  regions/span/        the Span: its moods, its prop kit, and its maps
-    mar-farm.ts        Mar Farm, the first map rebuilt
+  regions/span/        the Span (docs/design/regions/span.md)
+    region.ts          the five sections on their grid, the rooms, the unbuilt roads
+    mar-farm ramp plaza east-road white-bowl   the sections
+    rooms.ts doors.ts  the rooms behind lit doors · the light-language door kinds
+    props.ts kit.ts moods.ts   the Span's props and lights
   styles/              interface type and panels (spec §15)
 docs/
   style/               the world style spec (the rules everything follows)
+  design/              the world methodology, and a bible per region (design/regions/)
   architecture/        how the rebuild is put together, what's done, what's next
   research/            the engineering brief
 legacy/poc2/           the original game, its tools' output, its audit and screenshots

@@ -223,8 +223,18 @@ function roomExit(d: InteriorDress, x: number, to: string, spawn: string, night:
   const rows = d.grid.rows;
   d.spawns.door = { x, z: rows - 1.4, face: 'N' };
   d.triggers.push({ x0: x - 1.2, x1: x + 1.2, z0: rows - 0.15, z1: rows + 2, go: { to, spawn } });
-  d.built.push(dressDoor(d.root, x, 0, rows - 0.04, w, 2.1, 'open', night, Math.PI, { daylight: !night }));
   markDoor(x, rows - 0.1, 'open');
+  if (!night) { d.built.push(dressDoor(d.root, x, 0, rows - 0.04, w, 2.1, 'open', night, Math.PI, { daylight: true })); return; }
+  // by night the way out is the night itself: the gap in the cut-away front wall and a cool spill of moonlight
+  // on the floor. No lamp: the lamp is on the other side of the door, for the people coming in.
+  const g = new THREE.Group();
+  g.position.set(x, 0, rows - 0.04);
+  const spill = new THREE.Mesh(planeGeo(w * 1.3, 1.5), new THREE.MeshBasicMaterial({ color: '#4a6aa0', transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }));
+  spill.rotation.x = -Math.PI / 2;
+  spill.position.set(0, 0.02, -0.7);
+  g.add(spill);
+  g.add(box(w + 0.3, 0.08, 0.5, M.concrete(), 0, 0, 0.26));
+  d.root.add(g);
 }
 const carve = (g: { set(x: number, z: number, c: string): void; rows: number }, x: number, w = 1.4): void => {
   for (let k = Math.floor(x - w / 2); k < Math.ceil(x + w / 2); k++) g.set(k, g.rows - 1, '.');

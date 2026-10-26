@@ -85,7 +85,8 @@ export function stall(s: O, x: number, z: number, cloth: string, seed: number): 
 /** Strung bulbs between posts, lit off a battery somewhere: the market's light. */
 export function stringLights(s: O, posts: Array<[number, number]>, night: boolean): Built {
   const mats: THREE.MeshStandardMaterial[] = [];
-  const bulb = glow('#ffd890', night ? 3.2 : 1.2);
+  // small and warm: a string of bulbs is many lamps, not many lights (bloom turns anything brighter into coins)
+  const bulb = glow('#ffd890', night ? 1.5 : 0.8);
   mats.push(bulb);
   const wire = colMat('#1a1816');
   for (const [x, z] of posts) { s.add(at(box(0.09, 3.0, 0.09, M.wood(), 0, 0, 0), x, z)); addSolid(x - 0.1, z - 0.1, x + 0.1, z + 0.1); }
@@ -96,15 +97,15 @@ export function stringLights(s: O, posts: Array<[number, number]>, night: boolea
     mid.y -= 0.45;
     const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
     s.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 14, 0.012, 3, false), wire));
-    const n = Math.max(3, Math.round(a.distanceTo(b) / 0.8));
+    const n = Math.max(3, Math.round(a.distanceTo(b) / 1.1));
     for (let k = 1; k < n; k++) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), bulb);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 4), bulb);
       m.position.copy(curve.getPoint(k / n)).add(new THREE.Vector3(0, -0.07, 0));
       s.add(m);
       if (k === Math.floor(n / 2)) { const l = new THREE.PointLight('#ffc070', night ? 4 : 1.2, 7, 1.7); l.position.copy(m.position); s.add(l); }
     }
   }
-  return { update(t) { bulb.emissiveIntensity = (night ? 3.2 : 1.2) * (0.94 + Math.sin(t * 3.3) * 0.04); } };
+  return { update(t) { bulb.emissiveIntensity = (night ? 1.5 : 0.8) * (0.94 + Math.sin(t * 3.3) * 0.04); } };
 }
 
 /** The seven flags: seven poles in an arc, seven rags gone the same gray-pink. The Plaza's hero. */

@@ -20,7 +20,7 @@ npm run build          # dist/index.html, the whole game in one offline file
 npm test               # typecheck, build (rebuild + legacy), Playwright at 1080p and phone landscape
 ```
 
-`?time=lamp|night|white|day` picks the light. `window.__LN` (pos, tp, face, talking, doorIssues) is there for tests and checks.
+`?time=lamp|night|white|day` picks the light. `window.__LN` (pos, areaId, piece, tp, face, go, talking, doorIssues, checkAllRooms) is there for tests and checks.
 Headless Chromium needs `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; it renders a frame or two
 a second, so tests wait on outcomes, never fixed durations.
 

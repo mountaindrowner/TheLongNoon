@@ -8,7 +8,7 @@ jobs:
   playtest:
     # pinned: the pinned Playwright (1.56) can't install browsers on ubuntu-latest (26.04)
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60  # software WebGL: the region playtests walk at a frame or two a second
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

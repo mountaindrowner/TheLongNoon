@@ -26,6 +26,14 @@ const BIG: Array<[number, number]> = [[-1, 13.0], [10.0, 17.0], [22.0, 25.4], [3
 
 /** How far into the bowl a point is: <1 inside, a little noise on the shore. */
 const bowlK = (x: number, z: number): number => Math.hypot((x - BOWL.cx) / BOWL.rx, (z - BOWL.cz) / BOWL.rz) - (vnoise(x * 0.35, z * 0.35, 77) - 0.5) * 0.14;
+/** The boat ramp, from the lot down into the bowl: where along it and how far across, or null. */
+const RAMP = { ax: 33.0, az: 9.4, bx: 28.6, bz: 16.4, half: 1.3 };
+function rampAt(x: number, z: number): { along: number; across: number } | null {
+  const dx = RAMP.bx - RAMP.ax, dz = RAMP.bz - RAMP.az, L = Math.hypot(dx, dz);
+  const along = ((x - RAMP.ax) * dx + (z - RAMP.az) * dz) / L;
+  const across = ((x - RAMP.ax) * -dz + (z - RAMP.az) * dx) / L;
+  return along >= 0 && along <= L && Math.abs(across) <= RAMP.half ? { along, across } : null;
+}
 const smooth = (a: number, b: number, v: number): number => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 export function whiteBowl(): SectionSpec {
@@ -50,7 +58,7 @@ export function whiteBowl(): SectionSpec {
       g.blob(15, 10.6, 2.6, 1.6, 'g', 41, (q) => q === 'b' || q === 's' || q === 'W'); // it still seeps
       g.line([[33.6, -1], [34.4, 5.0]], 3.4, 'd'); // the park road
       g.rect(30, 4, 12, 6, 'b'); // the shore lot
-      g.line([[33.0, 9.4], [28.6, 16.4]], 2.6, 'b'); // the boat ramp, down into nothing
+      // the boat ramp is painted, not gridded (see paint): a cell-stepped diagonal slab reads as noise
     },
     height(x, z, h) {
       let out = h - 1.7 * smooth(1.12, 0.78, bowlK(x, z));
@@ -64,9 +72,18 @@ export function whiteBowl(): SectionSpec {
     },
     grassTint: (x, z) => (grid.get(Math.floor(x), Math.floor(z)) === '#' ? STRAW[Math.floor(fbm(x * 3, z * 3, 65, 1) * 4) % 4] : undefined),
     paint(glyph, x, z, fine) {
-      const base = spanPaint(glyph, x, z, fine);
-      if (glyph === 'W' || glyph === 's') return tracks(x, z, BIG, 'big', base ?? [200, 190, 170]) ?? base;
-      return base;
+      // the boat ramp: a straight concrete slab, scored across every half unit for grip
+      const r = rampAt(x, z);
+      if (r) return r.along % 0.5 < 0.05 ? [112, 106, 96] : fine > 0.8 ? [146, 140, 128] : [132, 126, 116];
+      // the shore follows the true curve, not the grid cells it was laid out on
+      if (glyph === 'W' || glyph === 's' || glyph === 'x') {
+        const k = bowlK(x, z);
+        const g = k < 1 ? 'W' : k < 1.18 ? 's' : glyph;
+        const base = spanPaint(g, x, z, fine);
+        if (g === 'W' || g === 's') return tracks(x, z, BIG, 'big', base ?? [200, 190, 170]) ?? base;
+        return base;
+      }
+      return spanPaint(glyph, x, z, fine);
     },
     edges: { w: 'bluff', s: 'trees', e: 'scrub', n: 'none' },
     exits: [],
