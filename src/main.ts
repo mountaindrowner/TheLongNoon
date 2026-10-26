@@ -2,14 +2,15 @@ import * as THREE from 'three';
 import './styles/fonts.css';
 import './styles/ui.css';
 import { createPost } from './engine/post';
-import { applyMood, moodPost, type Lights } from './engine/mood';
+import { applyMood, moodPost, moodAt, type Lights, type Mood } from './engine/mood';
 import { beginArea } from './engine/world';
 import { checkDoors, clearDoorMarks } from './engine/doorway';
 import { buildRegion, type Region } from './engine/region';
 import { UI } from './engine/ui';
 import type { Area, NPC, Spot, Thing } from './engine/area';
 import { Actor } from './game/actors';
-import { MOODS } from './regions/span/moods';
+import { Clock, fmtTime, parseClock } from './game/clock';
+import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
 import { SPAN, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
 
@@ -22,11 +23,15 @@ import { SPAN, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
  * doors (a quick pixel dissolve, spec §9.4).
  */
 
+// The clock runs from Lamp, as the story does (legacy newState: 7:20 pm). `?clock=HH:MM` starts it elsewhere;
+// `?time=lamp|night|shutter|white|day` holds one light still, for screenshots and playtests.
 const params = new URLSearchParams(location.search);
-const timeKey = params.get('time') ?? 'night'; // night is the default and is designed first (methodology §5.3)
-const mood = MOODS[timeKey] ?? MOODS.night!;
-const night = timeKey !== 'white' && timeKey !== 'day';
-const CLOCK: Record<string, [string, string]> = { lamp: ['7:20 pm', 'Lamp'], night: ['11:40 pm', 'Long night'], white: ['12:10 pm', 'Day'], day: ['5:30 pm', 'Day'] };
+const HELD: Record<string, number> = { lamp: 19 * 60 + 20, night: 23 * 60 + 40, shutter: 5 * 60 + 10, white: 12 * 60 + 10, day: 17 * 60 + 30 };
+const held = HELD[params.get('time') ?? ''];
+const time = new Clock(held ?? parseClock(params.get('clock')) ?? 19 * 60 + 20, held !== undefined);
+/** Whether the town is built with its lanterns lit (Lamp to Shutter) or not (the white). */
+let night = time.lit;
+const sky = (): Mood => moodAt(night ? SKY.lit : SKY.unlit, time.minute);
 
 // ------------------------------------------------------------ renderer + camera (spec §3)
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -86,7 +91,7 @@ interface World {
   tint: THREE.Color;
   issues: string[];
 }
-const ROOMS = spanRooms(night);
+let ROOMS = spanRooms(night);
 const worlds = new Map<string, World>();
 let cur: World;
 let player: Actor;
@@ -98,7 +103,7 @@ async function buildWorld(id: string): Promise<World> {
   let area: Area, issues: string[];
   if (id === SPAN) {
     beginArea();
-    const region = await buildRegion(scene, night, spanRegion(mood, night));
+    const region = await buildRegion(scene, night, spanRegion(sky(), night));
     area = region;
     issues = region.doorIssues;
   } else {
@@ -135,14 +140,65 @@ function placeAt(s: Spot): void {
   camera.lookAt(camTarget);
 }
 
-function enter(w: World, spawn: string): void {
+function enter(w: World, spawn: string | Spot): void {
   cur = w;
   post.setScene(w.scene, camera);
   moodPost(renderer, post, w.area.mood);
   w.scene.add(player.root);
+  if (w.id === SPAN) relight(true);
   player.setTint(w.tint);
-  placeAt(w.area.spawns[spawn] ?? w.area.spawns.start!);
+  placeAt(typeof spawn === 'string' ? w.area.spawns[spawn] ?? w.area.spawns.start! : spawn);
 }
+
+// ------------------------------------------------------------ the clock moving the light
+let lightAge = 0;
+/** Outdoors, the light follows the clock: the mood, and the tint on every sprite. Rooms keep their own lamps. */
+function relight(force = false): void {
+  if (cur.id !== SPAN || (time.frozen && !force)) return;
+  const m = sky();
+  cur.lights.set(m);
+  cur.tint.setRGB(...m.sprite);
+  for (const p of cur.people) p.actor.setTint(cur.tint);
+  for (const r of cur.roamers) r.actor.setTint(cur.tint);
+  player.setTint(cur.tint);
+}
+
+/** Drop a built world and free what it put on the GPU. */
+function dispose(w: World): void {
+  w.scene.traverse((o) => {
+    const m = o as THREE.Mesh;
+    m.geometry?.dispose();
+    for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) mat.dispose();
+  });
+}
+
+/** Lamp and the white change the town itself (lanterns lit or not, doors, windows), so it is rebuilt in the other
+ *  state behind a dissolve. Inside a room nothing shows; the town is rebuilt when you step back out. */
+async function turnOfDay(lit: boolean): Promise<void> {
+  busy = true;
+  night = lit;
+  ROOMS = spanRooms(night);
+  const here = cur;
+  const outdoors = here.id === SPAN;
+  if (outdoors) { ui.showPrompt(null); await ui.dissolve(true); }
+  for (const w of [...worlds.values()]) if (w !== here) { dispose(w); worlds.delete(w.id); }
+  if (outdoors) {
+    worlds.delete(SPAN);
+    const at: Spot = { x: player.x, z: player.z };
+    const w = await buildWorld(SPAN);
+    enter(w, at);
+    dispose(here);
+    await ui.dissolve(false);
+    ui.nameTag(lit ? 'Lamp' : 'The white', lit ? 'The first lanterns are lit' : 'Shutters down');
+  } else {
+    // keep the room you're in until you leave it; it's rebuilt in the new state on the next visit
+    worlds.delete(here.id);
+    staleRoom = here;
+  }
+  busy = false;
+}
+let staleRoom: World | null = null;
+
 
 /** Through a door or out of a room: a quick pixel dissolve, then a small name tag (spec §9.4). */
 async function go(to: string, spawn: string): Promise<void> {
@@ -151,6 +207,7 @@ async function go(to: string, spawn: string): Promise<void> {
   await ui.dissolve(true);
   const w = worlds.get(to) ?? (await buildWorld(to));
   enter(w, spawn);
+  if (staleRoom && staleRoom !== w) { dispose(staleRoom); staleRoom = null; }
   lastPiece = '';
   await ui.dissolve(false);
   if (to !== SPAN) ui.nameTag(w.area.title, w.area.sub);
@@ -158,11 +215,18 @@ async function go(to: string, spawn: string): Promise<void> {
 }
 
 let lastPiece = '';
+let shownMinute = -1;
+function showClock(): void {
+  const m = Math.floor(time.minute);
+  if (m === shownMinute) return;
+  shownMinute = m;
+  ui.badge(`<b>${fmtTime(m)}</b><span>${time.phase}</span>`);
+}
 async function load(): Promise<void> {
   player = await Actor.person('juno', new THREE.Color(1, 1, 1));
   const w = await buildWorld(SPAN);
   enter(w, 'start');
-  ui.badge(`<b>${CLOCK[timeKey]?.[0] ?? ''}</b><span>${CLOCK[timeKey]?.[1] ?? ''}</span>`);
+  showClock();
   ui.titleCard('THE SPAN', 'A town that stayed');
   lastPiece = (cur.area as Region).pieceAt(player.x, player.z)?.id ?? '';
   loaded = true;
@@ -227,6 +291,14 @@ function frame(): void {
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
   if (!loaded) return;
   const area = cur.area;
+
+  // the clock: stopped while people talk or the screen is changing (legacy: it only runs while exploring)
+  if (!ui.talking && !busy) {
+    time.tick(dt);
+    showClock();
+    if (time.lit !== night) void turnOfDay(time.lit);
+    else if ((lightAge += dt) > 0.2) { lightAge = 0; relight(); }
+  }
 
   const a = aQueued || ui.takeA();
   aQueued = false;
@@ -303,6 +375,11 @@ load().then(() => {
     get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
     get busy() { return busy; },
+    get clock() { return time.minute; },
+    get phase() { return time.phase; },
+    get lit() { return night; },
+    /** Set the clock (minutes after midnight); `run` lets it move from there. */
+    setClock(m: number, run = false) { time.set(m); time.frozen = !run; shownMinute = -1; showClock(); relight(true); },
     tp(x: number, z: number) { player.place(x, cur.area.ground(x, z), z); camTarget.copy(clampCam(x, z)); safe = [x, z]; },
     face(dx: number, dz: number) { player.face(dx, dz); },
     go: (to: string, spawn: string) => go(to, spawn),

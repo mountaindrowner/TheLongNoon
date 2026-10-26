@@ -71,6 +71,46 @@ export const CISTERN: Mood = {
 export interface Lights {
   sun: THREE.DirectionalLight;
   follow(target: THREE.Vector3): void;
+  /** Re-light the scene with another mood (a clock moving the light). */
+  set(m: Mood): void;
+}
+
+const col = new THREE.Color(), col2 = new THREE.Color();
+const mixHex = (a: string, b: string, t: number): string => '#' + col.set(a).lerp(col2.set(b), t).getHexString();
+const mixN = (a: number, b: number, t: number): number => a + (b - a) * t;
+const mix3 = (a: [number, number, number], b: [number, number, number], t: number): [number, number, number] => [mixN(a[0], b[0], t), mixN(a[1], b[1], t), mixN(a[2], b[2], t)];
+
+/** A mood part way from `a` to `b`. `night` (which lamps a scene was built with) is taken from `a`. */
+export function mixMood(a: Mood, b: Mood, t: number): Mood {
+  if (t <= 0) return a;
+  if (t >= 1) return { ...b, night: a.night };
+  return {
+    night: a.night,
+    sun: { color: mixHex(a.sun.color, b.sun.color, t), intensity: mixN(a.sun.intensity, b.sun.intensity, t), from: a.sun.from.clone().lerp(b.sun.from, t) },
+    hemi: { sky: mixHex(a.hemi.sky, b.hemi.sky, t), ground: mixHex(a.hemi.ground, b.hemi.ground, t), intensity: mixN(a.hemi.intensity, b.hemi.intensity, t) },
+    fog: { color: mixHex(a.fog.color, b.fog.color, t), density: mixN(a.fog.density, b.fog.density, t) },
+    exposure: mixN(a.exposure, b.exposure, t),
+    bloom: { strength: mixN(a.bloom.strength, b.bloom.strength, t), radius: mixN(a.bloom.radius, b.bloom.radius, t), threshold: mixN(a.bloom.threshold, b.bloom.threshold, t) },
+    grade: {
+      dull: mixN(a.grade.dull, b.grade.dull, t), lush: mixN(a.grade.lush, b.grade.lush, t), vignette: mixN(a.grade.vignette, b.grade.vignette, t),
+      shadowTint: mix3(a.grade.shadowTint, b.grade.shadowTint, t), highTint: mix3(a.grade.highTint, b.grade.highTint, t),
+    },
+    sprite: mix3(a.sprite, b.sprite, t),
+  };
+}
+
+/** A day's light as keyframes: [minute of the day, mood]. Minutes wrap at 1440; keys in order from any start. */
+export type MoodKeys = Array<[number, Mood]>;
+export function moodAt(keys: MoodKeys, minute: number): Mood {
+  const m = ((minute % 1440) + 1440) % 1440;
+  const n = keys.length;
+  for (let i = 0; i < n; i++) {
+    const [ta, a] = keys[i]!, [tb0, b] = keys[(i + 1) % n]!;
+    const tb = tb0 <= ta ? tb0 + 1440 : tb0;
+    const mm = m < ta ? m + 1440 : m;
+    if (mm >= ta && mm <= tb) return mixMood(a, b, tb === ta ? 0 : (mm - ta) / (tb - ta));
+  }
+  return keys[0]![1];
 }
 
 /** Exposure, bloom and grade for a mood — re-applied when returning from a battle stage. */
@@ -88,8 +128,9 @@ export function moodPost(renderer: THREE.WebGLRenderer, post: PostFX, m: Mood): 
 }
 
 export function applyMood(scene: THREE.Scene, renderer: THREE.WebGLRenderer, post: PostFX, m: Mood): Lights {
+  const fog = new THREE.FogExp2(m.fog.color, m.fog.density);
   scene.background = new THREE.Color(m.fog.color);
-  scene.fog = new THREE.FogExp2(m.fog.color, m.fog.density);
+  scene.fog = fog;
   renderer.toneMappingExposure = m.exposure;
 
   const hemi = new THREE.HemisphereLight(m.hemi.sky, m.hemi.ground, m.hemi.intensity);
@@ -109,6 +150,18 @@ export function applyMood(scene: THREE.Scene, renderer: THREE.WebGLRenderer, pos
   const texel = (S * 2) / 2048;
   return {
     sun,
+    set(next) {
+      m = next;
+      (scene.background as THREE.Color).set(m.fog.color);
+      fog.color.set(m.fog.color);
+      fog.density = m.fog.density;
+      hemi.color.set(m.hemi.sky);
+      hemi.groundColor.set(m.hemi.ground);
+      hemi.intensity = m.hemi.intensity;
+      sun.color.set(m.sun.color);
+      sun.intensity = m.sun.intensity;
+      moodPost(renderer, post, m);
+    },
     follow(target) {
       // keep the shadow frustum centred on the player, snapped to shadow texels so edges don't shimmer
       const tx = Math.round(target.x / texel) * texel, tz = Math.round(target.z / texel) * texel;

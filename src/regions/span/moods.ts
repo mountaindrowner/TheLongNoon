@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DAY, NIGHT, type Mood } from '../../engine/mood';
+import { DAY, NIGHT, type Mood, type MoodKeys } from '../../engine/mood';
 
 /**
  * The Span's light. The style spec fixes one mood per scene (§5); The Long
@@ -43,4 +43,29 @@ export const SPAN_NIGHT: Mood = {
   fog: { color: '#121c30', density: 0.024 },
 };
 
-export const MOODS: Record<string, Mood> = { lamp: LAMP, night: SPAN_NIGHT, white: WHITE, day: DAY };
+/** Shutter: the gray hour before the white. Lanterns still lit, the sky going pale and cold, the sun not up. */
+export const SHUTTER: Mood = {
+  night: true,
+  sun: { color: '#e8c8b8', intensity: 1.3, from: new THREE.Vector3(-10, 9, 6) },
+  hemi: { sky: '#8a8cb0', ground: '#4a4240', intensity: 0.95 },
+  fog: { color: '#6a6478', density: 0.026 },
+  exposure: 1.15,
+  bloom: { strength: 0.6, radius: 0.6, threshold: 0.7 },
+  grade: { dull: 1.4, lush: 1.05, vignette: 0.5, shadowTint: [0.9, 0.94, 1.1], highTint: [1.06, 1.0, 0.94] },
+  sprite: [0.86, 0.85, 0.94],
+};
+
+export const MOODS: Record<string, Mood> = { lamp: LAMP, night: SPAN_NIGHT, shutter: SHUTTER, white: WHITE, day: DAY };
+
+/**
+ * The Span's day as keyframes (minutes after midnight). The phases are the
+ * proof of concept's (legacy 03-lights): Lamp 6:30 pm, the long night from 8,
+ * Shutter at 4:30 am, the white from 6. The town is built in one of two
+ * states (lanterns lit or not), so there are two sets of keys: LIT covers
+ * Lamp to Shutter, UNLIT the day. Each ends where the other begins, so the
+ * swap between them changes the lamps, not the light.
+ */
+export const SKY: { lit: MoodKeys; unlit: MoodKeys } = {
+  lit: [[1110, LAMP], [1170, LAMP], [1250, SPAN_NIGHT], [270, SPAN_NIGHT], [330, SHUTTER], [360, SHUTTER]],
+  unlit: [[360, SHUTTER], [420, DAY], [600, WHITE], [930, WHITE], [1050, DAY], [1110, LAMP]],
+};

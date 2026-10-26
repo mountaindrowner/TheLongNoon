@@ -12,7 +12,8 @@ npm run build        # dist/index.html: the whole game in one offline file
 npm test             # typecheck, build, playtest at 1080p and on a phone
 ```
 
-Add `?time=lamp|night|white|day` to the URL to see the Span in each light (night is the default).
+The clock runs from Lamp (7:20 pm), a game minute per real second. Add `?clock=HH:MM` to start elsewhere, or
+`?time=lamp|night|shutter|white|day` to hold one light still.
 
 ## Layout
 

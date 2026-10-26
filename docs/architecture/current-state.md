@@ -103,11 +103,43 @@ The whole of the region's design is in `docs/design/regions/span.md`. In short:
   - The Bowl's crust is near-white by day on purpose, and still needs a
     phone check outdoors.
 
+## Piece 3 (done): the clock
+
+- **The clock** (`src/game/clock.ts`) follows the proof of concept's rules:
+  - The phases: Lamp from 6:30 pm, the long night from 8, Shutter from 4:30 am, the white from 6.
+  - One game minute per real second.
+  - It stops while people talk or the screen changes.
+  - It starts at 7:20 pm, as the story does.
+- **The light follows it.** The engine got `mixMood` and `moodAt` (a day as
+  keyframes) and `Lights.set`, so a scene can be re-lit live. The Span's
+  keyframes (`SKY` in `regions/span/moods.ts`):
+  - Lamp, then the long night, then Shutter (a new gray mood);
+  - then morning, the white, the afternoon, and back to Lamp.
+
+  Sprites take the tint of the moment. Rooms keep their own lamps.
+- **Two moments change the town itself.** At Lamp the lanterns are lit, and at
+  6 am they're out, with doors and windows to match. The region is rebuilt in
+  the other state behind a dissolve, with a tag: "Lamp: the first lanterns are
+  lit" or "The white: shutters down". If you're indoors, nothing shows, and the
+  town is rebuilt when you step out.
+- **URL controls:** `?clock=HH:MM` starts the clock elsewhere.
+  `?time=lamp|night|shutter|white|day` holds one light still (screenshots,
+  playtests).
+- **Not built (held for the owner):** what daylight costs. The legacy rule
+  (water burns in the white, faint at zero) and the owner's newer idea (shade
+  as cover) are both in `docs/design/held-ideas.md`.
+- **Open:** people are out on the Plaza by day as well as by night. The
+  methodology's §5.3 proposal ("shutters down, nobody out") would move them
+  indoors by day; that waits on the owner.
+- **Fixed on the way:** collision in a room you've visited before read the
+  wrong collision data, so you could walk through its furniture. Rooms now
+  keep their own.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
 |---|---|---|
-| One fixed mood per scene, no clock (§5) | A state per phase: Night (the default, designed first), Lamp and Shutter (gray hours), White (day, rare and lethal) | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The clock that moves between them is still to build. |
+| One fixed mood per scene, no clock (§5) | A clock moves the light through Lamp, the long night, Shutter and the white. The town is built twice (lanterns lit, lanterns out). | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The clock is the legacy game's own rhythm. |
 | Prairie ground, lush green as the norm | Desert ground (caliche, sand, old asphalt); green only where water has been | The Span is a desert. The spec's mood line still holds: bleak, with bright life where it's tended. |
 | 64px, 8-direction PixelLab sprites (§13) | The proof of concept's 16×24, 4-direction sprites, sized by measurement to 1.65 units | Generating new sprites needs a PixelLab API key and its per-figure cost. The engine's `RotHero` already plays 8-direction sprites when they exist. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
@@ -126,8 +158,7 @@ chunks, `terrain.ts` `setAprons`). The owner chose C on 2026-10-26; the Span (pi
 
 ## Next pieces (proposed order)
 
-1. **Clock and moods.** Time moves; light blends Lamp → Night → Shutter → White;
-   the HUD clock is live; shelter and water rules apply.
+1. **What daylight costs**, once the owner decides (`docs/design/held-ideas.md`).
 2. **Out of the Span:** the first caravan leg up the Thirty-Five, or the east loop and the drain under the road.
 3. **Story runtime:** the legacy dialogue and quest data (`legacy/poc2/src/data`)
    brought across: conditional dialogue, quest steps, the staybook.

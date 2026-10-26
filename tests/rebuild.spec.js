@@ -116,3 +116,18 @@ test('an unbuilt road turns you back at the edge instead of breaking', async ({ 
   expect((await pos(page))[0]).toBeLessThan(132);
   expect(errors).toEqual([]);
 });
+
+test('the clock runs, and at Lamp the town lights its lanterns', async ({ page }) => {
+  test.setTimeout(300_000);
+  const errors = watchErrors(page);
+  await boot(page, 'white');
+  expect(await page.evaluate(() => [window.__LN.phase, window.__LN.lit])).toEqual(['Day', false]);
+  // half a game minute before Lamp, running: the town is rebuilt lit, and every door promise still holds
+  await page.evaluate(() => window.__LN.setClock(18 * 60 + 29.6, true));
+  await until(page, () => window.__LN.lit === true && !window.__LN.busy, undefined, 150_000);
+  expect(await page.evaluate(() => window.__LN.phase)).toBe('Lamp');
+  await expect(page.locator('.badge')).toContainText('Lamp');
+  expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
+  expect(await page.evaluate(() => window.__LN.doorIssues)).toEqual([]);
+  expect(errors).toEqual([]);
+});

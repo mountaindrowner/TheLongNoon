@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { fbm, rng, vnoise } from './noise';
 import { Pix } from './textures';
 import { box, colMat } from './geo';
-import { setWorld, hitsSolid } from './world';
+import { setWorld, hitsSolid, currentChunk, useChunk } from './world';
 import { KM, LightPool, worldUV, type RGB } from './kit';
 import type { Built } from './buildings';
 import type { Mood } from './mood';
@@ -214,7 +214,10 @@ export function interior(spec: InteriorSpec): AreaBuilder {
     }
     await spec.dress(d);
 
+    // this room's own solids: other worlds may have been built (and made current) since
+    const chunk = currentChunk();
     const blocked = (x: number, z: number, rad: number): boolean => {
+      useChunk(chunk);
       for (const [dx, dz] of [[-rad, -rad], [rad, -rad], [-rad, rad], [rad, rad], [0, 0]] as Array<[number, number]>) {
         const px = x + dx, pz = z + dz;
         if (px < 0 || px > COLS) return true;
