@@ -26,7 +26,9 @@ import { rubble } from './ruins';
  */
 
 export const COLS = 88, ROWS = 64;
-const TOP = 0; // the highway runs at grade here, as it does through town
+const TOP = 2.6; // the deck's height where it comes up out of town on its embankment
+/** The highway comes north out of town on its embankment and settles to grade before the overpass. */
+const deckY = (z: number): number => TOP * smooth(38, 58, z);
 const HW = { x0: 7, x1: 19, z1: ROWS }; // the highway, four lanes, the whole length of the map
 const A: [number, number] = [50, 46], B: [number, number] = [20, 20]; // the exit ramp, from the fuel stop up to the highway
 const FRONTAGE: Array<[number, number]> = [[A[0], A[1]], [56, 40]];
@@ -70,7 +72,7 @@ export function ramp(night: boolean): SectionSpec {
       let out = h;
       if (dd < 3.2) out = THREE.MathUtils.lerp(0, h, smooth(2.2, 3.2, dd));
       const e = Math.max(HW.x0 - x, 0, x - HW.x1);
-      if (e < 1.2) out = THREE.MathUtils.lerp(0, out, smooth(0, 1.2, e));
+      if (e < 1.2) out = THREE.MathUtils.lerp(deckY(z), out, smooth(0, 1.2, e));
       return out;
     },
     paint(glyph, x, z, fine) {
@@ -91,6 +93,12 @@ export function ramp(night: boolean): SectionSpec {
       // ------------------------------------------------ the highway: the median, the overpass that came down (hero)
       jerseys(scene, [[13, 0.6], [13, BRIDGE - 5]], seed());
       jerseys(scene, [[13, BRIDGE + 5], [13, ROWS - 0.6]], seed());
+      // where the deck is still up on its embankment, barriers along both edges and walls below them
+      for (const ex of [HW.x0 + 0.4, HW.x1 - 0.4]) {
+        jerseys(scene, [[ex, 40], [ex, ROWS - 0.2]], seed());
+        for (let z = 40; z < ROWS; z += 0.5) addSolid(ex - 0.35, z - 0.3, ex + 0.35, z + 0.3);
+      }
+      for (const wx of [HW.x0 - 0.15, HW.x1 + 0.15]) for (let z = 44; z < ROWS; z += 4) retainingWall(scene, wx, z, wx, Math.min(ROWS, z + 4), deckY(z + 2));
       // the piers either side, the half that still stands over the northbound lanes, the half that fell
       for (const px of [4.6, 21.4]) { scene.add(box(1.2, 5.2, 1.6, M.concrete(), px, 0, BRIDGE)); addSolid(px - 0.6, BRIDGE - 0.8, px + 0.6, BRIDGE + 0.8); }
       scene.add(box(1.0, 5.2, 1.4, M.concrete(), 13, 0, BRIDGE)); addSolid(12.5, BRIDGE - 0.7, 13.5, BRIDGE + 0.7);

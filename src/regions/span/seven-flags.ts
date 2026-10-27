@@ -9,7 +9,7 @@ import { addSolid, heightAt } from '../../engine/world';
 import { rng, fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, palm, nopal, waterTower, lanternPost, solarPanels, clothesline, shadeSail, jugs, drum, tires, carHulk, burialPlatform, roofLetters, blockWall, mailbox } from './props';
-import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, busShelter } from './kit';
+import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall } from './kit';
 import { spanDoor, type SpanDoor } from './doors';
 import { SPAN_FLORA, mesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
@@ -45,13 +45,17 @@ type Pt = [number, number];
 // ------------------------------------------------------------------ the streets (centre lines, in map units)
 const I35: Pt[] = [[2, 161], [10, 140], [16, 115], [28, 85], [38, 60], [46, 40], [51, 18], [53, -1]];
 const RAIL: Pt[] = [[27, 161], [32, 140], [37, 118], [42, 96], [48, 70], [55, 40], [60, 18], [63, -1]];
-const DELMAR: Pt[] = [[-1, 141.7], [33, 134.7], [72, 129.8], [123, 130], [161, 130.6], [193, 124]];
+const DELMAR: Pt[] = [[19.5, 137.8], [33, 134.7], [72, 129.8], [123, 130], [161, 130.6], [193, 124]]; // ends at the highway's wall
+/** The Thirty-Five rides above the town on an embankment behind retaining walls. The only way up is the on-ramp at the top of town. */
+const DECK = 2.6;
+const JUNCTION = 16; // north of here the deck is open (it leads out of town); south of here, walled off
+const ONRAMP: Pt[] = [[70.4, 17], [57.2, 8.2]]; // foot (on the side street) to top (the deck's east edge)
 const INTL: Pt[] = [[40, 105], [104, 94.3], [136, 77], [193, 59]];
 const SHILOH: Pt[] = [[44, 76], [123, 61], [193, 47.6]];
 const MCPH: Pt[] = [[146, -1], [142, 19.5], [130.6, 36], [121.6, 46.3], [126.7, 59], [142, 77], [155, 90], [159, 102.7], [160, 161]];
 const MAIN: Array<[Pt[], number]> = [[DELMAR, 7], [INTL, 6], [SHILOH, 6], [MCPH, 6]];
 const SIDE: Pt[][] = [
-  [[56, 4.7], [86, 4.7]], [[69, 4.7], [71.7, 29.7]], [[53.8, 34.8], [92, 26.5]], [[80.4, 20.7], [88.3, 66.8]],
+  [[60, 4.7], [86, 4.7]], [[69, 4.7], [71.7, 29.7]], [[53.8, 34.8], [92, 26.5]], [[80.4, 20.7], [88.3, 66.8]],
   [[56.3, 50.2], [121, 44]], [[61.4, 65.5], [115, 54]], [[54.4, 79.4], [109.5, 71.3]], [[110, 71.5], [114, 86]],
   [[44, 108.5], [92, 107]], [[42.2, 123], [98.6, 121.6]], [[53.8, 134.7], [56.3, 157]], [[39.7, 142.3], [65.3, 141]],
   [[121.6, 134.7], [192, 134.7]], [[121.6, 152], [192, 151.3]], [[137, 134.7], [137, 161]],
@@ -66,7 +70,7 @@ const STORE = { x: 143, z: 110, w: 18, d: 11.8 }; // Mar Farm: the dead supermar
 const LOT = { x0: 131.8, z0: 116.7, x1: 154.9, z1: 126.3 };
 const SCHOOL = { x: 104, z: 27, w: 18, d: 9 };
 const BIGSTORE = { x: 164, z: 8, w: 20, d: 10 };
-const WAREHOUSE = { x: 27, z: 124, w: 12.6, d: 16 };
+const WAREHOUSE = { x: 28, z: 124, w: 10.6, d: 15 };
 const CHAPEL = { x: 106, z: 105, w: 9, d: 10 };
 const YARD = { x0: 163, z0: 60, x1: 179, z1: 72 }; // Abby's yard
 
@@ -91,6 +95,7 @@ function along(pts: Pt[], x: number, z: number): [number, number] {
   }
   return [best, at];
 }
+const smoothstep = (a: number, b: number, v: number): number => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 const bbox = (pts: Pt[], pad: number): [number, number, number, number] => [Math.min(...pts.map((p) => p[0])) - pad, Math.min(...pts.map((p) => p[1])) - pad, Math.max(...pts.map((p) => p[0])) + pad, Math.max(...pts.map((p) => p[1])) + pad];
 const RAIL_BOX = bbox(RAIL, 2);
 
@@ -192,7 +197,7 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       grid = g;
       g.rect(0, 0, COLS, ROWS, 'x');
       // west of the Thirty-Five: outside the town, brush to the horizon
-      for (let z = 0; z < ROWS; z++) { const xw = Math.floor(xAt(I35, z + 0.5) - 6.5); for (let x = 0; x < Math.min(COLS, xw); x++) g.set(x, z, '#'); }
+      for (let z = 0; z < ROWS; z++) { const xw = Math.floor(xAt(I35, z + 0.5) - 7.5); for (let x = 0; x < Math.min(COLS, xw); x++) g.set(x, z, '#'); }
       // brush where nobody's kept it back
       motte(g, 108, 8, 10, 5, 71); motte(g, 128, 16, 8, 6, 72); motte(g, 185, 64, 5, 6, 73); motte(g, 100, 64, 5, 3, 74);
       motte(g, 186, 154, 6, 4, 75); motte(g, 78, 156, 5, 3, 76); motte(g, 150, 60, 5, 4, 77); motte(g, 66, 98, 4, 3, 78);
@@ -209,7 +214,10 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       // sidewalks under every street, then the streets
       for (const [pts, w] of MAIN) g.line(pts, w + 2, 'v', (q) => q !== '#' || pts === DELMAR);
       for (const pts of SIDE) g.line(pts, 4, 'd', (q) => q !== '#');
-      g.line(I35, 11, 'd');
+      // the Thirty-Five on its embankment: 'H' is the walled-off deck (asphalt nobody can reach), open only north of the junction
+      g.line(I35, 13, 'H');
+      for (let z = 0; z <= JUNCTION; z++) for (let x = 40; x < 66; x++) if (g.get(x, z) === 'H') g.set(x, z, 'd');
+      g.line(ONRAMP, 4.4, 'd');
       for (const [pts, w] of MAIN) g.line(pts, w, 'd');
       g.rect(LOT.x0, LOT.z0, LOT.x1 - LOT.x0, LOT.z1 - LOT.z0, 'd');
       g.rect(150, 14, 28, 10, 'd'); // the Big Store's parking
@@ -222,6 +230,14 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
     height(x, z, h) {
       // the drain sinks below grade except where Del Mar crosses it; the creek runs low
       let out = h;
+      // the Thirty-Five's embankment, and the on-ramp climbing up to it
+      if (x < 70) {
+        const [di] = along(I35, x, z);
+        const deck = DECK * (1 - smoothstep(6.6, 7.6, di));
+        const [dr, ar] = along(ONRAMP, x, z), L = Math.hypot(ONRAMP[1]![0] - ONRAMP[0]![0], ONRAMP[1]![1] - ONRAMP[0]![1]);
+        const ramp = DECK * Math.min(1, ar / L) * (1 - smoothstep(2.2, 3.2, dr));
+        out += Math.max(deck, ramp);
+      }
       if (z > DRAIN.z0 - 1 && !(z > 125.5 && z < 134.5)) {
         const k = 1 - Math.min(1, Math.max(0, Math.max(DRAIN.x0 - x, x - DRAIN.x1) / 1.0));
         const inner = 1 - Math.min(1, Math.max(0, Math.max(DRAIN.x0 + 1.2 - x, x - (DRAIN.x1 - 1.2)) / 1.2));
@@ -233,7 +249,7 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
     grassTint: (x, z) => (grid.get(Math.floor(x), Math.floor(z)) === '#' ? STRAW[Math.floor(fbm(x * 3, z * 3, 66, 1) * 4) % 4] : undefined),
     paint(glyph, x, z, fine) {
       // the rail line: rails and ties over ballast, across whatever it crosses
-      if (x > RAIL_BOX[0] && x < RAIL_BOX[2]) {
+      if (x > RAIL_BOX[0] && x < RAIL_BOX[2] && along(ONRAMP, x, z)[0] > 2.2) {
         const [dr, a] = along(RAIL, x, z);
         if (dr < 1.25) {
           if (Math.abs(dr - 0.72) < 0.07) return [120, 112, 100];
@@ -256,6 +272,8 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         return paintAs('d', x, z, fine);
       }
       if (walk) return paintAs('v', x, z, fine);
+      if (glyph === 'H') return paintAs('d', x, z, fine);
+      if (glyph === 'd' && along(ONRAMP, x, z)[0] < 2.3) return paintAs('d', x, z, fine);
       if (glyph === 'd' || glyph === 'v') {
         if (inLot(x, z)) {
           // faded parking stalls at the store and the Big Store
@@ -269,10 +287,10 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       return spanPaint(glyph, x, z, fine);
     },
     edges: { n: 'brush', s: 'brush', w: 'brush', e: 'brush' },
+    solidGlyphs: ['H'],
     exits: [
       { side: 'n', at: 53, w: 12, to: 'ramp', spawn: 'town', name: 'north' },
       { side: 'e', at: 124, w: 9, to: 'lake-road', spawn: 'town', name: 'east' },
-      { side: 'w', at: 141.7, w: 8, to: 'dead-river', spawn: 'east', name: 'west' },
       { side: 's', at: 160, w: 7, to: 'south-road', spawn: 'north', name: 'south' },
     ],
     dress(d) {
@@ -350,6 +368,44 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       scene.add(shade(pipe));
       addSolid(183, 14.6, 189, 17.4);
 
+      // ------------------------------------------------ the Thirty-Five: retaining walls the length of town, the deck barricaded at the junction
+      const side = (off: number): Pt[] => I35.map(([x, z], i) => {
+        const [nx2, nz2] = I35[Math.min(i + 1, I35.length - 1)]!, [px2, pz2] = I35[Math.max(0, i - 1)]!;
+        const L = Math.hypot(nx2 - px2, nz2 - pz2) || 1;
+        return [x + ((pz2 - nz2) / L) * -off, z + ((nx2 - px2) / L) * -off];
+      });
+      for (const off of [-6.6, 6.6]) {
+        const wall = side(off).filter(([, z]) => z >= JUNCTION - 2);
+        for (let i = 0; i < wall.length - 1; i++) {
+          const [ax, az] = wall[i]!, [bx, bz] = wall[i + 1]!;
+          retainingWall(scene, ax, Math.max(az, JUNCTION), bx, Math.min(ROWS + 1, Math.max(bz, JUNCTION)), DECK);
+        }
+      }
+      // the deck: barriers along both edges where it's open, and across it at the junction with a wreck behind them
+      jerseys(scene, side(5.6).filter(([, z]) => z <= JUNCTION + 2).map(([x, z]) => [x, Math.min(z, JUNCTION)] as Pt), seed(), DECK);
+      jerseys(scene, [[46.6, JUNCTION + 0.6], [56.4, JUNCTION]], seed(), DECK);
+      carHulk(scene, 50, JUNCTION + 3.4, 0.4, seed());
+      // the deck's east edge north of the junction, except where the on-ramp meets it
+      jerseys(scene, [[56.6, -0.4], [57.6, 5.6]], seed(), DECK);
+      jerseys(scene, [[58, 11.6], [56.4, JUNCTION]], seed(), DECK);
+      // the on-ramp's sides
+      for (const off of [-2.3, 2.3]) {
+        const [[ax, az], [bx, bz]] = ONRAMP as [Pt, Pt];
+        const L = Math.hypot(bx - ax, bz - az), nx = -(bz - az) / L, nz = (bx - ax) / L;
+        jerseys(scene, [[ax + nx * off, az + nz * off], [bx + nx * off, bz + nz * off]], seed());
+        for (let t = 0; t <= 1; t += 0.04) addSolid(ax + (bx - ax) * t + nx * off - 0.3, az + (bz - az) * t + nz * off - 0.3, ax + (bx - ax) * t + nx * off + 0.3, az + (bz - az) * t + nz * off + 0.3);
+      }
+      // the deck's edges where it's open: solid all along, so nobody steps off the top of the wall
+      for (let z = 0; z <= JUNCTION; z += 0.5) {
+        const xc = xAt(I35, z);
+        addSolid(xc - 6.2, z - 0.3, xc - 5.6, z + 0.3);
+        if (z < 5.6 || z > 11.6) addSolid(xc + 5.6, z - 0.3, xc + 6.2, z + 0.3);
+      }
+      addSolid(45, JUNCTION, 57, JUNCTION + 0.6);
+      // where Del Mar runs into the wall: barriers stacked across what's left of it
+      jerseys(scene, [[20.4, 134], [21.6, 141.4]], seed());
+      carHulk(scene, 23.6, 136.6, 1.3, seed());
+
       // ------------------------------------------------ the east barricade on Del Mar (Memo)
       jerseys(scene, [[189.4, 119.4], [190.4, 122.4]], seed());
       carHulk(scene, 188.6, 125.6, 1.5, seed());
@@ -425,6 +481,8 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         { x: 168.6, z: 69.2, r: 1.8, label: 'Machine', lines: ['A small machine on four wheels, mowing the same square of dead grass it always has.'] },
         { x: 115.2, z: 123.8, r: 2.0, label: 'Culvert', lines: ['The drain goes under the road here. The pipe is black all the way in. Something in there drips.'] },
         { x: 186, z: 18.6, r: 2.6, label: 'Concrete pipe', lines: ['A pipe as tall as a man, where the creek used to go under the road. Something lives in it. The sand at its mouth is swept.'] },
+        { x: 22.6, z: 138.6, r: 2.4, label: 'Barricade', lines: ['Del Mar runs into the highway’s wall. Somebody stacked barriers across what’s left of it.'] },
+        { ...xz(ONRAMP[0]!), r: 2.4, label: 'On-ramp', lines: ['The ramp climbs up onto the Thirty-Five. Up there, the highway goes north out of town.'] },
         { x: 189, z: 120, r: 2.0, label: 'Barricade', lines: ['Barriers across Del Mar and a car on its side. Past it, the road goes east toward the lake.'] },
       );
       d.npcs.push(

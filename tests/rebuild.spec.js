@@ -120,6 +120,25 @@ test('an unbuilt road turns you back at the edge instead of breaking', async ({ 
   expect(errors).toEqual([]);
 });
 
+test('the highway is walled off; the on-ramp at the top of town leads up onto it and north to the Ramp', async ({ page }) => {
+  test.setTimeout(300_000);
+  await boot(page);
+  // from International's west end, walking west stops at the foot of the highway's wall (the deck's edge is near x 27)
+  await page.evaluate(() => window.__LN.tp(36, 64 + 106));
+  await page.keyboard.down('KeyA');
+  await until(page, () => window.__LN.pos[0] < 33);
+  let prev = 999;
+  for (;;) { const x = (await pos(page))[0]; if (Math.abs(x - prev) < 1e-4) break; prev = x; await page.waitForTimeout(1500); }
+  await page.keyboard.up('KeyA');
+  expect((await pos(page))[0]).toBeGreaterThan(26);
+  // up on the deck north of the junction, walking north leaves town for the Ramp
+  await page.evaluate(() => window.__LN.tp(53, 64 + 4));
+  await page.keyboard.down('KeyW');
+  await until(page, () => window.__LN.pos[1] < 63.4, undefined, 150_000);
+  await page.keyboard.up('KeyW');
+  expect(await page.evaluate(() => window.__LN.piece)).toBe('ramp');
+});
+
 test('the clock runs, and at Lamp the town lights its lanterns', async ({ page }) => {
   test.setTimeout(300_000);
   const errors = watchErrors(page);

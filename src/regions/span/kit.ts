@@ -21,6 +21,7 @@ const glow = (hex: string, k: number): THREE.MeshStandardMaterial => colMat(hex,
 
 // ------------------------------------------------------------------ ground
 
+const BRUSH_TOP = ['#3a3c26', '#46482e', '#525436', '#5e5e3e', '#6a6844'].map(H);
 const ASPHALT = ['#6a6762', '#77736c', '#827e76', '#605c56'].map(H);
 const SAND = ['#c8b08a', '#d2ba92', '#bca47e', '#dcc6a0'].map(H);
 const CRUST = ['#e6e0d2', '#ddd6c6', '#efe9dc', '#d2cab8'].map(H);
@@ -45,7 +46,17 @@ export function spanPaint(glyph: string, x: number, z: number, fine: number): RG
     if (fine > 0.985) c = H('#5e5a38');
     return c;
   }
-  if (glyph === '#') return SCRUB_DRY[Math.min(3, Math.floor(fbm(x * 0.7, z * 0.7, 41, 2) * 3 + fine * 1.2))]!;
+  if (glyph === '#') {
+    // thorn brush seen from above: clumps of dark olive canopy, lit from the upper left, dust between them
+    const n = vnoise(x * 0.8, z * 0.8, 41) * 0.75 + vnoise(x * 2.2, z * 2.2, 42) * 0.25;
+    if (n > 0.47) {
+      const lit = vnoise((x - 0.35) * 0.8, (z - 0.35) * 0.8, 41) * 0.75 + vnoise((x - 0.35) * 2.2, (z - 0.35) * 2.2, 42) * 0.25 - n;
+      const k = Math.min(4, Math.max(0, Math.floor(2 + lit * 14 + (fine - 0.5) * 1.6)));
+      return BRUSH_TOP[k]!;
+    }
+    if (n > 0.43) return H('#2a2618'); // the shadow at a clump's edge
+    return SCRUB_DRY[Math.min(3, Math.floor(fbm(x * 0.7, z * 0.7, 41, 2) * 3 + fine * 1.2))]!;
+  }
   if (glyph === 's') return SAND[Math.min(3, Math.floor(fbm(x * 0.4, z * 0.4, 51, 2) * 3 + fine * 1.2))]!;
   if (glyph === 'W') {
     let c = pick(CRUST, fbm(x * 0.3, z * 0.3, 91, 3) * 0.8 + fine * 0.3);

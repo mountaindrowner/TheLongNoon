@@ -191,6 +191,8 @@ export interface SectionSpec {
   noMotes?: boolean;
   /** The region's plants for the edges (default: the engine's prairie trees). */
   flora?: Flora;
+  /** Ground glyphs nobody walks on (besides '#' and 'w'): a raised highway behind its walls… */
+  solidGlyphs?: string[];
 }
 
 const ROAD = new Set(['d', 'e', 'v']);
@@ -310,6 +312,7 @@ export function section(spec: SectionSpec, pre?: Grid, pace?: () => Promise<void
       if (x > COLS - 0.4) return seam('e') || !!exitAt('e', z, -0.2);
       return true;
     };
+    const solidGlyphs = new Set(spec.solidGlyphs ?? []);
     const blocked = (x: number, z: number, rad: number): boolean => {
       for (const [dx, dz] of [[-rad, -rad], [rad, -rad], [-rad, rad], [rad, rad], [0, 0]] as Array<[number, number]>) {
         const px = x + dx, pz = z + dz;
@@ -317,7 +320,7 @@ export function section(spec: SectionSpec, pre?: Grid, pace?: () => Promise<void
         if (!inExit(px, pz)) return true;
         if (px < 0 || pz < 0 || px >= COLS || pz >= ROWS) continue; // running out through an exit
         const c = get(Math.floor(px), Math.floor(pz));
-        if (c === '#' || c === 'w') return true;
+        if (c === '#' || c === 'w' || solidGlyphs.has(c)) return true;
       }
       return hitsSolid(x, z, rad);
     };
