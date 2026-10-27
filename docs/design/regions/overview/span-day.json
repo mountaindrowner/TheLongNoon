@@ -1,13 +1,13 @@
 {
- "w": 1152,
- "h": 1424,
+ "w": 1440,
+ "h": 1780,
  "bounds": [
   0,
   0,
   288,
   356
  ],
- "ppu": 4,
+ "ppu": 5,
  "pieces": [
   {
    "id": "ramp",
@@ -218,6 +218,24 @@
    "go": null,
    "lines": [
     "A pipe as tall as a man, where the creek used to go under the road. Something lives in it. The sand at its mouth is swept."
+   ]
+  },
+  {
+   "label": "Barricade",
+   "x": 22.6,
+   "z": 202.6,
+   "go": null,
+   "lines": [
+    "Del Mar runs into the highway’s wall. Somebody stacked barriers across what’s left of it."
+   ]
+  },
+  {
+   "label": "On-ramp",
+   "x": 70.4,
+   "z": 81,
+   "go": null,
+   "lines": [
+    "The ramp climbs up onto the Thirty-Five. Up there, the highway goes north out of town."
    ]
   },
   {
@@ -463,11 +481,6 @@
  ],
  "exits": [
   {
-   "to": "dead-river",
-   "x": -1.35,
-   "z": 205.7
-  },
-  {
    "to": "south-road",
    "x": 160,
    "z": 225.35
@@ -498,11 +511,6 @@
    "x": 190.9,
    "z": 188,
    "face": "W"
-  },
-  "seven-flags:west": {
-   "x": 1.1,
-   "z": 205.7,
-   "face": "E"
   },
   "seven-flags:south": {
    "x": 160,
