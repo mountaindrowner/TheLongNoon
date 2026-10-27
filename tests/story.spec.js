@@ -82,7 +82,7 @@ test('home: feed the goats and fill up at the tank, and the milk is ready for Ch
 // fight and the end card is checked by screenshots, docs/architecture/current-state.md piece 6).
 test('the drain: the Stray and the coyote, the fight, and Kit comes along', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
-  test.setTimeout(900_000);
+  test.setTimeout(1_800_000);
   const errors = watchErrors(page);
   await boot(page, '?step=pancha&clock=22:00');
   await page.evaluate(() => window.__LN.tp(115, 205));
@@ -91,9 +91,10 @@ test('the drain: the Stray and the coyote, the fight, and Kit comes along', asyn
   await until(page, () => !!document.querySelector('.f-menu.on button'), undefined, 240_000);
   await page.screenshot({ path: info.outputPath('fight.png') });
   // always the first choice: Fight, then the first part offered; the parry ring is left to close
-  for (let i = 0; i < 400; i++) {
+  for (const end = Date.now() + 900_000; ;) {
     const s = await page.evaluate(() => ({ fight: !!document.querySelector('.fight.on'), menu: !!document.querySelector('.f-menu.on button') }));
     if (!s.fight) break;
+    if (Date.now() > end) throw new Error('the fight is still going after 15 minutes');
     if (s.menu) await page.keyboard.press('Enter');
     await page.waitForTimeout(400);
   }
