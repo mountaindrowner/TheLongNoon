@@ -37,6 +37,14 @@ export function spanPaint(glyph: string, x: number, z: number, fine: number): RG
     if (fbm(x * 0.35, z * 0.35, 37, 2) > 0.74) c = fine > 0.5 ? H('#8d7a5c') : H('#7a6a50'); // dust drifted over it
     return c;
   }
+  if (glyph === 'p') {
+    // dead grass where a park or a yard was: straw over dust, the odd dark tuft
+    const n = fbm(x * 0.5, z * 0.5, 61, 3);
+    const P = ['#8c8456', '#9a9060', '#7e7a4e', '#a89c6a'].map(H);
+    let c = P[Math.min(3, Math.floor(n * 3 + fine * 1.2))]!;
+    if (fine > 0.985) c = H('#5e5a38');
+    return c;
+  }
   if (glyph === '#') return SCRUB_DRY[Math.min(3, Math.floor(fbm(x * 0.7, z * 0.7, 41, 2) * 3 + fine * 1.2))]!;
   if (glyph === 's') return SAND[Math.min(3, Math.floor(fbm(x * 0.4, z * 0.4, 51, 2) * 3 + fine * 1.2))]!;
   if (glyph === 'W') {

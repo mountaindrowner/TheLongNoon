@@ -4,9 +4,7 @@ import type { Mood } from '../../engine/mood';
 import type { Spot, AreaBuilder } from '../../engine/area';
 import { attached } from '../../engine/foliage';
 import { spanApron, occluders, resetSpan, pruneSpan } from './props';
-import { marFarm } from './mar-farm';
-import { plaza } from './plaza';
-import { colonia } from './colonia';
+import { sevenFlagsTown } from './seven-flags';
 import { ramp } from './ramp';
 import { lakeRoad } from './lake-road';
 import { whiteBowl } from './white-bowl';
@@ -14,46 +12,40 @@ import { marHome, chapel, finaHouse, kidsHouse } from './rooms';
 
 /**
  * THE SPAN: the first region (methodology §2.3: "A town that stayed, and
- * can't keep everyone"). A web of maps on one ground, walked between with no
- * cut (option C), brush between them, roads where they meet. Sizes (owner,
- * 2026-10-26): large 132×96, medium about two thirds of that, the town twice
- * a large map, the lake road a large map stood on end.
+ * can't keep everyone"). The town is Seven Flags, laid out from the owner's
+ * map of the real streets of north Laredo (2026-10-27); around it, the road
+ * out north, and the long road down to the dry lake. A web of maps on one
+ * ground, walked between with no cut (option C), brush between them.
  *
- *   x:   0          88  132         264         396   492
- *   z:0  ┌────────┐
- *        │  RAMP  │ M                                    north: the Thirty-Five (next region)
- *   z:64 ├────────┴──┬───────────┬───────────┬──────┐
- *        │ MAR FARM  │ THE PLAZA │THE COLONIA│ LAKE │  east: the brush (not built)
- *        │    L      │  L (town) │  L (town) │ ROAD │
- *  z:160 └───────────┴───────────┴───────────┤ L,   │
- *                                       ┌────┴portr.┤ z:196
- *                                       │ WHITE BOWL│
- *                                       │     L     │
- *                                       └───────────┘ z:292
+ *   x:  0   40       128   192     288
+ *   z:0     ┌────────┐
+ *           │  RAMP  │ M (88×64)          north: the Thirty-Five (next region)
+ *   z:64 ┌──┴─┬──────┴───────┐
+ *        │    SEVEN FLAGS    │
+ *        │   the town, 192×160│         east, past Memo's barricade on Del Mar:
+ *   z:128│                   ├──────┐
+ *        │                   │ LAKE │   east: the brush (not built)
+ *   z:224└───────────────────┤ ROAD │
+ *        west: the Dead River│96×132│
+ *        south: McPherson    │      │
+ *   z:260              ┌─────┴──────┤
+ *                      │ WHITE BOWL │ 132×96, southeast of town
+ *   z:356              └────────────┘
  *
- * The boulevard runs from the store at Mar Farm east through the Plaza and
- * the Colonia to the fork on the lake road; the lake road turns south, the
- * drain beside it, to the dry lake southeast of town. The Ramp climbs north
- * from the farm to the Thirty-Five. From the Plaza a lane runs north into
- * the brush (the Old Trail) and a road south to the river (the Dead River):
- * both still to build. Real ground (methodology §3): north Laredo, the I-35
- * west and north, the creek channel east of town, the lake southeast.
- * Real names never show; the one Old Name is under the fallen sign.
+ * Real names never show; the one Old Name is under the fallen sign on the Ramp.
  */
 
 export const SPAN = 'span';
 
 /** Each map's place in the region (its top-left corner, world units). */
 export const PLACE: Record<string, [number, number]> = {
-  ramp: [0, 0],
-  'mar-farm': [0, 64],
-  plaza: [132, 64],
-  colonia: [264, 64],
-  'lake-road': [396, 64],
-  'white-bowl': [360, 196],
+  ramp: [40, 0],
+  'seven-flags': [0, 64],
+  'lake-road': [192, 128],
+  'white-bowl': [156, 260],
 };
-/** Where a new game starts: Mar Farm's yard, by the lane. */
-export const START: Spot = { x: 26, z: 64 + 50, face: 'N' };
+/** Where a new game starts: the lot in front of Mar Farm, by Papá. */
+export const START: Spot = { x: 137, z: 64 + 122.5, face: 'N' };
 
 export function spanRegion(mood: Mood, night: boolean, start: Spot = START): RegionSpec {
   resetSpan();
@@ -70,9 +62,7 @@ export function spanRegion(mood: Mood, night: boolean, start: Spot = START): Reg
     lights: 10,
     pieces: [
       { at: PLACE.ramp!, spec: ramp(night) },
-      { at: PLACE['mar-farm']!, spec: marFarm(night) },
-      { at: PLACE.plaza!, spec: plaza(night) },
-      { at: PLACE.colonia!, spec: colonia(night) },
+      { at: PLACE['seven-flags']!, spec: sevenFlagsTown(night) },
       { at: PLACE['lake-road']!, spec: lakeRoad(night) },
       { at: PLACE['white-bowl']!, spec: whiteBowl(night) },
     ],
@@ -100,10 +90,10 @@ export function spanRegion(mood: Mood, night: boolean, start: Spot = START): Reg
 /** The rooms behind the Span's lit doors, and where each one lets you back out. */
 export function spanRooms(night: boolean): Record<string, AreaBuilder> {
   return {
-    'mar-home': marHome({ to: SPAN, spawn: 'mar-farm:home', night }),
-    chapel: chapel({ to: SPAN, spawn: 'plaza:chapel', night }),
-    'fina-house': finaHouse({ to: SPAN, spawn: 'plaza:fina', night }),
-    'kids-house': kidsHouse({ to: SPAN, spawn: 'plaza:kids', night }),
+    'mar-home': marHome({ to: SPAN, spawn: 'seven-flags:home', night }),
+    chapel: chapel({ to: SPAN, spawn: 'seven-flags:chapel', night }),
+    'fina-house': finaHouse({ to: SPAN, spawn: 'seven-flags:fina', night }),
+    'kids-house': kidsHouse({ to: SPAN, spawn: 'seven-flags:kids', night }),
   };
 }
 
@@ -111,8 +101,8 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
 export const UNBUILT: Record<string, string> = {
   'thirty-five': 'The Thirty-Five runs north from here, toward the Gate. The caravan isn’t ready to leave.',
   'east-loop': 'The east road runs on into the brush. Not tonight.',
-  'old-trail': 'The lane goes on north into the brush, toward the Old Trail. Not tonight.',
-  'dead-river': 'The road runs on south, down to the Dead River. Not tonight.',
+  'dead-river': 'Del Mar runs on west under the Thirty-Five, down to the Dead River. Not tonight.',
+  'south-road': 'McPherson runs on south, out of town. Not tonight.',
 };
 
 export function useSpanApron(): void { setApronTexture(spanApron()); }

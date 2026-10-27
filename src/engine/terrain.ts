@@ -18,16 +18,16 @@ const SCRUB = ['#2f3a1d', '#3d4a25', '#4a5530', '#5a5a35'].map(H);
 const MUD = ['#3f3527', '#4a3f2e', '#55493a'].map(H);
 const FLOWERS = ['#e3c34a', '#ece6d6', '#5e6fd0', '#c4473a', '#b07ad0'].map(H);
 
-/** Paint the whole outdoor floor as one pixel-art texture, 16px per tile. */
-function paintGround(): THREE.CanvasTexture {
+/** Paint a piece of the outdoor floor (x0, z0, w × h units) as one pixel-art texture, 16px per unit.
+ *  Big maps are painted in tiles so no texture is larger than a phone can hold. */
+function paintGround(x0: number, z0: number, w: number, h: number): THREE.CanvasTexture {
   const wd = world();
-  const COLS = wd.cols, ROWS = wd.rows;
-  const W = COLS * TEXEL_PER_UNIT, Hh = ROWS * TEXEL_PER_UNIT;
+  const W = w * TEXEL_PER_UNIT, Hh = h * TEXEL_PER_UNIT;
   const p = new Pix(W, Hh);
-  const r = rng(wd.seed ?? 2026);
+  const r = rng((wd.seed ?? 2026) + x0 * 131 + z0 * 977);
   for (let py = 0; py < Hh; py++)
     for (let px = 0; px < W; px++) {
-      const x = (px + 0.5) / TEXEL_PER_UNIT, z = (py + 0.5) / TEXEL_PER_UNIT;
+      const x = x0 + (px + 0.5) / TEXEL_PER_UNIT, z = z0 + (py + 0.5) / TEXEL_PER_UNIT;
       // jittered lookup → organic, hand-drawn boundaries instead of tile seams
       const jx = x + (fbm(x * 0.9, z * 0.9, 9, 2) - 0.5) * 0.75;
       const jz = z + (fbm(x * 0.9, z * 0.9, 19, 2) - 0.5) * 0.75;
@@ -67,12 +67,13 @@ function paintGround(): THREE.CanvasTexture {
     }
   // darken under/around building footprints: a painted contact shadow
   for (const s of solidRects()) {
+    if (s.x1 + 0.4 < x0 || s.x0 - 0.4 > x0 + w || s.z1 + 0.4 < z0 || s.z0 - 0.4 > z0 + h) continue;
     for (let z = s.z0 - 0.4; z < s.z1 + 0.4; z += 1 / TEXEL_PER_UNIT)
       for (let x = s.x0 - 0.4; x < s.x1 + 0.4; x += 1 / TEXEL_PER_UNIT) {
         const dx = Math.max(s.x0 - x, 0, x - s.x1), dz = Math.max(s.z0 - z, 0, z - s.z1);
         const d = Math.hypot(dx, dz);
         const k = 0.72 + Math.min(1, d / 0.4) * 0.28;
-        const px = Math.floor(x * TEXEL_PER_UNIT), py = Math.floor(z * TEXEL_PER_UNIT);
+        const px = Math.floor((x - x0) * TEXEL_PER_UNIT), py = Math.floor((z - z0) * TEXEL_PER_UNIT);
         if (px < 0 || py < 0 || px >= W || py >= Hh) continue;
         const c = p.get(px, py);
         p.set(px, py, [c[0] * k, c[1] * k, c[2] * k]);
@@ -106,15 +107,20 @@ export function scrubTex(): THREE.Texture {
 
 export function buildGround(scene: THREE.Scene): void {
   const { cols: COLS, rows: ROWS, openings = [] } = world();
-  const g = new THREE.PlaneGeometry(COLS, ROWS, COLS * 4, ROWS * 4);
-  g.rotateX(-Math.PI / 2);
-  g.translate(COLS / 2, 0, ROWS / 2);
-  const pos = g.attributes.position as THREE.BufferAttribute;
-  for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
-  g.computeVertexNormals();
-  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: paintGround(), roughness: 1, metalness: 0 }));
-  m.receiveShadow = true;
-  scene.add(m);
+  // in tiles of at most 64 units (1024 px textures): heights meet exactly at the tile edges
+  const TILE = 64;
+  for (let tz = 0; tz < ROWS; tz += TILE) for (let tx = 0; tx < COLS; tx += TILE) {
+    const w = Math.min(TILE, COLS - tx), h = Math.min(TILE, ROWS - tz);
+    const g = new THREE.PlaneGeometry(w, h, w * 4, h * 4);
+    g.rotateX(-Math.PI / 2);
+    g.translate(tx + w / 2, 0, tz + h / 2);
+    const pos = g.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: paintGround(tx, tz, w, h), roughness: 1, metalness: 0 }));
+    m.receiveShadow = true;
+    scene.add(m);
+  }
   if (!aprons) return; // the overworld frames all its chunks at once
 
   // a frame of scrubland beyond the map edge (level with the berm top), so

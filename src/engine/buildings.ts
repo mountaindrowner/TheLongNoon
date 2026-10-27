@@ -72,6 +72,20 @@ export interface BuildingSpec {
   /** Vines climbing the front: x offsets. */
   vines?: number[];
   seed?: number;
+  /** Turned about its centre (radians, small angles: a house set square to a street that isn't). */
+  rot?: number;
+}
+
+/** A point in a building's own space (x across the front, z toward the front) turned into world space. */
+export function onBuilding(b: { x: number; z: number; rot?: number }, lx: number, lz: number): [number, number] {
+  const c = Math.cos(b.rot ?? 0), s = Math.sin(b.rot ?? 0);
+  return [b.x + lx * c + lz * s, b.z - lx * s + lz * c];
+}
+/** The axis-aligned box a turned footprint covers (for collision). */
+export function footprint(x: number, z: number, w: number, d: number, rot = 0): [number, number, number, number] {
+  const c = Math.abs(Math.cos(rot)), s = Math.abs(Math.sin(rot));
+  const hx = (c * w + s * d) / 2, hz = (s * w + c * d) / 2;
+  return [x - hx, z - hz, x + hx, z + hz];
 }
 
 /**
@@ -85,6 +99,7 @@ export function building(scene: THREE.Scene, b: BuildingSpec, night: boolean): B
   const g = new THREE.Group();
   const y0 = heightAt(b.x, b.z);
   g.position.set(b.x, y0, b.z);
+  g.rotation.y = b.rot ?? 0;
   scene.add(g);
   const wall = typeof b.wall === 'string' ? M[b.wall]() : b.wall;
   g.add(box(b.w + 0.24, 0.22, b.d + 0.24, M.concrete(), 0, -0.12, 0)); // footing
@@ -120,10 +135,10 @@ export function building(scene: THREE.Scene, b: BuildingSpec, night: boolean): B
   for (const dr of b.doors ?? []) {
     const w = dr.w ?? 1.1, h = dr.h ?? 1.95;
     built.push(dr.dress ? dr.dress(g, dr.x, b.d / 2 + 0.01, w, h) : dressDoor(g, dr.x, 0, b.d / 2 + 0.01, w, h, dr.state, night, 0, { fresh: dr.fresh }));
-    markDoor(b.x + dr.x, b.z + b.d / 2, dr.state);
+    markDoor(...onBuilding(b, dr.x, b.d / 2), dr.state);
   }
   for (const vx of b.vines ?? []) vines(g, vx, 0, b.d / 2 + 0.03, 0.9 + r() * 0.8, 0.9 + r() * 1.3);
-  addSolid(b.x - b.w / 2, b.z - b.d / 2, b.x + b.w / 2, b.z + b.d / 2);
+  addSolid(...footprint(b.x, b.z, b.w, b.d, b.rot));
   shade(g);
   return built;
 }

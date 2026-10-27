@@ -12,25 +12,25 @@ import { brushFill, openScatter, motte, clearOf } from './fill';
 import { rubble } from './ruins';
 
 /**
- * THE RAMP (the Span; medium, 88×64). The last of the Span before the
- * highway: the frontage road up from Mar Farm, the on-ramp climbing to the
- * Thirty-Five, the highway on its embankment heading north. Road leg, tier
- * ruined, quiet on purpose (methodology §7.2).
+ * THE RAMP (the Span; medium, 88×64). The Thirty-Five north out of Seven
+ * Flags: four lanes and a median, an exit ramp down to an old fuel stop, the
+ * checkpoint, and the overpass that came down. Road leg, tier ruined, quiet
+ * on purpose (methodology §7.2): the region's road out.
  *
- * - Hero: where the highway stops: the embankment sheared off, the slab
- *   tipped into the dirt, rebar hanging out of it.
+ * - Hero: the overpass, half of it down across the southbound lanes, rebar hanging out of the break.
  * - Routine: the checkpoint gantry over the ramp, its scanner still sweeping, its lamp still saying STOP.
  * - Signature: the green sign face-down by the ramp. Underneath, out of the sun, it kept its
  *   letters: the region's one Old Name (methodology §3.5).
  * - Side pocket: a fuel canopy and a restroom block, shut: a shade-hold to come back to.
- * - Ways out: south to Mar Farm (the frontage road); north up the Thirty-Five (the next region).
+ * - Ways out: south down the Thirty-Five into town; north up the Thirty-Five (the next region).
  */
 
 export const COLS = 88, ROWS = 64;
-const TOP = 3.4;
-const HW = { x0: 6, x1: 20, z1: 38 }; // the highway on its embankment, four lanes
-const A: [number, number] = [50, 46], B: [number, number] = [22, 17]; // the on-ramp, foot to top
-const FRONTAGE: Array<[number, number]> = [[66, ROWS + 1], [64, 56], [58, 50], [A[0], A[1]]];
+const TOP = 0; // the highway runs at grade here, as it does through town
+const HW = { x0: 7, x1: 19, z1: ROWS }; // the highway, four lanes, the whole length of the map
+const A: [number, number] = [50, 46], B: [number, number] = [20, 20]; // the exit ramp, from the fuel stop up to the highway
+const FRONTAGE: Array<[number, number]> = [[A[0], A[1]], [56, 40]];
+const BRIDGE = 30; // where the overpass crossed
 
 const smooth = (a: number, b: number, v: number): number => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 function rampParam(x: number, z: number): [number, number] {
@@ -57,65 +57,59 @@ export function ramp(night: boolean): SectionSpec {
       g.blob(76, 50, 6, 5, 's', 22, (q) => q === 'x');
       g.rect(HW.x0, 0, HW.x1 - HW.x0, HW.z1 + 1, 'd'); // the highway deck
       g.line([A, B], 4.4, 'd'); // the on-ramp
-      g.line(FRONTAGE, 3.4, 'e', (q) => q !== 'd'); // the frontage road up from home
+      g.line(FRONTAGE, 3.4, 'e', (q) => q !== 'd');
       g.rect(60, 8, 22, 16, 'b'); // the fuel lot, broken concrete
       g.line([[58, 50], [70, 24]], 2.6, 'e', (q) => q !== 'd'); // a track to the lot
       // brush: mottes east and south, a long wall of it under the embankment
       motte(g, 78, 40, 9, 8, 31); motte(g, 40, 58, 10, 5, 32); motte(g, 32, 34, 6, 5, 33); motte(g, 82, 4, 6, 4, 34);
-      motte(g, 24, 52, 9, 7, 35); motte(g, 52, 24, 5, 4, 36);
+      motte(g, 34, 52, 7, 6, 35); motte(g, 52, 24, 5, 4, 36);
     },
     height(x, z, h) {
-      // the on-ramp rises from the frontage road to the deck
-      const [t, dd] = rampParam(x, z);
+      // the highway and its ramp lie flat; the land rolls a little either side
+      const [, dd] = rampParam(x, z);
       let out = h;
-      if (dd < 3.2) out = THREE.MathUtils.lerp(TOP * t, h, smooth(2.2, 3.2, dd));
-      // the highway's embankment, flat on top, ending where it was cut
-      const e = Math.hypot(Math.max(HW.x0 - x, 0, x - HW.x1), Math.max(0, z - HW.z1));
-      if (e < 1.2) out = THREE.MathUtils.lerp(TOP, out, smooth(0, 1.2, e));
+      if (dd < 3.2) out = THREE.MathUtils.lerp(0, h, smooth(2.2, 3.2, dd));
+      const e = Math.max(HW.x0 - x, 0, x - HW.x1);
+      if (e < 1.2) out = THREE.MathUtils.lerp(0, out, smooth(0, 1.2, e));
       return out;
     },
     paint(glyph, x, z, fine) {
       // lane dashes on the deck, half gone
-      if (glyph === 'd' && x > HW.x0 && x < HW.x1 && z < HW.z1 && (Math.abs(x - 9.5) < 0.07 || Math.abs(x - 16.5) < 0.07) && (z % 3) < 1.6 && fine > 0.3) return [200, 192, 172];
+      if (glyph === 'd' && x > HW.x0 && x < HW.x1 && z < HW.z1 && (Math.abs(x - 10) < 0.07 || Math.abs(x - 16) < 0.07) && (z % 3) < 1.6 && fine > 0.3) return [200, 192, 172];
       if (glyph === 'd' && x > HW.x0 && x < HW.x1 && Math.abs(x - 13) < 0.1 && fine > 0.2) return [190, 160, 70]; // the yellow line down the middle
       return spanPaint(glyph, x, z, fine);
     },
     edges: { n: 'brush', w: 'bluff', e: 'brush', s: 'brush' },
     exits: [
       { side: 'n', at: 13, w: 12, to: 'thirty-five', spawn: 'south', name: 'north' },
-      { side: 's', at: 66, w: 5, to: 'mar-farm', spawn: 'ramp', name: 'farm' },
+      { side: 's', at: 13, w: 12, to: 'seven-flags', spawn: 'north', name: 'town' },
     ],
     dress(d) {
       const { scene } = d;
       const seed = (): number => d.seed();
 
-      // ------------------------------------------------ the highway: retaining walls, barriers, the cut end (hero)
-      retainingWall(scene, HW.x1 + 0.15, 0, HW.x1 + 0.15, 12.0, TOP);
-      retainingWall(scene, HW.x1 + 0.15, 22.4, HW.x1 + 0.15, HW.z1, TOP);
-      retainingWall(scene, HW.x0 - 0.15, 0, HW.x0 - 0.15, HW.z1, TOP);
-      retainingWall(scene, HW.x0 - 0.15, HW.z1 + 0.15, HW.x1 + 0.15, HW.z1 + 0.15, TOP);
-      addSolid(HW.x1, 0, HW.x1 + 0.4, 12.0); addSolid(HW.x1, 22.4, HW.x1 + 0.4, HW.z1 + 0.4);
-      addSolid(HW.x0 - 0.4, 0, HW.x0, HW.z1 + 0.4); addSolid(HW.x0, HW.z1, HW.x1, HW.z1 + 0.4);
-      jerseys(scene, [[6.6, 0.4], [6.6, 37.6]], seed(), TOP);
-      jerseys(scene, [[13, 2], [13, 30]], seed(), TOP); // the median
-      jerseys(scene, [[19.4, 0.4], [19.4, 11.4]], seed(), TOP);
-      jerseys(scene, [[19.4, 23.0], [19.4, 37.6]], seed(), TOP);
-      jerseys(scene, [[7.4, 37.6], [18.6, 37.6]], seed(), TOP); // somebody blocked the edge
-      // the slab that went down, rebar out of the cut like roots
-      const slab = box(13.2, 0.6, 6.4, M.concrete(), 0, 0, 0);
-      slab.position.set(13, 1.4, 41.4);
-      slab.rotation.x = 0.6;
-      scene.add(shade(slab));
-      addSolid(6.4, 38.4, 19.6, 44.6);
+      // ------------------------------------------------ the highway: the median, the overpass that came down (hero)
+      jerseys(scene, [[13, 0.6], [13, BRIDGE - 5]], seed());
+      jerseys(scene, [[13, BRIDGE + 5], [13, ROWS - 0.6]], seed());
+      // the piers either side, the half that still stands over the northbound lanes, the half that fell
+      for (const px of [4.6, 21.4]) { scene.add(box(1.2, 5.2, 1.6, M.concrete(), px, 0, BRIDGE)); addSolid(px - 0.6, BRIDGE - 0.8, px + 0.6, BRIDGE + 0.8); }
+      scene.add(box(1.0, 5.2, 1.4, M.concrete(), 13, 0, BRIDGE)); addSolid(12.5, BRIDGE - 0.7, 13.5, BRIDGE + 0.7);
+      const deck = box(9, 0.8, 4.2, M.concrete(), 0, 0, 0);
+      deck.position.set(17.4, 5.2, BRIDGE);
+      scene.add(shade(deck));
+      const fallen = box(9.4, 0.8, 4.2, M.concrete(), 0, 0, 0);
+      fallen.position.set(8.6, 1.9, BRIDGE + 0.4);
+      fallen.rotation.z = -0.42;
+      scene.add(shade(fallen));
+      addSolid(4.4, BRIDGE - 2.2, 12.6, BRIDGE + 2.6);
       const rebar = colMat('#5a3a26', { metalness: 0.5 });
-      for (let i = 0; i < 18; i++) scene.add(beam(new THREE.Vector3(6.6 + i * 0.75, TOP - 0.3, HW.z1 + 0.3), new THREE.Vector3(6.8 + i * 0.75 + Math.sin(i * 2.1) * 0.4, TOP - 0.9 - (i % 3) * 0.3, HW.z1 + 0.9 + (i % 2) * 0.4), 0.035, rebar));
-      for (const [x, z, s] of [[5.2, 42, 0.6], [20.6, 43, 0.7], [9, 46, 0.5], [17, 47, 0.45], [22.6, 40.4, 0.55], [12, 49, 0.4]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
-      rubble(scene, 16, 47.5, 1.3, seed());
+      for (let i = 0; i < 10; i++) scene.add(beam(new THREE.Vector3(12.9, 4.8 + (i % 3) * 0.2, BRIDGE - 1.8 + i * 0.4), new THREE.Vector3(12.0 - (i % 2) * 0.4, 3.9 - (i % 3) * 0.4, BRIDGE - 1.8 + i * 0.4 + Math.sin(i) * 0.3), 0.035, rebar));
+      for (const [x, z, s] of [[5.2, 34, 0.6], [11, 36, 0.5], [8, 26.6, 0.45], [6.4, 37.4, 0.4]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
+      rubble(scene, 9, 35, 1.3, seed());
       // the highway goes on north, out of the region
-      scene.add(box(HW.x1 - HW.x0, TOP + 1.2, 40, M.concrete(), (HW.x0 + HW.x1) / 2, -1.2, -20));
-      scene.add(box(HW.x1 - HW.x0 - 0.6, 0.02, 40, colMat('#5f5c57', { roughness: 1 }), (HW.x0 + HW.x1) / 2, TOP, -20));
-      carHulk(scene, 10, 8, 0.1, seed()); carHulk(scene, 16.4, 26, 3.2, seed()); // stopped where they stopped
-      cairn(scene, 9.6, 22, seed()); // up on the deck: given to the sun
+      scene.add(box(HW.x1 - HW.x0, 0.02, 40, colMat('#5f5c57', { roughness: 1 }), (HW.x0 + HW.x1) / 2, 0, -20));
+      carHulk(scene, 10, 8, 0.1, seed()); carHulk(scene, 16.4, 46, 3.2, seed()); // stopped where they stopped
+      cairn(scene, 23.4, 12, seed()); // by the shoulder: given to the sun
 
       // ------------------------------------------------ the on-ramp, its barriers, the gantry (routine)
       const [dx, dz] = [B[0] - A[0], B[1] - A[1]], L = Math.hypot(dx, dz), nx = dz / L, nz = -dx / L;
@@ -135,15 +129,15 @@ export function ramp(night: boolean): SectionSpec {
 
       // ------------------------------------------------ brush
       brushFill(d, 63, 1);
-      openScatter(d, 64, ['x', 's'], 0.9, (x, z) => clearOf(FRONTAGE, 3)(x, z) && clearOf([A, B], 4)(x, z) && !(x < HW.x1 + 1.5 && z < HW.z1 + 8));
+      openScatter(d, 64, ['x', 's'], 0.9, (x, z) => clearOf(FRONTAGE, 3)(x, z) && clearOf([A, B], 4)(x, z) && x > HW.x1 + 1.5);
 
       // ------------------------------------------------ what you can look at
       d.things.push(
         { x: 44, z: 33.6, r: 2.6, label: 'Sign', lines: ['A highway sign, face down in the caliche.', 'Underneath, where the sun never reached, the letters are still white: NORTH 35. SAN ANTONIO 154.'] },
         { x: P[0]!, z: P[1]! + 1.0, r: 2.4, label: 'Gantry', lines: ['A steel frame over the ramp. Something on it turns to watch whatever passes. A red light says STOP.'] },
-        { x: 13, z: 45.4, r: 3.2, label: 'The end of the road', lines: ['The highway just stops. The rest of it is down there, in pieces, rebar hanging out like roots.'] },
+        { x: 13, z: BRIDGE + 3.6, r: 3.4, label: 'Overpass', lines: ['An overpass, half of it down across the southbound lanes, rebar hanging out of the break like roots.', 'The other half still stands, carrying nothing.'] },
         { x: 78.4, z: 22.4, r: 1.4, label: 'Door', lines: ['Shut. Cool air comes from under it.'] },
-        { x: 9.6, z: 23.2, r: 1.4, label: 'Stones', lines: ['Stones stacked waist high, bleached white. Bones between them, set with care.'] },
+        { x: 23.4, z: 13.2, r: 1.4, label: 'Stones', lines: ['Stones stacked waist high, bleached white. Bones between them, set with care.'] },
         { x: 68, z: 17.6, r: 2.6, label: 'Canopy', lines: ['A roof on four legs over dead pumps. Open on every side.'] },
       );
     },

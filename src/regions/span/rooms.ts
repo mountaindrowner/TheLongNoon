@@ -316,7 +316,7 @@ export function chapel(l: RoomLinks): AreaBuilder {
       d.pool.add({ pos: new THREE.Vector3(6.5, 1.6, 2.8), color: new THREE.Color('#ffb860'), intensity: 9, dist: 9, flicker: 0.2 });
       d.pool.add({ pos: new THREE.Vector3(10.6, 1.4, 4.2), color: new THREE.Color('#ffb060'), intensity: 6, dist: 6, flicker: 0.25 });
       pendant(g, d.pool, 6.5, 8.6, true);
-      d.npcs.push({ id: 'tona', name: 'Abuela Toña', sprite: 'tona', x: 10.4, z: 4.6, face: 'N', lines: ['One candle for Elías. One for Rosa, in case.', "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."] });
+      // Abuela Toña sits outside now, at the elders' table (the owner's map, 2026-10-27)
       d.things.push({ x: 10.6, z: 4.4, r: 1.4, label: 'Candles', lines: ['Rows of candles in jars. Three of them are new tonight.'] });
       d.built.push({ update(t) { altar.emissiveIntensity = 3.2 * (0.9 + Math.sin(t * 7.3) * 0.07); rack.emissiveIntensity = 3.2 * (0.88 + Math.sin(t * 9.1 + 1) * 0.09); } });
     },
@@ -348,7 +348,7 @@ export function finaHouse(l: RoomLinks): AreaBuilder {
       cot(g, 2.4, 6.6, '#6a8a4a', Math.PI / 2);
       rug(g, 6.0, 6.8, 2.2, 1.4, 12);
       tableLantern(d, 6.8, 0.8, 4.5);
-      d.npcs.push({ id: 'fina', name: 'Doña Fina', sprite: 'fina', x: 6.0, z: 5.6, face: 'S', lines: ['Agua, agua. Clean, boiled, blessed. Two out of three, guaranteed.', 'Which two? Depends on the day, mija.'] });
+      // Doña Fina is out at her stall in the plaza (the owner's map, 2026-10-27)
       d.things.push(
         { x: 2.4, z: 2.9, r: 1.4, label: 'Pot', lines: ['A pot the size of a child, at a slow boil. The steam smells like iron.'] },
         { x: 9.8, z: 5.0, r: 1.2, label: 'Radio', lines: ['An old radio. The dial is lit. Nothing comes out of it but a low hiss, and she leaves it on.'] },

@@ -11,8 +11,8 @@ import { salvageFence, rubble, ruinWall } from './ruins';
 
 /**
  * THE LAKE ROAD (the Span; large and portrait, 96×132). The long way from
- * the east end of town down to the dry lake. The boulevard comes in from the
- * Colonia and runs on east into brush nobody takes after Lamp; at the fork,
+ * the east end of town down to the dry lake. Del Mar comes in from the
+ * barricade at the edge of Seven Flags and runs on east into brush nobody takes after Lamp; at the fork,
  * the lake road turns south and goes on and on, the drain running beside it.
  * Road leg, tier ruined.
  *
@@ -22,7 +22,7 @@ import { salvageFence, rubble, ruinWall } from './ruins';
  *   running south beside the road all the way to the lake.
  * - Seen, never said: small tracks, six wheels, coming up out of the drain and heading east (Memo's "little tracks").
  * - Side pocket: the salvage yard, where the town's fences come from: cars stacked on cars.
- * - Ways out: west into the Colonia; east on the boulevard (not built); south to the White Bowl, by the
+ * - Ways out: west into Seven Flags (past Memo's barricade on Del Mar); east on the boulevard (not built); south to the White Bowl, by the
  *   road or down the drain.
  * - The culverts are dark: a way in that needs a light you don't have yet (the drains, a dungeon to come).
  */
@@ -79,7 +79,7 @@ export function lakeRoad(night: boolean): SectionSpec {
     },
     edges: { n: 'brush', e: 'brush', w: 'brush', s: 'brush' },
     exits: [
-      { side: 'w', at: 60, w: 10, to: 'colonia', spawn: 'east', name: 'town' },
+      { side: 'w', at: 60, w: 9, to: 'seven-flags', spawn: 'east', name: 'town' },
       { side: 'e', at: 60, w: 6, to: 'east-loop', spawn: 'west', name: 'east' },
       { side: 's', at: 44, w: 8, to: 'white-bowl', spawn: 'road', name: 'lake' },
       { side: 's', at: 69, w: 6, to: 'white-bowl', spawn: 'drain', name: 'drain' },

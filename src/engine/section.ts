@@ -57,10 +57,11 @@ export class Grid {
     this.m = Array.from({ length: rows }, () => Array.from({ length: cols }, () => fill));
   }
   inb(x: number, z: number): boolean { return x >= 0 && z >= 0 && x < this.cols && z < this.rows; }
-  get(x: number, z: number): string { return this.inb(x, z) ? this.m[z]![x]! : '#'; }
-  set(x: number, z: number, c: string): void { if (this.inb(x, z)) this.m[z]![x] = c; }
+  get(x: number, z: number): string { x = Math.floor(x); z = Math.floor(z); return this.inb(x, z) ? this.m[z]![x]! : '#'; }
+  set(x: number, z: number, c: string): void { x = Math.floor(x); z = Math.floor(z); if (this.inb(x, z)) this.m[z]![x] = c; }
+  /** Every cell whose centre lies in the rectangle (fractional corners are fine). */
   rect(x0: number, z0: number, w: number, h: number, c: string): void {
-    for (let z = z0; z < z0 + h; z++) for (let x = x0; x < x0 + w; x++) this.set(x, z, c);
+    for (let z = Math.round(z0); z < Math.round(z0 + h); z++) for (let x = Math.round(x0); x < Math.round(x0 + w); x++) this.set(x, z, c);
   }
   /** A thick polyline (roads, creeks): every cell whose centre is within w/2 of the line. */
   line(pts: Array<[number, number]>, w: number, c: string, only?: (cur: string) => boolean): void {

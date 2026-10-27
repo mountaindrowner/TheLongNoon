@@ -32,7 +32,7 @@ for (const time of ['lamp', 'night', 'white']) {
     const errors = watchErrors(page);
     await boot(page, time);
     expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
-    expect(await page.evaluate(() => window.__LN.piece)).toBe('mar-farm');
+    expect(await page.evaluate(() => window.__LN.piece)).toBe('seven-flags');
     expect(await page.evaluate(() => window.__LN.doorIssues)).toEqual([]);
     expect(await page.evaluate(() => window.__LN.checkAllRooms())).toEqual([]);
     await page.screenshot({ path: info.outputPath(`span-${time}.png`) });
@@ -40,41 +40,42 @@ for (const time of ['lamp', 'night', 'white']) {
   });
 }
 
-// Region coordinates (src/regions/span/region.ts PLACE): the Ramp (0,0) 88×64, Mar Farm (0,64), the Plaza (132,64),
-// the Colonia (264,64), all 132×96; the Lake Road (396,64) 96×132; the White Bowl (360,196) 132×96.
+// Region coordinates (src/regions/span/region.ts PLACE): the Ramp (40,0) 88×64; Seven Flags, the town (0,64) 192×160;
+// the Lake Road (192,128) 96×132; the White Bowl (156,260) 132×96.
 test('every map is where the region says it is', async ({ page }) => {
   test.setTimeout(240_000);
   await boot(page, 'night');
-  const where = await page.evaluate(() => [[40, 30], [26, 114], [198, 100], [330, 110], [440, 170], [440, 250]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
-  expect(where).toEqual(['ramp', 'mar-farm', 'plaza', 'colonia', 'lake-road', 'white-bowl']);
+  const where = await page.evaluate(() => [[80, 30], [100, 150], [240, 200], [240, 300]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
+  expect(where).toEqual(['ramp', 'seven-flags', 'lake-road', 'white-bowl']);
+  expect(await page.evaluate(() => window.__LN.piece)).toBe('seven-flags');
 });
 
-test('Juno walks from the farm into the Plaza with no cut, and solid things stop her', async ({ page }) => {
+test('Juno walks out of town onto the Lake Road with no cut, and solid things stop her', async ({ page }) => {
   test.setTimeout(300_000);
   await boot(page);
-  // the boulevard runs east from the farm into the Plaza through a gap in the brush at x 132
-  await page.evaluate(() => window.__LN.tp(131.2, 124));
+  // Del Mar runs east past Memo's barricade into the Lake Road through a gap in the brush at x 192
+  await page.evaluate(() => window.__LN.tp(191.2, 188));
   await page.keyboard.down('KeyD');
-  await until(page, () => window.__LN.pos[0] > 132.4, undefined, 150_000);
+  await until(page, () => window.__LN.pos[0] > 192.4, undefined, 150_000);
   await page.keyboard.up('KeyD');
-  expect(await page.evaluate(() => window.__LN.piece)).toBe('plaza');
+  expect(await page.evaluate(() => window.__LN.piece)).toBe('lake-road');
   expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
-  // the store's front wall is solid: walking north from the lot stops at its face (z 64 + 42.5)
-  await page.evaluate(() => window.__LN.tp(28, 108.4));
+  // Mar Farm's front wall is solid: walking north across the lot stops at its face (z 64 + 115.9)
+  await page.evaluate(() => window.__LN.tp(139, 182));
   await page.keyboard.down('KeyW');
-  await until(page, () => window.__LN.pos[1] < 107.4);
+  await until(page, () => window.__LN.pos[1] < 180.9);
   let prev = 999;
   for (;;) { const z = (await pos(page))[1]; if (Math.abs(z - prev) < 1e-4) break; prev = z; await page.waitForTimeout(1500); }
   await page.keyboard.up('KeyW');
-  expect((await pos(page))[1]).toBeGreaterThan(106.5);
+  expect((await pos(page))[1]).toBeGreaterThan(179.9);
 });
 
 test('a lit door is a way in: into the chapel and back out to its step', async ({ page }, info) => {
   test.setTimeout(300_000);
   const errors = watchErrors(page);
   await boot(page, 'night');
-  // stand on the chapel step (Plaza 66, 11.6) facing the door, and use it
-  await page.evaluate(async () => { await window.__LN.tp(132 + 66, 64 + 11.6); window.__LN.face(0, -1); });
+  // stand on the chapel step (town 106, 111.4) facing the door, and use it
+  await page.evaluate(async () => { await window.__LN.tp(106, 64 + 111.4); window.__LN.face(0, -1); });
   await until(page, () => !!document.querySelector('.prompt.on'));
   await page.keyboard.press('KeyE');
   await until(page, () => window.__LN.areaId === 'chapel' && !window.__LN.busy);
@@ -84,15 +85,15 @@ test('a lit door is a way in: into the chapel and back out to its step', async (
   await until(page, () => window.__LN.areaId === 'span' && !window.__LN.busy);
   await page.keyboard.up('KeyS');
   const [x, z] = await pos(page);
-  expect(Math.abs(x - (132 + 66))).toBeLessThan(1.5);
-  expect(Math.abs(z - (64 + 11.6))).toBeLessThan(1.5);
+  expect(Math.abs(x - 106)).toBeLessThan(1.5);
+  expect(Math.abs(z - (64 + 111.4))).toBeLessThan(1.5);
   expect(errors).toEqual([]);
 });
 
 test('talking to Hermana Lupe opens her dialogue, and it closes', async ({ page }, info) => {
   test.setTimeout(240_000);
   await boot(page);
-  await page.evaluate(async () => { await window.__LN.tp(12.3, 64 + 39.4); window.__LN.face(-1, 0); });
+  await page.evaluate(async () => { await window.__LN.tp(131.9, 64 + 123); window.__LN.face(1, 0); });
   await until(page, () => !!document.querySelector('.prompt.on'));
   await page.keyboard.press('KeyE');
   await until(page, () => window.__LN.talking);
@@ -109,13 +110,13 @@ test('an unbuilt road turns you back at the edge instead of breaking', async ({ 
   test.setTimeout(240_000);
   const errors = watchErrors(page);
   await boot(page);
-  // the boulevard goes on east past the lake road's fork (x 492, z 64 + 60); the next region isn't built
-  await page.evaluate(() => window.__LN.tp(490.6, 124));
+  // Del Mar goes on east past the Lake Road's fork (x 288, z 128 + 60); the next region isn't built
+  await page.evaluate(() => window.__LN.tp(286.6, 188));
   await page.keyboard.down('KeyD');
   await until(page, () => !!document.querySelector('.hint'), undefined, 150_000);
   await page.keyboard.up('KeyD');
   await expect(page.locator('.hint')).toContainText('east road');
-  expect((await pos(page))[0]).toBeLessThan(492);
+  expect((await pos(page))[0]).toBeLessThan(288);
   expect(errors).toEqual([]);
 });
 

@@ -3,7 +3,7 @@ import { T, Pix } from '../../engine/textures';
 import { box, beam, cyl, colMat, texMat, shade } from '../../engine/geo';
 import { addSolid, heightAt } from '../../engine/world';
 import { rng, vnoise } from '../../engine/noise';
-import { building, windowAt, M, type Built, type DoorSpec } from '../../engine/buildings';
+import { building, windowAt, onBuilding, M, type Built, type DoorSpec } from '../../engine/buildings';
 import { batch } from '../../engine/batch';
 import { blockWall } from './props';
 import { spanDoor, type SpanDoor } from './doors';
@@ -91,6 +91,8 @@ export interface HouseSpec {
   /** A tarp over part of the roof. */
   tarp?: boolean;
   seed: number;
+  /** Turned to sit square to its street (radians, small). */
+  rot?: number;
 }
 
 /**
@@ -103,12 +105,13 @@ export function house(scene: THREE.Scene, s: HouseSpec, night: boolean): Built[]
   const k = Math.floor(r() * 5);
   const doors: DoorSpec[] = s.door ? [{ x: s.door.x, w: s.door.w, ...spanDoor(s.door.kind, night) }] : [];
   const built = building(scene, {
-    x: s.x, z: s.z, w: s.w, d: s.d, h: s.h, wall: patchMat(s.base, k), roof: 'shed', seed: s.seed,
+    x: s.x, z: s.z, w: s.w, d: s.d, h: s.h, wall: patchMat(s.base, k), roof: 'shed', seed: s.seed, rot: s.rot,
     doors, windows: s.windows?.map((w) => ({ x: w.x, kind: w.kind, w: 0.7, h: 0.7 })),
   }, night);
   const y0 = heightAt(s.x, s.z);
   const g = new THREE.Group();
   g.position.set(s.x, y0, s.z);
+  g.rotation.y = s.rot ?? 0;
   scene.add(g);
   // patches on the front and the sides: where the base gave out, something else holds
   const others: Patch[] = (['block', 'tin', 'ply', 'stucco', 'container'] as Patch[]).filter((p) => p !== s.base && p !== 'container');
@@ -144,8 +147,7 @@ export function house(scene: THREE.Scene, s: HouseSpec, night: boolean): Built[]
     const roof = box(pw + 0.4, 0.05, 2.1, M.tin(), px, s.h * 0.74, pz - 0.05);
     roof.rotation.x = 0.12;
     g.add(roof);
-    addSolid(s.x + px - pw / 2 - 0.08, s.z + pz + 0.5, s.x + px - pw / 2 + 0.08, s.z + pz + 0.7);
-    addSolid(s.x + px + pw / 2 - 0.08, s.z + pz + 0.5, s.x + px + pw / 2 + 0.08, s.z + pz + 0.7);
+    for (const sx of [-1, 1]) { const [qx, qz] = onBuilding(s, px + sx * pw / 2, pz + 0.6); addSolid(qx - 0.1, qz - 0.1, qx + 0.1, qz + 0.1); }
   }
   shade(g);
   return built;
