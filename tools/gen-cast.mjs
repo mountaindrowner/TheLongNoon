@@ -146,6 +146,8 @@ async function animate(id) {
 }
 
 // ------------------------------------------------------------------ the plan, or the work
+// the look is locked on the anchor (docs/design/cast.md): she's never remade by accident
+if (flag('--force') && want.includes(C.anchor) && !flag('--remake-anchor')) throw new Error(`${C.anchor} is the style anchor for the whole cast; remaking her needs the owner, and --remake-anchor`);
 const todo = want.filter((id) => flag('--anims') ? made(id) : flag('--force') || !made(id));
 const cost = todo.reduce((n, id) => n + (flag('--anims') ? C.cast[id].anims.length * COST.template : COST.figure), 0);
 console.log(`${flag('--anims') ? 'animate' : 'make'}: ${todo.join(', ') || 'nothing'} (about ${cost} generations)`);

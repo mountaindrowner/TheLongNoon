@@ -9,6 +9,7 @@ spec. Every session starts fresh, so read these first:
 - `docs/design/held-ideas.md`: the owner's ideas waiting for a go (daytime shade-as-cover, …). Don't build them unasked.
 - `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
 - `docs/design/legacy-breakdown.md`: what the first version does, beat by beat, and where each part lives in the rebuild.
+- `docs/design/cast.md`: **the cast's locked look** (PixelLab, styled on Juno). New characters are made with `tools/gen-cast.mjs` and only that way.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
 - `legacy/poc2/`: the original proof of concept: its story, dialogue and quest data, sprites and music to bring across.

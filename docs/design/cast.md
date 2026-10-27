@@ -4,6 +4,42 @@
 figures made on PixelLab in the spec's locked style (`docs/style/world-style-spec.md`
 §13): 64 px, low top-down, lineless, chunky, saturated.
 
+## The look (locked by the owner, 2026-10-27)
+
+The owner saw the first thirteen (`docs/design/cast-preview.png`) and said:
+**"great style, make sure to capture that."** Every character from here on is
+made the same way, and nothing below changes without the owner.
+
+- **The anchor:** Juno, PixelLab character `d8dd94ff-62b8-482f-a3ce-31e888d3ceb1`.
+  - Every new figure passes her as `style_character_id`.
+  - She herself was styled on the spec's style character
+    (`cea31c61-3b70-4ec6-a617-413b60f80ece`).
+  - Never remake Juno without the owner. Remaking her changes the anchor
+    for everyone made after her.
+- **The request:** `v2/create-character-pro`, `method: create_with_style`,
+  `view: low top-down`, a 64 × 64 canvas, no background, `template_id:
+  mannequin` for people (`dog` for four-legged animals).
+- **The style line**, verbatim (`tools/cast.json` `style`): *modern indie
+  action-adventure pixel art: chunky stylized proportions, big bold readable
+  silhouette, saturated colours, lineless with strong graphic light and shadow
+  shapes, expressive and punchy*.
+- **The world line** for people, verbatim (`tools/cast.json` `person`): *a
+  person of a small South Texas border town generations after the sky turned
+  white, sun-faded patched clothes, dust on the boots*.
+- **How a person is described:** name and role, age, hair, then each layer of
+  clothing with its colour, then what they carry, then the face.
+  - Each person keeps one strong colour and one shape you can read from
+    across the plaza (Beto's sombrero, Chayo's red hair and apron, Kit's
+    goggles).
+  - Example (Chayo): *Doña Chayo, a stout middle-aged market trader: red hair
+    tied back, teal dress with a white apron, bangles, warm bossy face.*
+- **What it looks like:** chunky, lineless, strong light and shadow; worn,
+  patched, dusty clothes; real colour against the bleached town. Not chibi:
+  heads stay in proportion.
+- **In the game:** the figure is measured on its front-facing still, then
+  scaled to each person's height (`HEIGHT` in `src/game/actors.ts`), so
+  children read as children.
+
 ## How they're made
 
 - **The anchor is Juno.** She was made first, styled on the spec's style
