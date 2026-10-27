@@ -11,9 +11,8 @@ import charsUrl from '../assets/chars-poc2.png';
  * Two sources:
  * - **The cast from PixelLab** (docs/design/cast.md): one packed sheet per
  *   figure (src/assets/cast/<id>.png, laid out in cast.json by
- *   tools/pack-cast.py). The still figure faces four ways, and the idle and
- *   walk come in three (front, side, back), with the side mirrored for the
- *   other side.
+ *   tools/pack-cast.py). The still figure, the idle and the walk each face
+ *   four ways (a figure missing its west row plays its east row mirrored).
  * - **The first version's atlas** (16×24 frames, rows down/left/right/up,
  *   walk order 1-0-2-0), for anyone not remade yet.
  */

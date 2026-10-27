@@ -1,0 +1,20 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Tavo, a boy of about nine: spiky dark hair, orange t-shirt, dark shorts, scabbed knees, curious face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "d64a50f6-4a9d-44c6-8823-c155ec252444",
+  "anims": {},
+  "at": "2026-10-27T20:28:26.380Z"
+}

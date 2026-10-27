@@ -32,9 +32,9 @@ const want = ids.length ? ids : Object.keys(C.cast);
 for (const id of want) if (!C.cast[id]) throw new Error(`no ${id} in tools/cast.json`);
 
 // rough generation costs (§13.2: about 10 per 8-direction figure; template animations 1 per direction)
-const COST = { figure: 15, template: 3, custom: 3 };
-// animations in three directions (the owner, 2026-10-27): front, side, back; the other side is the side mirrored
-const DIRS3 = ['south', 'east', 'north'];
+const COST = { figure: 15, template: 4, custom: 4 };
+// animations in four directions (the owner, 2026-10-27): front, back and both sides
+const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
 const BODY = { person: 'mannequin', goat: 'dog', coyote: 'dog' };
 const ANIM = {
@@ -85,8 +85,27 @@ async function fetchZip(id, cid) {
   rmSync(tmp, { recursive: true, force: true });
 }
 
+/** A figure already on the account from an earlier run (a run cut short): adopt it instead of paying for it twice. */
+async function adopt(id) {
+  const c = C.cast[id];
+  const list = (await api('/characters?limit=60')).characters ?? [];
+  const found = list.find((x) => x.name?.startsWith(c.desc.slice(0, 48)) && x.status !== 'failed');
+  if (!found) return null;
+  for (let i = 0; ; i++) {
+    const x = await api(`/characters/${found.id}`);
+    if (x.status === 'completed') break;
+    if (x.status === 'failed' || i > 360) return null;
+    await sleep(5000);
+  }
+  mkdirSync(join(OUT, id), { recursive: true });
+  await fetchZip(id, found.id);
+  writeFileSync(join(OUT, id, 'prompt.json'), JSON.stringify({ source: 'pixellab', endpoint: 'v2/create-character-pro', adopted: true, description: found.name, character_id: found.id, anims: {}, at: new Date().toISOString() }, null, 2));
+  return `${id}: adopted (${found.id})`;
+}
+
 async function figure(id) {
   const c = C.cast[id];
+  if (!flag('--force')) { const a = await adopt(id); if (a) return a; }
   const anchor = id === C.anchor ? null : made(C.anchor);
   if (id !== C.anchor && !anchor) throw new Error(`${id}: make the anchor (${C.anchor}) first, and look at her`);
   const body = {
@@ -115,8 +134,8 @@ async function animate(id) {
     if (p.anims[name] && !flag('--force')) continue;
     const custom = CUSTOM[id]?.[name];
     const body = custom
-      ? { character_id: p.character_id, mode: 'v3', action_description: custom, frame_count: 8, animation_name: name, directions: DIRS3 }
-      : { character_id: p.character_id, template_animation_id: ANIM[name].template, animation_name: name, directions: DIRS3 };
+      ? { character_id: p.character_id, mode: 'v3', action_description: custom, frame_count: 8, animation_name: name, directions: DIRS4 }
+      : { character_id: p.character_id, template_animation_id: ANIM[name].template, animation_name: name, directions: DIRS4 };
     const sub = await api('/animate-character', body);
     await Promise.all((sub.background_job_ids ?? []).map(job));
     p.anims[name] = { animation_group_id: sub.animation_group_id, fps: ANIM[name].fps, body };

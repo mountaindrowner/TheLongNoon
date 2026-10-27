@@ -16,8 +16,8 @@ figures made on PixelLab in the spec's locked style (`docs/style/world-style-spe
 - **Directions:**
   - The still figure is made in all eight directions (PixelLab always makes
     eight).
-  - **Animations come in three directions only** (the owner, 2026-10-27):
-    front, side and back. The other side is the side mirrored.
+  - **Animations come in four directions** (the owner, 2026-10-27): front,
+    back and both sides.
 - **Animations:**
   - **People:** a breathing idle (PixelLab's `breathing-idle`, 5 fps).
     Juno and Kit also get a walk (`walking-8-frames`, 11 fps), because they
@@ -40,6 +40,8 @@ node tools/gen-cast.mjs --plan                                             # wha
   proxy.
 - **The floor:** the script stops before the account would drop under
   1,000 generations (`PIXELLAB_FLOOR` changes it).
+- **A run cut short** (a restart) leaves figures half-made on the account.
+  The next run adopts them by their description instead of paying twice.
 - **Where things go:** the raw PixelLab output and the request behind each
   figure (`prompt.json`, with its `character_id`) are kept in
   `assets/cast/<id>/`.

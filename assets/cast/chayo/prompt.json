@@ -1,0 +1,20 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Doña Chayo, a stout middle-aged market trader: red hair tied back, teal dress with a white apron, bangles, warm bossy face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "4da5efc8-e61e-428f-ad9d-d52ff2f3dd63",
+  "anims": {},
+  "at": "2026-10-27T20:19:27.412Z"
+}
