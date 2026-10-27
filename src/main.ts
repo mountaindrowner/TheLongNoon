@@ -248,7 +248,7 @@ async function load(): Promise<void> {
   const w = await buildWorld(SPAN);
   enter(w, 'start');
   showClock();
-  ui.titleCard('THE SPAN', 'A town that stayed');
+  ui.titleCard('SEVEN FLAGS', 'A town that stayed');
   lastPiece = (cur.area as Region).pieceAt(player.x, player.z)?.id ?? '';
   loaded = true;
 }

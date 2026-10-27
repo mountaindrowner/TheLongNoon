@@ -11,10 +11,10 @@ import { desertScatter } from './props';
  */
 
 /** Plants on every '#' cell at least `edge` in from the map's border (the border is the edge kit's). */
-export function brushFill(d: Dress, seed: number, k = 1, edge = 3): void {
+export function brushFill(d: Dress, seed: number, k = 1, edge = 3, keep: (x: number, z: number) => boolean = () => true): void {
   const g = d.grid, r = rng(seed);
   for (let z = edge; z < g.rows - edge; z++) for (let x = edge; x < g.cols - edge; x++) {
-    if (g.get(x, z) !== '#' || r() > 0.4 * k) continue;
+    if (g.get(x, z) !== '#' || r() > 0.4 * k || !keep(x, z)) continue;
     const px = x + r(), pz = z + r(), t = r(), s = 0.85 + r() * 0.5, sd = seed * 10000 + z * 300 + x;
     // the outer cells of a motte are lower stuff, the middle has trees standing out of it
     const inner = ['#'].includes(g.get(x - 2, z)) && g.get(x + 2, z) === '#' && g.get(x, z - 2) === '#' && g.get(x, z + 2) === '#';

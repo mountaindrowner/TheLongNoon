@@ -109,9 +109,10 @@ export function buildGround(scene: THREE.Scene): void {
   const { cols: COLS, rows: ROWS, openings = [] } = world();
   // in tiles of at most 64 units (1024 px textures): heights meet exactly at the tile edges
   const TILE = 64;
+  const K = COLS * ROWS > 20000 ? 2 : 4; // vertices per unit: a town-sized map is mostly flat, and twice as costly
   for (let tz = 0; tz < ROWS; tz += TILE) for (let tx = 0; tx < COLS; tx += TILE) {
     const w = Math.min(TILE, COLS - tx), h = Math.min(TILE, ROWS - tz);
-    const g = new THREE.PlaneGeometry(w, h, w * 4, h * 4);
+    const g = new THREE.PlaneGeometry(w, h, w * K, h * K);
     g.rotateX(-Math.PI / 2);
     g.translate(tx + w / 2, 0, tz + h / 2);
     const pos = g.attributes.position as THREE.BufferAttribute;

@@ -186,6 +186,31 @@ pieced together from ruins. `docs/design/regions/span.md` has the whole layout.
   - Memory peaked at 550 MB walking every map.
   - Real-device hitches still need measuring on a phone.
 
+## Piece 5 (done): Seven Flags, from the owner's map of the town
+
+The owner sent their own top-down map of the town ("SEVEN FLAGS: the
+playable town", 192 × 160, built from the real streets of north Laredo) and
+asked for the Span to follow it: less linear, more like the real place. The
+town is now one map (`src/regions/span/seven-flags.ts`), with the owner's
+layout, story places and people. Mar Farm, the Plaza and the Colonia maps are
+gone; their contents are in the town. The Ramp now carries the Thirty-Five
+north at grade, and the Lake Road joins at Memo's barricade on Del Mar.
+`docs/design/regions/span.md` has the details.
+
+- **Engine:**
+  - **Ground in tiles:** a map's ground is painted in tiles of at most 64
+    units (1024 px textures), so big maps stay within what phones hold. Big
+    maps also use half the ground-mesh density.
+  - **Turned buildings:** a building can turn to sit square to its street
+    (`rot`); door marks and collision follow (`onBuilding`, `footprint`).
+  - **Grid:** grid rectangles take fractional corners.
+- **Streets on their true lines:** the town paints its streets from their
+  centre lines, so diagonals have clean edges. A per-cell list of nearby
+  streets keeps the cost down.
+- **Checks:** the playtests cover every map's position, walking out of town
+  onto the Lake Road, Mar Farm's wall, the chapel in and out, Lupe, the
+  unbuilt east road, and the clock. They pass at 1080p.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

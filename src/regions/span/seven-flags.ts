@@ -397,7 +397,7 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       for (const pts of [INTL, SHILOH, DELMAR.slice(1)]) { const p = poles(pts, 5.6); powerLine(scene, p, p.slice(1).map((_, i) => [i, i + 1] as [number, number])); }
 
       // ------------------------------------------------ brush, the outside, the open ground
-      brushFill(d, 77, 0.8);
+      brushFill(d, 77, 0.8, 3, (x, z) => x > xAt(I35, z) - 18); // the outside, only as far as anyone can see from the road
       for (const [x, z, s] of [[120, 100, 1.1], [130, 88, 1.0], [96, 60, 1.0], [150, 50, 1.1], [60, 70, 0.9], [178, 100, 1.0]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.3);
       for (const [x, z, s] of [[124, 108, 0.9], [70, 96, 0.8], [158, 128.4, 0.9], [100, 120, 0.8], [176, 58, 1.0]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
       openScatter(d, 78, ['x', 's'], 0.25, (x) => x > 40);
