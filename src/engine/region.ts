@@ -97,8 +97,10 @@ export interface Region extends Area {
   doorIssues: string[];
   /** Build every map within reach of (x, z) now, and wait for them. */
   settle(x: number, z: number): Promise<void>;
-  /** Build every map in the region (checks, overview). */
+  /** Build every map in the region (the overview). */
   buildAll(): Promise<void>;
+  /** Build each map in turn, check its door promises, and take it down again unless it's near (x, z). */
+  checkEach(x: number, z: number): Promise<string[]>;
   /** Make sure a spawn (`map:name`) exists: build its map and what's around it. */
   prepare(spawn: string): Promise<void>;
   /** Resolves when no map is being built (other worlds can then be built safely). */
@@ -323,6 +325,18 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
       streaming = true;
     },
     async buildAll() { for (const p of plan) await ensure(p); },
+    async checkEach(x, z) {
+      const issues: string[] = [];
+      region.hold = true;
+      for (const p of plan) {
+        const had = built.has(p.id);
+        const b = await ensure(p);
+        issues.push(...b.doorIssues);
+        if (!had && distTo(p, x, z) > DROP) take(p.id);
+      }
+      region.hold = false;
+      return issues;
+    },
     async prepare(key) {
       const id = key.split(':')[0]!;
       const p = plan.find((q) => q.id === id);

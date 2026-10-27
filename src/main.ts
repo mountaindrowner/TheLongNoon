@@ -415,9 +415,7 @@ load().then(() => {
     /** Build every map of the region and every room, and return any broken door promise. */
     async checkAllRooms() {
       const region = worlds.get(SPAN)?.area as Region | undefined;
-      if (region) { region.hold = true; await region.buildAll(); }
-      const issues = [...region?.doorIssues ?? []];
-      if (region) region.hold = false;
+      const issues = region ? await region.checkEach(player.x, player.z) : [];
       for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id);
       for (const w of worlds.values()) if (w.id !== SPAN) issues.push(...w.issues);
       return issues;
