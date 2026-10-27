@@ -3,49 +3,80 @@ import { blob, pixelTex } from '../engine/sprites';
 import charsUrl from '../assets/chars-poc2.png';
 
 /**
- * Characters drawn from the proof-of-concept sprite atlas (16×24 frames,
- * rows down/left/right/up, 3 columns, walk order 1-0-2-0), placed the way the
- * style spec places sprites (§13.4): an upright plane facing the camera,
- * MeshBasicMaterial tinted by the mood, alpha-cut, a soft blob shadow, and
- * sized by measuring the drawn figure so it stands its target height.
- * These are placeholders until the cast is regenerated as 64px, 8-direction
- * sprites (spec §13); the engine's RotHero already plays those.
+ * Characters, placed the way the style spec places sprites (§13.4): an
+ * upright plane facing the camera, MeshBasicMaterial tinted by the mood,
+ * alpha-cut, a soft blob shadow, and sized by measuring the drawn figure so
+ * it stands its target height.
+ *
+ * Two sources:
+ * - **The cast from PixelLab** (docs/design/cast.md): one packed sheet per
+ *   figure (src/assets/cast/<id>.png, laid out in cast.json by
+ *   tools/pack-cast.py). The still figure faces four ways, and the idle and
+ *   walk come in three (front, side, back), with the side mirrored for the
+ *   other side.
+ * - **The first version's atlas** (16×24 frames, rows down/left/right/up,
+ *   walk order 1-0-2-0), for anyone not remade yet.
  */
 
 export type Dir4 = 'S' | 'W' | 'E' | 'N';
 const ROW: Record<Dir4, number> = { S: 0, W: 1, E: 2, N: 3 };
 const WALK = [1, 0, 2, 0];
+const NAME: Record<Dir4, string> = { S: 'south', E: 'east', N: 'north', W: 'west' };
 
-/** Where each figure sits in the atlas (from the old manifest). */
+/** Where each figure sits in the old atlas (from the old manifest). */
 export const ATLAS = {
   people: { juno: [0, 0], kit: [49, 0], lupe: [98, 0], chayo: [147, 0], beto: [196, 0], ruben: [0, 97], tavo: [49, 97], nacho: [98, 97], fina: [147, 97], memo: [196, 97], nina: [0, 194], tona: [49, 194], elias: [98, 194], rosa: [147, 194], kidjuno: [196, 194] } as Record<string, [number, number]>,
   critters: { goat: [[141, 291, 18, 15], [160, 291, 18, 15]], chicken: [[179, 291, 10, 10], [190, 291, 10, 10]], coyote: [[87, 291, 26, 17], [114, 291, 26, 17]], stray: [[0, 291, 28, 24], [29, 291, 28, 24]], strayBroken: [[58, 291, 28, 24]] } as Record<string, Array<[number, number, number, number]>>,
 };
 
-interface Atlas { img: HTMLImageElement; data: Uint8ClampedArray; tex: THREE.Texture }
-let atlas: Promise<Atlas> | null = null;
-function loadAtlas(): Promise<Atlas> {
-  atlas ??= new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const c = document.createElement('canvas');
-      c.width = img.width; c.height = img.height;
-      const g = c.getContext('2d')!;
-      g.drawImage(img, 0, 0);
-      res({ img, data: g.getImageData(0, 0, img.width, img.height).data, tex: pixelTex(new THREE.Texture(img)) });
-    };
-    img.onerror = rej;
-    img.src = charsUrl;
-  });
-  return atlas;
-}
+// ---------------------------------------------------------------- the PixelLab cast
+interface CastAnim { fps: number; frames: number; rows: Record<string, number> }
+interface CastMeta { w: number; h: number; still: Record<string, [number, number]>; anims: Record<string, CastAnim> }
+const CAST_META = (Object.values(import.meta.glob('../assets/cast/cast.json', { eager: true, import: 'default' }))[0] ?? {}) as Record<string, CastMeta>;
+const CAST_URL = Object.fromEntries(Object.entries(import.meta.glob('../assets/cast/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>).map(([k, v]) => [k.split('/').pop()!.replace('.png', ''), v]));
+/** The cast figure an atlas name is drawn from now (the Stray's wreck is the Stray, gone dark). */
+const CAST_OF: Record<string, string> = { strayBroken: 'stray' };
+const castId = (id: string): string | null => { const c = CAST_OF[id] ?? id; return CAST_META[c] && CAST_URL[c] ? c : null; };
 
-/** Top and bottom drawn rows (alpha > 128) inside a rect of the atlas. */
+interface Sheet { img: HTMLImageElement; data: Uint8ClampedArray; tex: THREE.Texture }
+const sheets = new Map<string, Promise<Sheet>>();
+function loadSheet(url: string): Promise<Sheet> {
+  let p = sheets.get(url);
+  if (!p) {
+    p = new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const g = c.getContext('2d')!;
+        g.drawImage(img, 0, 0);
+        res({ img, data: g.getImageData(0, 0, img.width, img.height).data, tex: pixelTex(new THREE.Texture(img)) });
+      };
+      img.onerror = rej;
+      img.src = url;
+    });
+    sheets.set(url, p);
+  }
+  return p;
+}
+const loadAtlas = (): Promise<Sheet> => loadSheet(charsUrl);
+
+/** Top and bottom drawn rows (alpha > 128) inside a rect of a sheet. */
 function measure(data: Uint8ClampedArray, W: number, x: number, y: number, w: number, h: number): [number, number] {
   let top = h, bottom = 0;
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (data[((y + j) * W + x + i) * 4 + 3]! > 128) { top = Math.min(top, j); bottom = Math.max(bottom, j + 1); }
   return [top, bottom];
 }
+/** The drawn bounds of a rect: [left, top, right, bottom]. */
+function bounds(data: Uint8ClampedArray, W: number, x: number, y: number, w: number, h: number): [number, number, number, number] {
+  let l = w, t = h, r = 0, b = 0;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (data[((y + j) * W + x + i) * 4 + 3]! > 128) { l = Math.min(l, i); r = Math.max(r, i + 1); t = Math.min(t, j); b = Math.max(b, j + 1); }
+  return [l, t, r, b];
+}
+
+type Source =
+  | { kind: 'atlas'; frames: Array<[number, number, number, number]> | null; origin: [number, number] }
+  | { kind: 'cast'; id: string; meta: CastMeta };
 
 export class Actor {
   readonly root = new THREE.Group();
@@ -57,8 +88,10 @@ export class Actor {
   z = 0;
   moving = false;
   private t = 0;
+  /** A multiplier on the mood's tint (the Stray's wreck is dark). */
+  private dim = 1;
 
-  private constructor(tex: THREE.Texture, private readonly W: number, private readonly H: number, private readonly frames: Array<[number, number, number, number]> | null, private readonly origin: [number, number], fw: number, fh: number, k: number, bottom: number, tint: THREE.Color, shadowR: number) {
+  private constructor(tex: THREE.Texture, private readonly W: number, private readonly H: number, private readonly src: Source, fw: number, fh: number, k: number, bottom: number, tint: THREE.Color, shadowR: number) {
     this.tex = tex;
     const geo = new THREE.PlaneGeometry(fw * k, fh * k);
     geo.translate(0, fh * k * (bottom / fh - 0.5), 0); // feet on the ground
@@ -69,36 +102,67 @@ export class Actor {
     this.frame(0);
   }
 
-  /** A person from the atlas, standing `height` units tall. */
+  /** A figure from its PixelLab sheet, `height` units tall measured on its front-facing still. */
+  private static async fromCast(id: string, tint: THREE.Color, height: number, shadowR: number): Promise<Actor> {
+    const meta = CAST_META[id]!;
+    const s = await loadSheet(CAST_URL[id]!);
+    const [top, bottom] = measure(s.data, s.img.width, 0, 0, meta.w, meta.h);
+    return new Actor(s.tex.clone(), s.img.width, s.img.height, { kind: 'cast', id, meta }, meta.w, meta.h, height / Math.max(1, bottom - top), bottom, tint, shadowR);
+  }
+
+  /** A person, standing `height` units tall. */
   static async person(id: string, tint: THREE.Color, height = 1.65): Promise<Actor> {
+    const c = castId(id);
+    if (c) return Actor.fromCast(c, tint, height, 0.34);
     const a = await loadAtlas();
     const [ox, oy] = ATLAS.people[id] ?? ATLAS.people.juno!;
     const [top, bottom] = measure(a.data, a.img.width, ox, oy, 16, 24);
-    const tex = a.tex.clone(); // shares the uploaded image; only the window differs
-    return new Actor(tex, a.img.width, a.img.height, null, [ox, oy], 16, 24, height / Math.max(1, bottom - top), bottom, tint, 0.34);
+    return new Actor(a.tex.clone(), a.img.width, a.img.height, { kind: 'atlas', frames: null, origin: [ox, oy] }, 16, 24, height / Math.max(1, bottom - top), bottom, tint, 0.34);
   }
 
-  /** An animal from the atlas: side-view frames, mirrored to face its way. */
+  /** An animal (or a machine): its sheet if it's been remade, else side-view frames from the atlas, mirrored to face its way. */
   static async critter(kind: string, tint: THREE.Color, height: number): Promise<Actor> {
+    const c = castId(kind);
+    if (c) {
+      const a = await Actor.fromCast(c, tint, height, Math.max(0.2, height * 0.42));
+      if (kind === 'strayBroken') { a.dim = 0.42; a.dir = 'E'; a.body.rotation.z = -0.12; a.setTint(tint); a.frame(0); }
+      return a;
+    }
     const a = await loadAtlas();
     const fr = ATLAS.critters[kind]!;
     const [x, y, w, h] = fr[0]!;
     const [top, bottom] = measure(a.data, a.img.width, x, y, w, h);
-    return new Actor(a.tex.clone(), a.img.width, a.img.height, fr, [x, y], w, h, height / Math.max(1, bottom - top), bottom, tint, Math.max(0.18, w / 40));
+    return new Actor(a.tex.clone(), a.img.width, a.img.height, { kind: 'atlas', frames: fr, origin: [x, y] }, w, h, height / Math.max(1, bottom - top), bottom, tint, Math.max(0.18, w / 40));
+  }
+
+  /** Show one cell of the sheet; `flip` mirrors it (the side frames played for the other side). */
+  private cell(x: number, y: number, w: number, h: number, flip = false): void {
+    const { W, H } = this;
+    this.tex.repeat.set(((flip ? -1 : 1) * w) / W, h / H);
+    this.tex.offset.set((flip ? x + w : x) / W, 1 - (y + h) / H);
   }
 
   private frame(col: number): void {
-    const { W, H } = this;
-    if (this.frames) {
-      const [x, y, w, h] = this.frames[col % this.frames.length]!;
-      const flip = this.dir === 'E';
-      this.tex.repeat.set(((flip ? -1 : 1) * w) / W, h / H);
-      this.tex.offset.set((flip ? x + w : x) / W, 1 - (y + h) / H);
+    const src = this.src;
+    if (src.kind === 'cast') {
+      const m = src.meta;
+      const anim = this.dim < 1 ? undefined : m.anims[this.moving ? 'walk' : 'idle'];
+      if (anim) {
+        const want = NAME[this.dir];
+        const row = anim.rows[want] ?? (this.dir === 'W' ? anim.rows.east : undefined);
+        if (row !== undefined) { this.cell((col % anim.frames) * m.w, row * m.h, m.w, m.h, anim.rows[want] === undefined); return; }
+      }
+      const [r, c] = m.still[NAME[this.dir]] ?? m.still.south!;
+      this.cell(c * m.w, r * m.h, m.w, m.h);
       return;
     }
-    const [ox, oy] = this.origin;
-    this.tex.repeat.set(16 / W, 24 / H);
-    this.tex.offset.set((ox + col * 16) / W, 1 - (oy + ROW[this.dir] * 24 + 24) / H);
+    if (src.frames) {
+      const [x, y, w, h] = src.frames[col % src.frames.length]!;
+      this.cell(x, y, w, h, this.dir === 'E');
+      return;
+    }
+    const [ox, oy] = src.origin;
+    this.cell(ox + col * 16, oy + ROW[this.dir] * 24, 16, 24);
   }
 
   face(dx: number, dz: number): void {
@@ -113,7 +177,16 @@ export class Actor {
 
   animate(dt: number, speed = 1): void {
     this.t += dt * speed;
-    if (this.frames) {
+    const src = this.src;
+    if (src.kind === 'cast') {
+      const anim = src.meta.anims[this.moving ? 'walk' : 'idle'];
+      this.frame(anim ? Math.floor(this.t * anim.fps) : 0);
+      // no walk drawn: step with a small bob; no idle drawn: a slow breath (spec §13.4)
+      this.body.position.y = this.moving && !src.meta.anims.walk ? Math.abs(Math.sin(this.t * 9)) * 0.05 : 0;
+      this.body.scale.y = !this.moving && !anim && this.dim === 1 ? 1 + Math.sin(this.t * 2.2) * 0.012 : 1;
+      return;
+    }
+    if (src.frames) {
       this.frame(this.moving ? Math.floor(this.t * 6) : 0);
       this.body.scale.y = 1;
       return;
@@ -123,15 +196,38 @@ export class Actor {
     this.body.scale.y = this.moving ? 1 : 1 + Math.sin(this.t * 2.2) * 0.012;
   }
 
-  setTint(c: THREE.Color): void { (this.mesh.material as THREE.MeshBasicMaterial).color.copy(c); }
+  setTint(c: THREE.Color): void { (this.mesh.material as THREE.MeshBasicMaterial).color.copy(c).multiplyScalar(this.dim); }
 
   /** The dialogue card: this figure's standing frame, trimmed and upscaled (spec §13.4). */
-  async card(): Promise<string> { return Actor.cardOf(this.origin); }
+  async card(): Promise<string> { return this.src.kind === 'cast' ? Actor.portrait(this.src.id) : Actor.atlasCard(this.src.origin); }
 
   private static cards = new Map<string, Promise<string>>();
-  /** A person's sprite, scaled up and facing left: the picture beside their lines. */
-  static portrait(id: string): Promise<string> { return Actor.cardOf(ATLAS.people[id] ?? ATLAS.people.juno!); }
-  private static cardOf(origin: [number, number]): Promise<string> {
+  /** A person's picture beside their lines: their portrait if one was made, else their front-facing figure,
+   *  trimmed, scaled up and facing left (standing at the right of the box). */
+  static portrait(id: string): Promise<string> {
+    const c = castId(id);
+    if (!c) return Actor.atlasCard(ATLAS.people[id] ?? ATLAS.people.juno!);
+    let p = Actor.cards.get(c);
+    if (!p) {
+      p = (async () => {
+        if (PORTRAIT_URL[c]) return PORTRAIT_URL[c];
+        const s = await loadSheet(CAST_URL[c]!);
+        const m = CAST_META[c]!;
+        const [l, t, r, b] = bounds(s.data, s.img.width, 0, 0, m.w, m.h);
+        const k = Math.max(2, Math.floor(216 / (b - t)));
+        const cv = document.createElement('canvas');
+        cv.width = (r - l) * k; cv.height = (b - t) * k;
+        const g = cv.getContext('2d')!;
+        g.imageSmoothingEnabled = false;
+        g.translate(cv.width, 0); g.scale(-1, 1);
+        g.drawImage(s.img, l, t, r - l, b - t, 0, 0, cv.width, cv.height);
+        return cv.toDataURL();
+      })();
+      Actor.cards.set(c, p);
+    }
+    return p;
+  }
+  private static atlasCard(origin: [number, number]): Promise<string> {
     const key = origin.join(',');
     let p = Actor.cards.get(key);
     if (!p) {
@@ -151,3 +247,6 @@ export class Actor {
     return p;
   }
 }
+
+/** Bust portraits made from the cast (src/assets/cast/portraits/<id>.png), for the dialogue box. */
+const PORTRAIT_URL = Object.fromEntries(Object.entries(import.meta.glob('../assets/cast/portraits/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>).map(([k, v]) => [k.split('/').pop()!.replace('.png', ''), v]));
