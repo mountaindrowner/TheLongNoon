@@ -1,0 +1,19 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a crawler, a low old-world irrigation robot like a metal crab, a round green-painted body gone rusty, four spindly jointed legs, a rotating sprinkler head on top that spits hot dust, two small amber eye lights; it still crawls dead fields looking for crops to water. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
+  },
+  "character_id": "5a4c1713-d8a6-4d74-b695-9dd0c1aef0f5",
+  "anims": {},
+  "at": "2026-10-27T22:10:55.043Z"
+}

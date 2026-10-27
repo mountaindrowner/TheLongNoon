@@ -1,0 +1,19 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "the Keeper of the dry creek, a tall thin old-world cleaning machine the size of a person, a narrow sun-bleached white body on a single rolling base, two long jointed arms holding a worn broom and a dustpan, a cracked speaker grille for a mouth, one dim blue eye lens, rags tied to it like a shawl; it sweeps the sand at night and keens, and the town calls it La Llorona. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
+  },
+  "character_id": "43cb70b1-ce6a-4df0-915a-b0d9ccabdab8",
+  "anims": {},
+  "at": "2026-10-27T22:11:08.839Z"
+}

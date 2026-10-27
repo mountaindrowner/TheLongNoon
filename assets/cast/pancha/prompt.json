@@ -1,0 +1,20 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Pancha, a small young white goat with one brown ear and a brown patch over one eye, a red cloth collar with a little bell, curious and stubborn. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "dog"
+  },
+  "character_id": "b112de78-f8a2-406b-9572-4f61ddbabf93",
+  "anims": {},
+  "at": "2026-10-27T21:34:19.037Z"
+}
