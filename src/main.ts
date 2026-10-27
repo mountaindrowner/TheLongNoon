@@ -293,6 +293,7 @@ async function load(): Promise<void> {
     hud.show(true);
     showObjective(false);
     if (STEP === 'burial') void burial();
+    else if (HASH_FIGHT) void fightDemo();
     else { ui.titleCard('SEVEN FLAGS', 'A town that stayed'); void bringCast(cur); }
   } else void titleScreen();
 }
@@ -467,7 +468,9 @@ type Mode = 'title' | 'cine' | 'play';
 let mode: Mode = 'play';
 let S: GameState;
 /** Playtests and screenshots skip the title: `?time=`/`?clock=` start in free roam, `?step=` at a mission step. */
-const STEP = params.get('step');
+/** `#fight-<staging>` (the only part of an address a shared page passes on): straight into the drain fight, framed that way. */
+const HASH_FIGHT = /^#fight-([a-z]+)$/.exec(location.hash)?.[1] ?? null;
+const STEP = params.get('step') ?? (HASH_FIGHT ? 'pancha' : null);
 const TEST = held !== undefined || params.has('clock') || STEP !== null;
 const STEPS = QUESTS.steps as unknown as Record<string, { obj: string; marker: string | [number, number] | null }>;
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -914,7 +917,7 @@ const STAGINGS: Record<string, Staging> = {
     cam: { pos: [-7.6, 4.4, 1.2], look: [0.3, 0.7, 0.6], fov: 32 }, band: 0.2, sway: 0.35, cuts: true, cheat: 0.75,
   },
 };
-const BATTLE = STAGINGS[params.get('battle') ?? ''] ? params.get('battle')! : 'topdown';
+const BATTLE = [params.get('battle'), HASH_FIGHT].find((b) => b && STAGINGS[b]) ?? 'topdown';
 /** The fight's centre at the drain, and the staging in use (null outside a fight). */
 const CENTRE = { x: 115.2, z: 209.4 };
 let staged: Staging | null = null;
@@ -995,6 +998,17 @@ function stageFrame(dt: number, t: number): void {
     const fx = other[0] - a.x, fz = other[1] - a.z, fl = Math.hypot(fx, fz) || 1;
     a.pose({ fx: fx / fl - (vx / vl) * cheat, fz: fz / fl - (vz / vl) * cheat, vx, vz, yaw: Math.atan2(camera.position.x - a.x, camera.position.z - a.z) });
   }
+}
+
+/** Straight into the drain fight (looking at stagings: `#fight-<name>`, `__LN.battleDemo`). */
+async function fightDemo(): Promise<void> {
+  S.flags.drainStarted = true;
+  await (cur.area as Region).settle(CENTRE.x, CENTRE.z);
+  player.place(CENTRE.x, cur.area.ground(CENTRE.x, CENTRE.z + 2), CENTRE.z + 2);
+  await bringCast(cur);
+  await spawnEnemies();
+  const r = await battle();
+  if (r === 'win') await run('drainWin');
 }
 
 /** Something rolls out of the culvert's dark mouth, and a coyote after it. Everyone takes their places. */
@@ -1231,14 +1245,7 @@ load().then(() => {
     /** Hold a cut on Juno's blow at the Stray (looking at the cut staging without waiting for a turn). */
     cutDemo() { if (!staged || !foes[0]) return; const c = staged.cuts; staged.cuts = true; cutTo(player, foes[0]); staged.cuts = c; if (stageCut) stageCut.until = performance.now() + 120_000; },
     /** Straight into the drain fight in the staging `?battle=` picked (for looking at stagings). */
-    async battleDemo() {
-      S.flags.drainStarted = true;
-      await (cur.area as Region).settle(CENTRE.x, CENTRE.z);
-      player.place(CENTRE.x, cur.area.ground(CENTRE.x, CENTRE.z + 2), CENTRE.z + 2);
-      await bringCast(cur);
-      await spawnEnemies();
-      void battle();
-    },
+    battleDemo: () => fightDemo(),
     get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
     get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },
