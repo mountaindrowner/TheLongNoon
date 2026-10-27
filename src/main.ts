@@ -437,19 +437,23 @@ function frame(): void {
   // camera: follow the player, clamped so the edge never shows a void
   camTarget.lerp(clampCam(player.x, player.z), 1 - Math.exp(-dt * (camHold ? 2.2 : 4.5)));
   camZoom += (camZoomTo - camZoom) * (1 - Math.exp(-dt * 1.6));
-  camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
-  camera.lookAt(camTarget);
+  if (staged) stageFrame(dt, t);
+  else {
+    camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
+    camera.lookAt(camTarget);
+  }
   if (tilt > 0.001) { camera.position.y -= tilt * 8; camera.lookAt(v.set(camTarget.x, camTarget.y + tilt * 17, camTarget.z - tilt * 30)); }
   cur.lights.follow(player.root.position);
   if (cur.id === SPAN) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
 
-  // tilt-shift: the sharp band tracks the player's height on screen (spec §4)
-  v.set(player.x, player.root.position.y + 0.8, player.z).project(camera);
+  // tilt-shift: the sharp band tracks the player's height on screen (spec §4); in a fight, the fight's middle
+  if (staged) v.set(CENTRE.x, cur.area.ground(CENTRE.x, CENTRE.z) + 0.8, CENTRE.z).project(camera);
+  else v.set(player.x, player.root.position.y + 0.8, player.z).project(camera);
   focusY += ((v.y * 0.5 + 0.5) - focusY) * (1 - Math.exp(-dt * 6));
   post.tiltH.uniforms.focus!.value = focusY;
   post.tiltV.uniforms.focus!.value = focusY;
   // looking up at the sky, the diorama blur would smear it: the band opens to the whole frame
-  post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = 0.1 + tilt * 0.9;
+  if (!staged) post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = 0.1 + tilt * 0.9;
 
   area.update(t, player.root.position, camTarget);
   if ((mapAge += dt) > 0.05) { mapAge = 0; drawMap(); }
@@ -851,7 +855,147 @@ const fight = new Fight(ui.root, {
   blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
   dead() { (cur.area as Region).dropLamps('stray'); },
   touch: touchUI(),
+  onAct: (who, target) => cutTo(who, target),
 });
+
+// ---------------------------------------------------------------- battle stagings
+/**
+ * How a fight is shown. The owner, 2026-10-27: "play with a few different battle screens… different
+ * orientations… let's be dramatic." Each staging sets where everyone stands (offsets from the fight's
+ * centre: x east, z south), the camera, and the look; `?battle=<name>` picks one. The fight's rules don't
+ * change, only how it's framed.
+ */
+interface Staging {
+  title: string;
+  after: string;
+  party: Array<[number, number]>;
+  foes: Array<[number, number]>;
+  cam: { pos: [number, number, number]; look: [number, number, number]; fov: number };
+  /** Cinema bars top and bottom. */
+  letterbox?: boolean;
+  /** The camera pushes in on whoever acts. */
+  cuts?: boolean;
+  /** A slow drift, so the frame breathes (units). */
+  sway?: number;
+  /** How much of the frame the tilt-shift keeps sharp (0.1 is the overworld's band). */
+  band: number;
+  /** Turn everyone this far toward the camera, the way actors cheat out on a stage (0 = squarely at each other). */
+  cheat?: number;
+}
+const STAGINGS: Record<string, Staging> = {
+  topdown: {
+    title: 'In place', after: 'Sea of Stars, Chrono Trigger: the fight happens where you stand, from the overworld camera',
+    party: [[-1.3, 1.3], [1.1, 1.9]], foes: [[-1.2, -2.9], [1.5, -1.9]],
+    cam: { pos: [0, 10.8, 12.5], look: [0, 0.8, 0.9], fov: 30 }, band: 0.1,
+  },
+  diorama: {
+    title: 'Diorama', after: 'Octopath Traveler I and II: side-on and low, the party in a staggered column on the right, the enemy large on the left',
+    party: [[-0.7, 2.3], [0.9, 3.5]], foes: [[-0.1, -2.2], [1.4, -1.0]],
+    cam: { pos: [-7.6, 4.4, 1.2], look: [0.3, 0.7, 0.6], fov: 32 }, band: 0.2, sway: 0.35, cheat: 0.75,
+  },
+  shoulder: {
+    title: 'Over the shoulder', after: 'Dragon Quest III HD-2D: behind the party, the enemy facing you',
+    party: [[-0.9, 2.5], [1.0, 2.9]], foes: [[-0.6, -3.2], [1.6, -2.4]],
+    cam: { pos: [0.3, 2.4, 7.4], look: [0.1, 1.1, -2.4], fov: 38 }, band: 0.2, sway: 0.2,
+  },
+  hero: {
+    title: 'Hero shot', after: 'Clair Obscur, modern Final Fantasy: low behind the enemy, looking up at the party, letterboxed',
+    party: [[-0.5, 1.6], [0.9, 2.3]], foes: [[2.1, -3.3], [-2.1, -2.7]],
+    cam: { pos: [0.3, 0.62, -7.6], look: [0.1, 1.45, 1.8], fov: 42 }, band: 0.22, letterbox: true, sway: 0.25, cheat: 0.3,
+  },
+  iso: {
+    title: 'Face-off', after: 'Triangle Strategy, Live A Live: a high diagonal, two sides squared up across the concrete',
+    party: [[1.7, 1.9], [3.0, 0.8]], foes: [[-1.9, -1.5], [-0.6, -2.9]],
+    cam: { pos: [9.4, 9.8, 9.4], look: [0.2, 0.4, 0.2], fov: 24 }, band: 0.14, cheat: 0.85,
+  },
+  cuts: {
+    title: 'Diorama with cuts', after: 'Octopath Traveler II: the diorama, but the camera swings in on every blow',
+    party: [[-0.7, 2.3], [0.9, 3.5]], foes: [[-0.1, -2.2], [1.4, -1.0]],
+    cam: { pos: [-7.6, 4.4, 1.2], look: [0.3, 0.7, 0.6], fov: 32 }, band: 0.2, sway: 0.35, cuts: true, cheat: 0.75,
+  },
+};
+const BATTLE = STAGINGS[params.get('battle') ?? ''] ? params.get('battle')! : 'topdown';
+/** The fight's centre at the drain, and the staging in use (null outside a fight). */
+const CENTRE = { x: 115.2, z: 209.4 };
+let staged: Staging | null = null;
+let stageCut: { pos: THREE.Vector3; look: THREE.Vector3; fov: number; until: number } | null = null;
+/** The first frame of a staging cuts straight to its mark (the fight opens on a flash). */
+let stageSnap = false;
+const letterbox = document.createElement('div');
+letterbox.className = 'letterbox';
+ui.root.appendChild(letterbox);
+
+const stageAt = (o: [number, number]): [number, number] => [CENTRE.x + o[0], CENTRE.z + o[1]];
+/** Put everyone where the staging says and frame it. */
+function stageFight(st: Staging): void {
+  staged = st;
+  stageSnap = true;
+  ui.root.classList.add('fighting');
+  fight.setLayout(Object.keys(STAGINGS).find((k) => STAGINGS[k] === st) ?? 'topdown');
+  letterbox.classList.toggle('on', !!st.letterbox);
+  const g = (x: number, z: number): number => cur.area.ground(x, z);
+  const party = [player, kitActor].filter((a): a is Actor => !!a);
+  party.forEach((a, i) => { const [x, z] = stageAt(st.party[i]!); a.place(x, g(x, z), z); });
+  foes.forEach((a, i) => { const [x, z] = stageAt(st.foes[i]!); a.place(x, g(x, z), z); });
+  // the Stray's one red eye goes where the Stray is
+  (cur.area as Region).dropLamps('stray');
+  if (foes[0]) (cur.area as Region).addLamp({ pos: new THREE.Vector3(foes[0].x, foes[0].root.position.y + 0.9, foes[0].z + 0.3), color: new THREE.Color('#ff4a2a'), intensity: 2.2, dist: 5, flicker: 0.1, tag: 'stray' });
+  // and a cool key light over the fight, so faces read from any side at night
+  (cur.area as Region).dropLamps('stage');
+  const y = g(CENTRE.x, CENTRE.z);
+  (cur.area as Region).addLamp({ pos: new THREE.Vector3(CENTRE.x - 1, y + 4.6, CENTRE.z + 1.2), color: new THREE.Color('#b8c6ff'), intensity: 5, dist: 14, flicker: 0, tag: 'stage' });
+}
+function unstage(): void {
+  for (const a of [player, kitActor, ...foes]) a?.pose(null);
+  staged = null; stageCut = null;
+  ui.root.classList.remove('fighting');
+  letterbox.classList.remove('on');
+  camera.fov = 30; camera.updateProjectionMatrix();
+  (cur.area as Region | undefined)?.dropLamps?.('stage');
+}
+/** On a cut staging, swing in over the attacker's shoulder toward the target for a beat. */
+function cutTo(who: Actor, target: Actor): void {
+  if (!staged?.cuts) return;
+  const dx = who.x - target.x, dz = who.z - target.z, l = Math.hypot(dx, dz) || 1;
+  const y = who.root.position.y;
+  stageCut = {
+    pos: new THREE.Vector3(who.x + (dx / l) * 4.4 - (dz / l) * 1.9, y + 2.0, who.z + (dz / l) * 4.4 + (dx / l) * 1.9),
+    look: new THREE.Vector3(target.x, target.root.position.y + 0.8, target.z),
+    fov: 26, until: performance.now() + 1300,
+  };
+}
+const camGoal = new THREE.Vector3(), lookGoal = new THREE.Vector3(), lookNow = new THREE.Vector3();
+/** Each frame of a staged fight: the camera, and every figure turned to it. */
+function stageFrame(dt: number, t: number): void {
+  const st = staged!;
+  const y = cur.area.ground(CENTRE.x, CENTRE.z);
+  const sw = st.sway ? Math.sin(t * 0.25) * st.sway : 0;
+  if (stageCut && performance.now() > stageCut.until) stageCut = null;
+  if (stageCut) { camGoal.copy(stageCut.pos); lookGoal.copy(stageCut.look); }
+  else {
+    camGoal.set(CENTRE.x + st.cam.pos[0] + sw, y + st.cam.pos[1], CENTRE.z + st.cam.pos[2] - sw * 0.5);
+    lookGoal.set(CENTRE.x + st.cam.look[0], y + st.cam.look[1], CENTRE.z + st.cam.look[2]);
+  }
+  const k = stageSnap ? 1 : 1 - Math.exp(-dt * (stageCut ? 7 : 3));
+  stageSnap = false;
+  camera.position.lerp(camGoal, k);
+  lookNow.lerp(lookGoal, k);
+  camera.lookAt(lookNow);
+  const fov = stageCut ? stageCut.fov : st.cam.fov;
+  if (Math.abs(camera.fov - fov) > 0.01) { camera.fov += (fov - camera.fov) * k; camera.updateProjectionMatrix(); }
+  post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = st.band;
+  // everyone faces the other side, turned to the camera, drawn from whichever of their eight sides shows
+  const vx = lookNow.x - camera.position.x, vz = lookNow.z - camera.position.z;
+  const party = [player, kitActor].filter((a): a is Actor => !!a);
+  const mid = (list: Actor[]): [number, number] => [list.reduce((s, a) => s + a.x, 0) / list.length, list.reduce((s, a) => s + a.z, 0) / list.length];
+  const pm = mid(party), fm = foes.length ? mid(foes) : pm;
+  const vl = Math.hypot(vx, vz) || 1, cheat = st.cheat ?? 0;
+  for (const [list, other] of [[party, fm], [foes, pm]] as const) for (const a of list) {
+    if (!a.root.visible) continue;
+    const fx = other[0] - a.x, fz = other[1] - a.z, fl = Math.hypot(fx, fz) || 1;
+    a.pose({ fx: fx / fl - (vx / vl) * cheat, fz: fz / fl - (vz / vl) * cheat, vx, vz, yaw: Math.atan2(camera.position.x - a.x, camera.position.z - a.z) });
+  }
+}
 
 /** Something rolls out of the culvert's dark mouth, and a coyote after it. Everyone takes their places. */
 async function spawnEnemies(): Promise<void> {
@@ -859,19 +1003,19 @@ async function spawnEnemies(): Promise<void> {
   const g = (x: number, z: number): number => cur.area.ground(x, z);
   player.place(AT.juno[0], g(AT.juno[0], AT.juno[1]), AT.juno[1]); player.dir = 'N';
   if (kitActor) { kitActor.place(AT.kit[0], g(AT.kit[0], AT.kit[1]), AT.kit[1]); kitActor.dir = 'N'; cur.scene.add(kitActor.root); }
-  for (const [kind, h, to] of [['stray', 1.15, AT.stray], ['coyote', 0.8, AT.coyote]] as const) {
+  for (const [kind, h] of [['stray', 1.15], [variant('coyote', 3, 1), 0.8]] as const) {
     const a = await Actor.critter(kind, cur.tint, h);
     a.place(AT.culvert[0], g(AT.culvert[0], AT.culvert[1]), AT.culvert[1]);
     cur.scene.add(a.root);
     foes.push(a);
-    void to;
   }
+  const st = STAGINGS[BATTLE]!;
   // the Stray's one red eye
   const eye = new THREE.Vector3(AT.stray[0], g(AT.stray[0], AT.stray[1]) + 0.9, AT.stray[1] + 0.4);
   (cur.area as Region).addLamp({ pos: eye, color: new THREE.Color('#ff4a2a'), intensity: 2.2, dist: 5, flicker: 0.1, tag: 'stray' });
   sound.servo(); setTimeout(() => sound.beep(), 500); setTimeout(() => sound.growl(), 900);
   await Promise.all(foes.map(async (a, i) => {
-    const to = i === 0 ? AT.stray : AT.coyote;
+    const to = stageAt(st.foes[i]!);
     await sleep(i * 500);
     a.moving = true;
     const sx = a.x, sz = a.z;
@@ -882,9 +1026,11 @@ async function spawnEnemies(): Promise<void> {
     });
     a.moving = false;
   }));
+  stageFight(st);
 }
 
 async function battle(): Promise<'win' | 'load'> {
+  if (!staged) stageFight(STAGINGS[BATTLE]!);
   const B = BATTLES as unknown as { drain: FightDef; units: Record<string, UnitDef> };
   sound.battleStart();
   sound.music('combat');
@@ -892,12 +1038,13 @@ async function battle(): Promise<'win' | 'load'> {
   for (let retry = false; ; retry = true) {
     const r = await fight.fight(B.drain, B.units, { juno: player, kit: kitActor! }, foes, retry);
     if (r === 'win') break;
-    if (r === 'load') { clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
+    if (r === 'load') { unstage(); clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
     for (const a of foes) a.root.visible = true;
   }
   S.flags.drainDone = true;
   minimap.hidden = false;
   await ui.fade(true, 450);
+  unstage();
   clearFoes();
   await bringCast(cur);
   if (kitActor) { kitActor.place(player.x + 0.9, cur.area.ground(player.x + 0.9, player.z + 0.4), player.z + 0.4); kitActor.dir = 'W'; }
@@ -1080,6 +1227,18 @@ load().then(() => {
     get step() { return S.step; },
     get state() { return S; },
     get scripting() { return director.running; },
+    stagings: Object.keys(STAGINGS),
+    /** Hold a cut on Juno's blow at the Stray (looking at the cut staging without waiting for a turn). */
+    cutDemo() { if (!staged || !foes[0]) return; const c = staged.cuts; staged.cuts = true; cutTo(player, foes[0]); staged.cuts = c; if (stageCut) stageCut.until = performance.now() + 120_000; },
+    /** Straight into the drain fight in the staging `?battle=` picked (for looking at stagings). */
+    async battleDemo() {
+      S.flags.drainStarted = true;
+      await (cur.area as Region).settle(CENTRE.x, CENTRE.z);
+      player.place(CENTRE.x, cur.area.ground(CENTRE.x, CENTRE.z + 2), CENTRE.z + 2);
+      await bringCast(cur);
+      await spawnEnemies();
+      void battle();
+    },
     get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
     get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },

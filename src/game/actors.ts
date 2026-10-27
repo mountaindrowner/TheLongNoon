@@ -101,6 +101,8 @@ export class Actor {
   private t = 0;
   /** A multiplier on the mood's tint (the Stray's wreck is dark). */
   private dim = 1;
+  /** Battle staging: a rotation picked for the battle camera (any of eight), or null in play. */
+  private posed: string | null = null;
 
   private constructor(tex: THREE.Texture, private readonly W: number, private readonly H: number, private readonly src: Source, fw: number, fh: number, k: number, bottom: number, tint: THREE.Color, shadowR: number) {
     this.tex = tex;
@@ -157,6 +159,7 @@ export class Actor {
     const src = this.src;
     if (src.kind === 'cast') {
       const m = src.meta;
+      if (this.posed) { const [r, c] = m.still[this.posed] ?? m.still[this.posed.split('-')[0]!] ?? m.still.south!; this.cell(c * m.w, r * m.h, m.w, m.h); return; }
       const anim = this.dim < 1 ? undefined : m.anims[this.moving ? 'walk' : 'idle'];
       if (anim) {
         const want = NAME[this.dir];
@@ -176,6 +179,24 @@ export class Actor {
     this.cell(ox + col * 16, oy + ROW[this.dir] * 24, 16, 24);
   }
 
+  /**
+   * Battle staging: face world direction (fx, fz) as seen by a camera looking along (vx, vz) from yaw `yaw`.
+   * The figure turns its plane to the camera and shows the one of its eight drawn directions that matches
+   * (spec §13: the eight rotations are for exactly this). `null` hands it back to play.
+   */
+  pose(f: { fx: number; fz: number; vx: number; vz: number; yaw: number } | null): void {
+    if (!f) { this.posed = null; this.body.rotation.y = 0; this.frame(0); return; }
+    const l = Math.hypot(f.vx, f.vz) || 1, vx = f.vx / l, vz = f.vz / l;
+    // in camera terms: toward the camera is south, the camera's right is east
+    const toward = -(f.fx * vx + f.fz * vz), right = f.fx * -vz + f.fz * vx;
+    const a = Math.atan2(right, toward); // 0 south, +90° east, ±180° north, −90° west
+    const NAMES = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west'];
+    this.posed = NAMES[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8]!;
+    if (this.src.kind !== 'cast') this.dir = ({ south: 'S', east: 'E', north: 'N', west: 'W' } as Record<string, Dir4>)[this.posed.split('-')[0]!] ?? 'S';
+    this.body.rotation.y = f.yaw;
+    this.frame(0);
+  }
+
   face(dx: number, dz: number): void {
     if (Math.abs(dx) < 1e-4 && Math.abs(dz) < 1e-4) return;
     this.dir = Math.abs(dx) >= Math.abs(dz) * 0.9 ? (dx < 0 ? 'W' : 'E') : dz < 0 ? 'N' : 'S';
@@ -189,6 +210,7 @@ export class Actor {
   animate(dt: number, speed = 1): void {
     this.t += dt * speed;
     const src = this.src;
+    if (this.posed) { this.body.scale.y = 1 + Math.sin(this.t * 2.2) * 0.012; return; }
     if (src.kind === 'cast') {
       const anim = src.meta.anims[this.moving ? 'walk' : 'idle'];
       this.frame(anim ? Math.floor(this.t * anim.fps) : 0);

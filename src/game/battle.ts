@@ -40,6 +40,8 @@ export interface FightWorld {
   /** A machine gone still (its eye's light out). */
   dead(f: Actor): void;
   touch: boolean;
+  /** Someone acts on someone: the stage can cut the camera to it. */
+  onAct?(who: Actor, target: Actor): void;
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -106,6 +108,9 @@ export class Fight {
 
   get active(): boolean { return this.on; }
 
+  /** Which staging the fight is shown in (the menus sit differently in each; ui.css `.fight.l-…`). */
+  setLayout(name: string): void { this.root.className = `fight l-${name}${this.on ? ' on' : ''}`; }
+
   /** Keys while fighting: the menu, and the parry. True when used. */
   key(code: string): boolean {
     if (!this.on) return false;
@@ -163,6 +168,7 @@ export class Fight {
     void tween(240, (t) => { a.place(x0 + Math.sin(t * 40) * 0.08 * (1 - t), a.root.position.y, a.z); }).then(() => a.place(x0, a.root.position.y, a.z));
   }
   private async lunge(a: Actor, t: Actor, frac = 0.62): Promise<void> {
+    this.w.onAct?.(a, t);
     const sx = a.x, sz = a.z, tx = lerp(sx, t.x, frac), tz = lerp(sz, t.z, frac);
     a.moving = true;
     this.w.sound.whoosh();
@@ -173,6 +179,7 @@ export class Fight {
   private async shoot(a: Actor, t: Actor): Promise<void> {
     const b = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 4), new THREE.MeshBasicMaterial({ color: 0xe8e2d4 }));
     a.root.parent?.add(b);
+    this.w.onAct?.(a, t);
     this.w.sound.twang();
     const y0 = a.root.position.y;
     await tween(260, (k) => { b.position.set(lerp(a.x, t.x, k), y0 + 0.9 + Math.sin(k * Math.PI) * 0.6, lerp(a.z, t.z, k)); });

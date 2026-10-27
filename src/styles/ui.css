@@ -212,6 +212,33 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
 .f-ring::after { content: ''; position: absolute; left: -26px; top: -26px; width: 52px; height: 52px; border: 2px dashed rgba(255, 255, 255, 0.45); border-radius: 50%; }
 .f-ring b { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); white-space: nowrap; padding: 2px 10px; background: var(--panel); font-size: 16px; font-weight: 500; }
 
+
+/* battle stagings (main.ts STAGINGS): cinema bars, and the fight's panels placed for each camera */
+.letterbox { z-index: 8; position: absolute; inset: 0; pointer-events: none !important; }
+.letterbox::before, .letterbox::after { content: ''; position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height 0.6s ease; }
+.letterbox::before { top: 0; } .letterbox::after { bottom: 0; }
+.letterbox.on::before, .letterbox.on::after { height: 11vh; }
+.ui.fighting .status, .ui.fighting .objective, .ui.fighting .minimap { opacity: 0; transition: opacity 0.4s; }
+/* diorama (Octopath): turn order along the top left, the party's panel low on the right, commands beside it */
+.fight.l-diorama .f-turns, .fight.l-cuts .f-turns { left: 18px; transform: none; }
+.fight.l-diorama .f-msg, .fight.l-cuts .f-msg { left: 18px; transform: none; }
+.fight.l-diorama .f-party, .fight.l-cuts .f-party { left: auto; right: 16px; }
+.fight.l-diorama .f-menu, .fight.l-cuts .f-menu { right: 340px; }
+/* over the shoulder (Dragon Quest): the party's boxes across the top, the commands in a window low on the left */
+.fight.l-shoulder .f-party { left: 50%; bottom: auto; top: 54px; transform: translateX(-50%); flex-direction: row; }
+.fight.l-shoulder .f-party .pc { grid-template-columns: 60px 110px 56px; border-left: 0; border-top: 2px solid transparent; }
+.fight.l-shoulder .f-party .pc.act { border-top-color: var(--gold); }
+.fight.l-shoulder .f-msg { top: auto; bottom: 22px; left: 290px; transform: none; }
+.fight.l-shoulder .f-menu { right: auto; left: 16px; }
+/* hero shot: everything sits in the cinema bars */
+.fight.l-hero .f-turns { top: calc(11vh - 34px); }
+.fight.l-hero .f-msg { top: calc(11vh + 8px); }
+.fight.l-hero .f-party { bottom: 8px; flex-direction: row; }
+.fight.l-hero .f-party .pc { background: transparent; }
+.fight.l-hero .f-menu { bottom: calc(11vh + 6px); }
+/* face-off (tactics): the party low on the left, the commands low on the right */
+.fight.l-iso .f-turns { left: auto; right: 18px; transform: none; }
+
 /* the mini map: top right, north up; a tap switches close and far */
 .minimap { z-index: 2; position: absolute; right: 16px; top: 14px; width: 216px; background: var(--panel); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold-dim); cursor: pointer; }
 .minimap canvas { display: block; width: 100%; aspect-ratio: 1; }

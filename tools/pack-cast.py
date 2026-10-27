@@ -4,7 +4,8 @@
     python3 tools/pack-cast.py juno kit
 
 Writes src/assets/cast/<id>.png and src/assets/cast/cast.json:
-- row 0: the still figure facing south, east, north, west (4 cells);
+- row 0: the still figure in all eight directions: south, east, north, west, then the diagonals
+  (the battle cameras look from any side; play uses the first four);
 - then one row per animation and direction, in the order the meta lists them
   (four directions: south, east, north, west; a figure without west plays east mirrored).
 Every cell is the figure's canvas size (64 × 64). Spec §13.3: one sheet per figure, not hundreds of files.
@@ -20,7 +21,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 SRC = os.path.join(ROOT, 'assets/cast')
 OUT = os.path.join(ROOT, 'src/assets/cast')
 CAST = json.load(open(os.path.join(ROOT, 'tools/cast.json')))['cast']
-STILL = ['south', 'east', 'north', 'west']
+STILL = ['south', 'east', 'north', 'west', 'south-east', 'north-east', 'north-west', 'south-west']
 FPS = {'idle': 5, 'walk': 11}
 
 

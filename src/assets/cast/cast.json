@@ -18,6 +18,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -41,6 +57,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -64,6 +96,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -87,6 +135,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -110,6 +174,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -133,6 +213,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -156,6 +252,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -179,6 +291,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -202,6 +330,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -225,6 +369,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -248,6 +408,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -271,6 +447,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -294,6 +486,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -317,6 +525,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -340,6 +564,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -363,6 +603,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -386,6 +642,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -409,6 +681,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -432,6 +720,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -455,6 +759,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -478,6 +798,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -501,6 +837,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -524,6 +876,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -547,6 +915,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -570,6 +954,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -593,6 +993,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -616,6 +1032,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -639,6 +1071,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
@@ -662,6 +1110,22 @@
    "west": [
     0,
     3
+   ],
+   "south-east": [
+    0,
+    4
+   ],
+   "north-east": [
+    0,
+    5
+   ],
+   "north-west": [
+    0,
+    6
+   ],
+   "south-west": [
+    0,
+    7
    ]
   },
   "anims": {}
