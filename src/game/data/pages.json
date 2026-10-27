@@ -1,0 +1,27 @@
+{
+  "1": {
+    "who": "dad",
+    "text": "NEVER WALK IN WHITE.\nIF YOUR SHADOW'S SHORTER THAN YOU ARE, YOU'RE ALREADY LATE.",
+    "teach": "The clock runs all night. At Shutter, get under a roof. Daylight costs water by the minute."
+  },
+  "2": {
+    "who": "mom",
+    "text": "Put white on before you leave, not when you feel it. When you feel it, it's done.\nLips first. They burn first and they don't heal right.",
+    "teach": "White is money. Tins of zinc paste. You'll see your count by the drop meter."
+  },
+  "3": {
+    "who": "mom",
+    "text": "Wet you didn't see come out of the ground is wet somebody wants you to drink.",
+    "teach": "Water is life and medicine. Drink in battle to heal. Refill at home and at wells."
+  },
+  "5": {
+    "who": "dad",
+    "text": "HIT WHAT'S SOFT.\nON PEOPLE, KNEES. ON MACHINES, EYES.\nTHEN RUN. WINNING IS GETTING HOME.",
+    "teach": "In battle, choose which part to hit. Break a machine's eye to stun it. Tap when the ring closes to parry."
+  },
+  "last": {
+    "who": "mom",
+    "text": "Juno. If you're reading this by yourself, then",
+    "teach": "The page stops there."
+  }
+}

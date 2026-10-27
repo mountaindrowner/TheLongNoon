@@ -1,0 +1,779 @@
+{
+  "burial": [
+    {
+      "do": "wait",
+      "ms": 600
+    },
+    [
+      "",
+      "Lamp. Across the Span, the oldest person in every house lights the first lantern."
+    ],
+    [
+      "Hermana Lupe",
+      "The sun takes him at first light, mija. By summer he'll be clean bone."
+    ],
+    [
+      "Juno",
+      "He hated the sun."
+    ],
+    [
+      "Hermana Lupe",
+      "Everybody hates the sun. It takes us anyway."
+    ],
+    [
+      "Hermana Lupe",
+      "Señor, Elías kept his family in his hands. Keep him in Yours. Amén."
+    ],
+    [
+      "Juno",
+      "...Amén."
+    ],
+    [
+      "Hermana Lupe",
+      "Your mamá left this on the counter before she went. It's yours now."
+    ],
+    {
+      "do": "item",
+      "id": "staybook",
+      "n": 1
+    },
+    [
+      "Hermana Lupe",
+      "Eleven days, Juno. Don't you go doing anything stupid."
+    ],
+    [
+      "Juno",
+      "Like walk into the day?"
+    ],
+    [
+      "Hermana Lupe",
+      "Like doing it alone. Go feed your goats. They don't know anybody died."
+    ],
+    {
+      "do": "page",
+      "n": 1
+    },
+    {
+      "do": "step",
+      "to": "home"
+    },
+    {
+      "do": "hint"
+    }
+  ],
+  "lupe": {
+    "home": [
+      [
+        "Hermana Lupe",
+        "I'll sit with him till Shutter. Go on. Those goats are yelling at you."
+      ]
+    ],
+    "market": [
+      [
+        "Hermana Lupe",
+        "Chayo was asking for you. The Plaza, west down the boulevard. Take the milk."
+      ]
+    ],
+    "*": [
+      [
+        "Hermana Lupe",
+        "Keep the lantern lit, mija. Somebody always has to."
+      ]
+    ]
+  },
+  "pen": {
+    "home&!fed": [
+      {
+        "do": "sfx",
+        "s": "goat"
+      },
+      [
+        "",
+        "The goats crowd the gate, yelling like it's the end of the world."
+      ],
+      [
+        "Juno",
+        "It is the end of the world. Eat your mesquite."
+      ],
+      {
+        "do": "flag",
+        "f": "fed"
+      },
+      {
+        "do": "item",
+        "id": "milk",
+        "n": 2
+      },
+      {
+        "do": "checkHome"
+      }
+    ],
+    "*": [
+      {
+        "do": "sfx",
+        "s": "goat"
+      },
+      [
+        "",
+        "The goats are busy ignoring you. Pancha's spot by the gate is empty."
+      ]
+    ]
+  },
+  "tank": {
+    "home&!tank": [
+      [
+        "",
+        "The tank is half full. Papá's dew lines held another night."
+      ],
+      [
+        "Juno",
+        "Fill up before you go. Mamá always said that."
+      ],
+      {
+        "do": "water",
+        "set": 10
+      },
+      {
+        "do": "flag",
+        "f": "tank"
+      },
+      {
+        "do": "page",
+        "n": 3
+      },
+      {
+        "do": "checkHome"
+      }
+    ],
+    "*": [
+      [
+        "",
+        "You top off your water."
+      ],
+      {
+        "do": "water",
+        "set": 10
+      }
+    ]
+  },
+  "homeDone": [
+    [
+      "Juno",
+      "Two jars of milk. Doña Chayo will trade for that."
+    ],
+    {
+      "do": "step",
+      "to": "market"
+    }
+  ],
+  "platform": [
+    [
+      "",
+      "Your father, wrapped in white. At first light, the sun takes him."
+    ]
+  ],
+  "door": {
+    "home2": [
+      {
+        "do": "ending"
+      }
+    ]
+  },
+  "chayo": {
+    "market": [
+      [
+        "Doña Chayo",
+        "Ay, Juno. Come here, come here. Let me look at you."
+      ],
+      [
+        "Doña Chayo",
+        "You look like your papá. That's not a compliment. He always looked tired."
+      ],
+      [
+        "Juno",
+        "I brought milk. Two jars."
+      ],
+      [
+        "Doña Chayo",
+        "Milk! Okay. Two jars of milk is worth..."
+      ],
+      [
+        "Doña Chayo",
+        "...two tins of white. And don't argue, I know what you're going to say."
+      ],
+      [
+        "Juno",
+        "It's worth one."
+      ],
+      [
+        "Doña Chayo",
+        "That's what I said you'd say. Take two. Your mamá never once sold me gray."
+      ],
+      {
+        "do": "take",
+        "id": "milk",
+        "n": 2
+      },
+      {
+        "do": "white",
+        "add": 2
+      },
+      {
+        "do": "page",
+        "n": 2
+      },
+      [
+        "Doña Chayo",
+        "Now go find that Kit before he talks somebody to death. He's been asking for you all night."
+      ],
+      {
+        "do": "step",
+        "to": "kit"
+      }
+    ],
+    "*": [
+      [
+        "Doña Chayo",
+        "White's not for looking at, mija. Put it on before you leave, not when you feel it."
+      ]
+    ]
+  },
+  "kit": {
+    "kit": [
+      [
+        "Kit",
+        "Juno! Juno. Okay. Question."
+      ],
+      [
+        "Juno",
+        "No."
+      ],
+      [
+        "Kit",
+        "You didn't even hear it."
+      ],
+      [
+        "Kit",
+        "Does rain make a noise? Like, when it hits stuff?"
+      ],
+      [
+        "Juno",
+        "Kit, I've never seen rain. Nobody has."
+      ],
+      [
+        "Kit",
+        "Your papá said his abuelo heard it once. He said it sounds like applause."
+      ],
+      [
+        "Juno",
+        "...He told everybody that."
+      ],
+      [
+        "Kit",
+        "Anyway. Pancha got out."
+      ],
+      [
+        "Juno",
+        "Kit."
+      ],
+      [
+        "Kit",
+        "She went down toward the drain, east of the park. There's something down there, Juno. It's got a light."
+      ],
+      [
+        "Juno",
+        "A light. Like a lantern?"
+      ],
+      [
+        "Kit",
+        "Like an eye."
+      ],
+      {
+        "do": "step",
+        "to": "pancha"
+      }
+    ],
+    "pancha": [
+      [
+        "Kit",
+        "East of the park. The drain. Please, Juno?"
+      ]
+    ],
+    "*": [
+      [
+        "Kit",
+        "Does Pancha count as a party member? I think she counts."
+      ]
+    ]
+  },
+  "ruben": [
+    [
+      "Rubén",
+      "Seven flags. Seven nations owned this ground once, they say."
+    ],
+    [
+      "Rubén",
+      "Can't name a single one of them. Doesn't matter. They're gone, and we're still here."
+    ]
+  ],
+  "beto": [
+    [
+      "Don Beto",
+      "You hear her last night? La Llorona. Down in the Dead River."
+    ],
+    [
+      "Don Beto",
+      "My abuela said if you hear her crying, you don't go look. You don't help. You go home."
+    ],
+    [
+      "Juno",
+      "Did your abuela ever go look?"
+    ],
+    [
+      "Don Beto",
+      "Once."
+    ]
+  ],
+  "tavo": [
+    [
+      "Tavo",
+      "Did you know the Old Trail is the oldest place in the whole world?"
+    ],
+    [
+      "Tavo",
+      "Abuelo Nacho says the first people walked it. It's north. It has benches."
+    ]
+  ],
+  "nacho": [
+    [
+      "Abuelo Nacho",
+      "Careful, mija. You're walking on history."
+    ],
+    [
+      "Juno",
+      "It's a trail, Nacho."
+    ],
+    [
+      "Abuelo Nacho",
+      "It's the oldest trail in the world. The first families walked it to get here."
+    ],
+    [
+      "Abuelo Nacho",
+      "There's a bench up the way. Somebody carved a heart in it. Ancient."
+    ]
+  ],
+  "bench": [
+    [
+      "",
+      "Someone carved a heart into the old bench, a very long time ago."
+    ],
+    [
+      "",
+      "Inside it: MANDO + CRISTI 4EVER."
+    ],
+    [
+      "Juno",
+      "...Ancient lovers."
+    ]
+  ],
+  "well": [
+    {
+      "do": "sfx",
+      "s": "splash"
+    },
+    [
+      "",
+      "The bucket comes up wet. Somebody's lucky night."
+    ],
+    {
+      "do": "water",
+      "add": 3
+    }
+  ],
+  "drainIntro": [
+    {
+      "do": "cam",
+      "x": 115,
+      "z": 209
+    },
+    {
+      "do": "sfx",
+      "s": "goat"
+    },
+    [
+      "",
+      "Pancha is backed against the concrete, bleating."
+    ],
+    {
+      "do": "spawnEnemies",
+      "id": "drain"
+    },
+    [
+      "",
+      "Something rolls out of the culvert's dark mouth. Six wheels. One red eye."
+    ],
+    [
+      "Kit",
+      "That's a Stray. That's a Stray, Juno."
+    ],
+    [
+      "Juno",
+      "I know what it is."
+    ],
+    [
+      "",
+      "A coyote slinks in behind it, following the noise. Following the meal."
+    ],
+    {
+      "do": "page",
+      "n": 5
+    },
+    [
+      "Juno",
+      "Kit. Get your sling out."
+    ],
+    [
+      "Kit",
+      "My sling's for birds!"
+    ],
+    [
+      "Juno",
+      "Then pretend it's a bird with one eye."
+    ],
+    {
+      "do": "battle",
+      "id": "drain"
+    }
+  ],
+  "drainWin": [
+    {
+      "do": "sfx",
+      "s": "goat"
+    },
+    [
+      "",
+      "The Stray shudders and goes still. Its eye fades to nothing."
+    ],
+    [
+      "Kit",
+      "You hit it in the eye. Like your papá's book says."
+    ],
+    [
+      "Juno",
+      "Mamá's book. Papá just wrote in it louder."
+    ],
+    [
+      "Kit",
+      "Can I come with you? Like, from now on? On everything?"
+    ],
+    [
+      "Juno",
+      "...You can walk Pancha home."
+    ],
+    [
+      "Kit",
+      "That's a yes. I'm counting that as a yes."
+    ],
+    {
+      "do": "join",
+      "who": "kit"
+    },
+    {
+      "do": "salvage"
+    },
+    [
+      "Juno",
+      "Shutter's coming. Let's get home before the sky goes white."
+    ],
+    {
+      "do": "step",
+      "to": "home2"
+    }
+  ],
+  "fall": [
+    [
+      "Kit",
+      "Juno. Juno, wake up. Come look."
+    ],
+    [
+      "Juno",
+      "Kit, it's day. Get inside before you go white."
+    ],
+    [
+      "Kit",
+      "Everybody's up on the roofs. Look up."
+    ],
+    {
+      "do": "lookUp"
+    },
+    [
+      "Juno",
+      "..."
+    ],
+    [
+      "Kit",
+      "What is that?"
+    ],
+    [
+      "Juno",
+      "Nothing comes down from up there. Nothing ever comes down."
+    ],
+    {
+      "do": "waitDrone"
+    },
+    [
+      "Kit",
+      "It's going toward the lake."
+    ],
+    [
+      "Juno",
+      "The White Bowl."
+    ]
+  ],
+  "faint": [
+    [
+      "",
+      "The white closes in. Your hands stop working right. You've stopped sweating."
+    ],
+    [
+      "",
+      "Someone drags you under a roof. You wake at Mar Farm, the next Lamp, with one less tin of white."
+    ]
+  ],
+  "fina": [
+    [
+      "Doña Fina",
+      "Agua, agua. Clean, boiled, blessed. Two out of three, guaranteed."
+    ],
+    [
+      "Juno",
+      "Which two?"
+    ],
+    [
+      "Doña Fina",
+      "Depends on the day, mija."
+    ]
+  ],
+  "memo": {
+    "pancha": [
+      [
+        "Memo",
+        "Drain's east of the park. If that's where you're going, take a pipe."
+      ],
+      [
+        "Memo",
+        "Something's been rolling around out there at night. Little tracks. Six wheels."
+      ]
+    ],
+    "home2": [
+      [
+        "Memo",
+        "Heard the noise from here. You and the kid okay?"
+      ],
+      [
+        "Juno",
+        "We're okay."
+      ],
+      [
+        "Memo",
+        "Then get home. Shutter waits for nobody."
+      ]
+    ],
+    "*": [
+      [
+        "Memo",
+        "Nobody goes out the east road after Lamp. Not without a reason and a pipe."
+      ],
+      [
+        "Memo",
+        "Big tracks out by the lake lately. Bigger than any Stray."
+      ]
+    ]
+  },
+  "nina": [
+    [
+      "Nina",
+      "Tavo says the Old Trail is the oldest place in the world. I say it's the drain."
+    ],
+    [
+      "Nina",
+      "The drain has bones in it. That's how you know it's old."
+    ]
+  ],
+  "tona": [
+    [
+      "Abuela Toña",
+      "One candle for Elías. One for Rosa, in case."
+    ],
+    [
+      "Abuela Toña",
+      "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."
+    ]
+  ],
+  "intro": [
+    {
+      "do": "wait",
+      "ms": 500
+    },
+    [
+      "Little Juno",
+      "Papá. Tell the old story."
+    ],
+    [
+      "Papá",
+      "Again? You know it better than I do."
+    ],
+    [
+      "Little Juno",
+      "The whole thing. Don't skip the machines."
+    ],
+    [
+      "Mamá",
+      "Don't skip the machines, Elías."
+    ],
+    [
+      "Papá",
+      "...Okay. Okay. Come closer to the fire."
+    ],
+    {
+      "do": "tale",
+      "p": "rain"
+    },
+    [
+      "Papá",
+      "A long time ago, the sky was full. Clouds, white and gray, big as mountains."
+    ],
+    [
+      "Papá",
+      "And when they got heavy, water fell out of them. All by itself. For free."
+    ],
+    {
+      "do": "tale",
+      "p": "machines"
+    },
+    [
+      "Papá",
+      "Then the world got hot. Hotter every year. So the people built machines and sent them up to cool the sky down."
+    ],
+    [
+      "Papá",
+      "They sprayed it with a kind of dust. A shade, to hide us from the sun."
+    ],
+    {
+      "do": "tale",
+      "p": "veil"
+    },
+    [
+      "Papá",
+      "But something lived up there, mija. Something nobody knew about. Smaller than dust."
+    ],
+    [
+      "Papá",
+      "It was what made the clouds. And the machines' dust was killing it."
+    ],
+    {
+      "do": "tale",
+      "p": "white"
+    },
+    [
+      "Papá",
+      "When the machines finally stopped, the heat came all at once. The sky turned white."
+    ],
+    [
+      "Papá",
+      "They called it the White Year. It lasted the rest of their lives."
+    ],
+    {
+      "do": "tale",
+      "p": "below"
+    },
+    [
+      "Papá",
+      "Most people didn't make it. The ones who did went down. Under bridges. Under stores. Into the dark, where the lanterns are."
+    ],
+    [
+      "Papá",
+      "And up top, the machines kept going. They still walk the day, doing whatever they were told a hundred years ago."
+    ],
+    {
+      "do": "tale",
+      "p": "circling"
+    },
+    [
+      "Papá",
+      "Some people say something is still up there. Circling. Waiting for somebody to tell it what to do."
+    ],
+    {
+      "do": "tale",
+      "p": null
+    },
+    {
+      "do": "wait",
+      "ms": 700
+    },
+    [
+      "Little Juno",
+      "Is it true?"
+    ],
+    [
+      "Papá",
+      "Which part?"
+    ],
+    [
+      "Little Juno",
+      "The part where water fell out of the sky."
+    ],
+    [
+      "Mamá",
+      "Your papá's abuelo swore he heard it once, when he was little. He said it sounded like applause."
+    ],
+    [
+      "Papá",
+      "That's why we never walk in white, Juno. The day belongs to the sun."
+    ],
+    [
+      "Little Juno",
+      "Papá... will it ever rain again?"
+    ],
+    [
+      "Papá",
+      "Not in my lifetime, mija."
+    ],
+    {
+      "do": "wait",
+      "ms": 1100
+    },
+    [
+      "Papá",
+      "Maybe in yours."
+    ],
+    {
+      "do": "wait",
+      "ms": 900
+    }
+  ],
+  "cot": [
+    [
+      "",
+      "Home. Under the floor, forty feet down, it's cool."
+    ],
+    {
+      "do": "choice",
+      "q": "Rest here?",
+      "opts": [
+        [
+          "Rest and save",
+          [
+            {
+              "do": "rest"
+            }
+          ]
+        ],
+        [
+          "Not yet",
+          []
+        ]
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { section, sectionGrid, regionPaint, type Grid, type RGB, type SectionSpec } from './section';
 import { currentChunk, useChunk, hitsSolid, type Chunk } from './world';
 import { checkDoors, clearDoorMarks } from './doorway';
-import { LightPool } from './kit';
+import { LightPool, type Lamp } from './kit';
 import { motes, pruneSways } from './foliage';
 import { planeGeo } from './geo';
 import type { Area, NPC, Roamer, Spot, Thing, Trigger } from './area';
@@ -113,6 +113,9 @@ export interface Region extends Area {
   onChange?: (added: BuiltPiece | null, removed: BuiltPiece | null) => void;
   /** The ground's colour at a point, as its map paints it (for the mini map); null past every map's edge. */
   groundColor(x: number, z: number): RGB | null;
+  /** Add a lamp to the region's shared light pool (a scene's fire), or take a tag's lamps away again. */
+  addLamp(l: Lamp): void;
+  dropLamps(tag: string): void;
 }
 
 const inside = (p: PiecePlan, x: number, z: number): boolean => x >= p.ox && x < p.ox + p.cols && z >= p.oz && z < p.oz + p.rows;
@@ -347,6 +350,8 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
       if (s) await region.settle(s.x, s.z);
     },
     async idle() { while (building.size) await Promise.allSettled([...building.values()]); },
+    addLamp(l) { pool.add(l); },
+    dropLamps(tag) { pool.drop(tag); },
     groundColor(x, z) {
       const p = planAt(x, z);
       if (!p) return null;

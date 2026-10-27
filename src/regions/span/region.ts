@@ -101,8 +101,8 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
 export const UNBUILT: Record<string, string> = {
   'thirty-five': 'The Thirty-Five runs north from here, toward the Gate. The caravan isn’t ready to leave.',
   'east-loop': 'The east road runs on into the brush. Not tonight.',
-  'dead-river': 'Del Mar runs on west under the Thirty-Five, down to the Dead River. Not tonight.',
-  'south-road': 'McPherson runs on south, out of town. Not tonight.',
+  'dead-river': 'The boulevard runs on west under the Thirty-Five, down to the Dead River. Not tonight.',
+  'south-road': 'The road runs on south, out of town. Not tonight.',
 };
 
 export function useSpanApron(): void { setApronTexture(spanApron()); }

@@ -11,9 +11,17 @@ import { Minimap, type MapMark } from './engine/minimap';
 import type { Area, NPC, Spot, Thing } from './engine/area';
 import { Actor } from './game/actors';
 import { Clock, fmtTime, parseClock } from './game/clock';
+import { Director, type Cmd, type Dialogue, type Script, type Stage } from './game/script';
+import { Hud, type Page } from './game/hud';
+import { Tale } from './game/tale';
+import { campfire } from './game/fire';
+import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
+import DIALOGUE from './game/data/dialogue.json';
+import QUESTS from './game/data/quests.json';
+import PAGES from './game/data/pages.json';
 import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
-import { SPAN, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
+import { SPAN, START, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
 
 /**
  * The Long Noon, rebuilt on the world style spec (docs/style/world-style-spec.md)
@@ -50,6 +58,8 @@ const camTarget = new THREE.Vector3();
 const post = createPost(renderer, new THREE.Scene(), camera);
 const ui = new UI(host);
 const minimap = new Minimap(ui.root);
+const hud = new Hud(ui.root);
+const tale = new Tale(ui.root);
 
 function resize(): void {
   renderer.setSize(innerWidth, innerHeight);
@@ -64,10 +74,17 @@ resize();
 const keys = new Set<string>();
 let aQueued = false;
 addEventListener('keydown', (e) => {
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
+  // whatever's open on top takes the key: the book, a menu, the skip of the tale, a choice
+  if (!e.repeat && hud.key(e.code)) return;
+  if (mode === 'cine' && !e.repeat && (e.code === 'Escape' || e.code === 'KeyQ')) { skipTale(); return; }
+  if (e.code.startsWith('Arrow') && ui.nudge(e.code === 'ArrowDown' || e.code === 'ArrowRight' ? 1 : -1)) return;
   keys.add(e.code);
-  if (!e.repeat && ['KeyE', 'Space', 'Enter', 'KeyZ'].includes(e.code)) aQueued = true;
-  if (!e.repeat && e.code === 'KeyM') minimap.toggle();
+  if (e.repeat) return;
+  if (['KeyE', 'Space', 'Enter', 'KeyZ'].includes(e.code)) aQueued = true;
+  if (e.code === 'KeyM') minimap.toggle();
+  if (free() && (e.code === 'Escape' || e.code === 'KeyQ' || e.code === 'Backspace')) void openPause();
+  if (free() && (e.code === 'KeyB' || e.code === 'Tab')) void openBook();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
@@ -126,8 +143,9 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
     for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
     region.onChange = (added, removed) => {
       if (removed) unpopulate(w, removed.id);
-      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); }
+      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); remember(added.things, added.npcs); }
     };
+    for (const b of region.pieces) remember(b.things, b.npcs);
     void minimap.setRegion(region, at ?? region.spawns.start!);
   } else await populate(w, area.npcs, area.roamers ?? [], id);
   worlds.set(id, w);
@@ -160,7 +178,7 @@ function placeAt(s: Spot): void {
   player.place(s.x, cur.area.ground(s.x, s.z), s.z);
   if (s.face) player.face(s.face === 'W' ? -1 : s.face === 'E' ? 1 : 0, s.face === 'N' ? -1 : s.face === 'S' ? 1 : 0);
   camTarget.copy(clampCam(player.x, player.z));
-  camera.position.copy(camTarget).add(CAM_OFFSET);
+  camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
   camera.lookAt(camTarget);
 }
 
@@ -225,12 +243,12 @@ let staleRoom: World | null = null;
 
 
 /** Through a door or out of a room: a quick pixel dissolve, then a small name tag (spec §9.4). */
-async function go(to: string, spawn: string): Promise<void> {
+async function go(to: string, spawn: string | Spot): Promise<void> {
   busy = true;
   ui.showPrompt(null);
   await ui.dissolve(true);
   const w = worlds.get(to) ?? (await buildWorld(to));
-  if (to === SPAN) await (w.area as Region).prepare(spawn);
+  if (to === SPAN) await (typeof spawn === 'string' ? (w.area as Region).prepare(spawn) : (w.area as Region).settle(spawn.x, spawn.z));
   enter(w, spawn);
   if (staleRoom && staleRoom !== w) { dispose(staleRoom); staleRoom = null; }
   lastPiece = '';
@@ -245,19 +263,29 @@ function showClock(): void {
   const m = Math.floor(time.minute);
   if (m === shownMinute) return;
   shownMinute = m;
-  ui.badge(`<b>${fmtTime(m)}</b><span>${time.phase}</span>`);
+  // the time is shown in the status panel (game/hud.ts), redrawn each frame
 }
 async function load(): Promise<void> {
   player = await Actor.person('juno', new THREE.Color(1, 1, 1));
   const w = await buildWorld(SPAN);
   enter(w, 'start');
   showClock();
-  ui.titleCard('SEVEN FLAGS', 'A town that stayed');
   lastPiece = (cur.area as Region).pieceAt(player.x, player.z)?.id ?? '';
   loaded = true;
+  S = newState(where());
+  if (TEST) {
+    // straight into the town, for playtests and screenshots: free roam, or the mission step asked for
+    S.step = STEP ?? 'free';
+    mode = 'play';
+    hud.show(true);
+    showObjective(false);
+    if (STEP === 'burial') void burial();
+    else ui.titleCard('SEVEN FLAGS', 'A town that stayed');
+  } else void titleScreen();
 }
 
 function clampCam(x: number, z: number): THREE.Vector3 {
+  if (camHold) return camHold.clone();
   const c = cur.area.cam;
   return new THREE.Vector3(THREE.MathUtils.clamp(x, c.x0, c.x1), 0.8, THREE.MathUtils.clamp(z, c.z0, c.z1));
 }
@@ -276,11 +304,16 @@ async function interact(tg: Target): Promise<void> {
     const { npc, actor } = tg.p;
     actor.face(player.x - actor.x, player.z - actor.z);
     player.face(actor.x - player.x, actor.z - player.z);
+    const sc = director.resolve(npc.script ?? npc.id);
+    if (sc) { await director.run(sc); actor.dir = npc.face ?? actor.dir; return; }
     ui.say({ name: npc.name, portrait: await actor.card(), lines: npc.lines ?? ['…'] }, () => { actor.dir = npc.face ?? actor.dir; });
     return;
   }
   const t = tg.t;
   player.face(t.x - player.x, t.z - player.z);
+  // a thing with a script says what the story needs it to say now; a door with nothing to say just opens
+  const sc = t.script ? director.resolve(t.script) : null;
+  if (sc) { await director.run(sc); return; }
   if (t.go) { await go(t.go.to, t.go.spawn); return; }
   if (t.lines) ui.say({ lines: t.lines });
 }
@@ -317,18 +350,25 @@ function frame(): void {
   if (!loaded) return;
   const area = cur.area;
 
-  // the clock: stopped while people talk or the screen is changing (legacy: it only runs while exploring)
-  if (!ui.talking && !busy) {
+  // the clock: stopped while people talk, in menus, or while the screen is changing (legacy: it only runs while exploring)
+  if (free()) {
+    const before = time.day;
     time.tick(dt);
+    if (time.day !== before) S.day++;
     showClock();
     if (time.lit !== night) void turnOfDay(time.lit);
     else if ((lightAge += dt) > 0.2) { lightAge = 0; relight(); }
+    weather(dt);
   }
+  tale.draw(dt);
+  for (const c of cine) c.animate(dt);
+  fire?.update(t);
+  hud.update(S, fmtTime(time.minute), time.phase);
 
   const a = aQueued || ui.takeA();
   aQueued = false;
   if (ui.talking) { if (a) ui.advance(); }
-  else if (!busy) {
+  else if (free()) {
     const m = moveInput();
     const l = Math.hypot(m.x, m.z);
     player.moving = l > 0.12;
@@ -372,8 +412,9 @@ function frame(): void {
   }
 
   // camera: follow the player, clamped so the edge never shows a void
-  camTarget.lerp(clampCam(player.x, player.z), 1 - Math.exp(-dt * 4.5));
-  camera.position.copy(camTarget).add(CAM_OFFSET);
+  camTarget.lerp(clampCam(player.x, player.z), 1 - Math.exp(-dt * (camHold ? 2.2 : 4.5)));
+  camZoom += (camZoomTo - camZoom) * (1 - Math.exp(-dt * 1.6));
+  camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
   camera.lookAt(camTarget);
   cur.lights.follow(player.root.position);
   if (cur.id === SPAN) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
@@ -386,8 +427,288 @@ function frame(): void {
 
   area.update(t, player.root.position, camTarget);
   if ((mapAge += dt) > 0.05) { mapAge = 0; drawMap(); }
+  markGoal();
   post.tick(t);
   post.composer.render();
+}
+
+// ------------------------------------------------------------ the story (legacy/poc2, broken down in docs/design/legacy-breakdown.md)
+type Mode = 'title' | 'cine' | 'play';
+let mode: Mode = 'play';
+let S: GameState;
+/** Playtests and screenshots skip the title: `?time=`/`?clock=` start in free roam, `?step=` at a mission step. */
+const STEP = params.get('step');
+const TEST = held !== undefined || params.has('clock') || STEP !== null;
+const STEPS = QUESTS.steps as unknown as Record<string, { obj: string; marker: string | [number, number] | null }>;
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+const touchUI = (): boolean => matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+let camHold: THREE.Vector3 | null = null;
+let camZoom = 1, camZoomTo = 1;
+/** Free to walk and for the clock to run: playing, nothing open, nothing being said, no script running. */
+const free = (): boolean => loaded && mode === 'play' && !busy && !ui.talking && !director.running && !hud.modal;
+
+/** Who's speaking → whose sprite stands beside the line (legacy PORTRAIT). */
+const PORTRAIT: Record<string, string> = {
+  'Papá': 'elias', 'Mamá': 'rosa', 'Little Juno': 'kidjuno', 'Juno': 'juno', 'Kit': 'kit', 'Hermana Lupe': 'lupe', 'Doña Chayo': 'chayo', 'Don Beto': 'beto',
+  'Rubén': 'ruben', 'Tavo': 'tavo', 'Abuelo Nacho': 'nacho', 'Doña Fina': 'fina', 'Memo': 'memo', 'Nina': 'nina', 'Abuela Toña': 'tona',
+};
+let aborting = false;
+const stage: Stage = {
+  async say(name, text) { const id = PORTRAIT[name]; await ui.speak(name, text, id ? await Actor.portrait(id) : undefined); },
+  choose: (q, opts) => ui.choose(q, opts),
+  endTalk: () => ui.endTalk(),
+  aborted: () => aborting,
+  command: (c) => command(c),
+};
+const director = new Director(DIALOGUE as unknown as Dialogue, STEPS, () => S, stage);
+const run = (id: string): Promise<void> => director.run(director.resolve(id));
+
+async function command(c: Cmd): Promise<void> {
+  switch (c.do) {
+    case 'wait': await sleep(c.ms as number); break;
+    case 'item': {
+      const id = c.id as string, n = c.n as number;
+      S.items[id] = (S.items[id] ?? 0) + n;
+      hud.toast(n > 1 ? `${ITEM_NAMES[id]} ×${n}` : `Got ${(ITEM_NAMES[id] ?? id).toLowerCase()}`, true);
+      break;
+    }
+    case 'take': S.items[c.id as string] = Math.max(0, (S.items[c.id as string] ?? 0) - (c.n as number)); break;
+    case 'white': S.white += c.add as number; hud.toast(`+${c.add as number} tins of white`, true); break;
+    case 'water':
+      S.water = c.set != null ? (c.set as number) : Math.min(10, S.water + (c.add as number));
+      hud.toast(c.set != null ? 'Water topped off' : `+${c.add as number} water`);
+      break;
+    case 'page': await unlockPage(String(c.n)); break;
+    case 'step': setStep(c.to as string); break;
+    case 'flag': S.flags[c.f as string] = true; break;
+    case 'checkHome': if (S.flags.fed && S.flags.tank) await run('homeDone'); break;
+    case 'hint': hud.toast(touchUI() ? 'Drag on the left to walk. Tap A to talk.' : 'Walk with WASD or the arrows. E or Space to talk. B opens the staybook.', false, 6000); break;
+    case 'rest': await rest(); break;
+    case 'cam': camHold = new THREE.Vector3(c.x as number, 0.8, c.z as number); break;
+    case 'tale': tale.set((c.p as string | null) ?? null); break;
+    case 'sfx': break; // the sound set comes with the battle stage
+    default: console.warn('[script] not built yet:', c.do); hud.toast('(That part of the story isn’t built yet.)');
+  }
+}
+
+function setStep(to: string): void {
+  S.step = to;
+  showObjective(true);
+  if (to !== 'burial') saveGame(true);
+}
+function showObjective(flash: boolean): void { hud.objective(QUESTS.mission, STEPS[S.step]?.obj ?? '', flash); }
+
+async function unlockPage(key: string): Promise<void> {
+  if (!S.pages.includes(key)) S.pages.push(key);
+  await hud.openBook(PAGES as Record<string, Page>, S.pages, key, true);
+}
+async function openBook(): Promise<void> {
+  if (!S.pages.length) { hud.toast('The staybook is empty.'); return; }
+  const have = ['1', '2', '3', '5', 'last'].filter((k) => S.pages.includes(k));
+  await hud.openBook(PAGES as Record<string, Page>, S.pages, have[have.length - 1]!, false);
+}
+
+// ---------------------------------------------------------------- where the story's things are
+/** The last place each scripted thing and person was seen (maps stream, the marker still needs them). */
+const known = new Map<string, [number, number]>();
+function remember(things: Thing[], npcs: NPC[]): void {
+  for (const t of things) if (t.script) known.set(`i:${t.script}`, [t.x, t.z]);
+  for (const n of npcs) known.set(`npc:${n.id}`, [n.x, n.z]);
+}
+function goalPoint(): [number, number] | null {
+  const m = STEPS[S.step]?.marker;
+  if (!m) return null;
+  if (Array.isArray(m)) return m;
+  if (m === 'homeTasks') return S.flags.fed && S.flags.tank ? null : known.get(S.flags.fed ? 'i:tank' : 'i:pen') ?? null;
+  if (m.startsWith('npc:')) { const p = cur.people.find((q) => q.npc.id === m.slice(4)); return p ? [p.actor.x, p.actor.z] : known.get(m) ?? null; }
+  return known.get(m) ?? null;
+}
+function markGoal(): void {
+  const g = mode === 'play' && cur.id === SPAN && free() ? goalPoint() : null;
+  if (!g || Math.hypot(player.x - g[0], player.z - g[1]) < 2.4) { hud.mark(null); return; }
+  v.set(g[0], cur.area.ground(g[0], g[1]) + 2.1, g[1]).project(camera);
+  hud.mark({ x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, behind: v.z > 1 });
+}
+
+// ---------------------------------------------------------------- the white: daylight costs water (legacy 16-exploration)
+let exposure = 0, thirst = 0, fainting = false;
+function weather(dt: number): void {
+  if (time.frozen || fainting) { hud.warning(null); return; }
+  const ph = time.phase;
+  const door = known.get('i:door');
+  const sheltered = cur.id !== SPAN || (!!door && Math.hypot(player.x - door[0], player.z - door[1]) < 3.4);
+  if (ph === 'Shutter' && S.flags.shutterWarn !== S.day) { S.flags.shutterWarn = S.day; hud.toast('Shutter. Get under a roof before the white.', true, 4200); }
+  if (ph === 'Day' && !sheltered) {
+    hud.warning('Daylight. Your water is burning.');
+    if ((exposure += dt) > 3.5) { exposure = 0; S.water = Math.max(0, S.water - 1); if (S.water === 0) void faint(); }
+  } else hud.warning(ph === 'Shutter' && !sheltered ? 'Shutter. Find a roof.' : null);
+  if ((thirst += dt) > 150) { thirst = 0; if (S.water > 1) S.water--; }
+}
+
+/** Out in the white with no water: you wake at home the next Lamp, one tin of white poorer. */
+async function faint(): Promise<void> {
+  fainting = true;
+  hud.warning(null);
+  await ui.fade(true, 900, '#f4f0e6');
+  await run('faint');
+  S.day++; S.water = 3; S.white = Math.max(0, S.white - 1);
+  await setTime(19 * 60 + 30);
+  await go(SPAN, 'seven-flags:home');
+  saveGame(true);
+  await ui.fade(false, 900);
+  fainting = false;
+}
+
+/** Jump the clock; the town is rebuilt if its lanterns change. */
+async function setTime(m: number): Promise<void> {
+  time.set(m);
+  shownMinute = -1;
+  showClock();
+  if (time.lit !== night) await turnOfDay(time.lit);
+  relight(true);
+}
+
+async function rest(): Promise<void> {
+  await ui.fade(true, 500);
+  S.party.juno.hp = 42; S.party.kit.hp = 26;
+  saveGame(true);
+  await sleep(350);
+  await ui.fade(false, 500);
+  hud.toast('Rested. Game saved.', true);
+}
+
+// ---------------------------------------------------------------- saves (game/state.ts; rule 8)
+function where(): GameState['where'] {
+  return player ? { world: cur?.id ?? SPAN, x: +player.x.toFixed(2), z: +player.z.toFixed(2), face: player.dir } : { world: SPAN, ...START, face: 'N' };
+}
+function saveGame(quiet: boolean): void {
+  S.clock = time.minute;
+  S.where = where();
+  const ok = writeSave(S);
+  if (!quiet) hud.toast(ok ? 'Game saved' : "Couldn't save. Browser storage is turned off.", ok);
+}
+async function loadGame(): Promise<boolean> {
+  const s = readSave();
+  if (!s) { hud.toast('No saved game yet.'); return false; }
+  S = s;
+  await setTime(S.clock);
+  const w = S.where;
+  await go(w.world in ROOMS || w.world === SPAN ? w.world : SPAN, { x: w.x, z: w.z, face: w.face });
+  mode = 'play';
+  hud.show(true);
+  minimap.hidden = false;
+  showObjective(false);
+  hud.toast('Loaded your last save');
+  return true;
+}
+
+// ---------------------------------------------------------------- menus
+async function openPause(): Promise<void> {
+  const a = await hud.openPause(S, hasSave());
+  if (a === 'book') await openBook();
+  else if (a === 'save') saveGame(false);
+  else if (a === 'load') await loadGame();
+  else if (a === 'title') await titleScreen();
+}
+
+async function titleScreen(): Promise<void> {
+  mode = 'title';
+  ui.endTalk();
+  hud.show(false);
+  minimap.hidden = true;
+  camHold = new THREE.Vector3(START.x + 2, 0.8, START.z - 6);
+  camZoomTo = 1.25;
+  const a = await hud.titleScreen(hasSave());
+  camZoomTo = 1;
+  if (a === 'continue') { await ui.fade(true, 400); camHold = null; if (await loadGame()) { await ui.fade(false, 600); return; } }
+  await newGame();
+}
+
+// ---------------------------------------------------------------- the tale, then the burial
+const FIRE = { x: 142.6, z: 64 + 124.2 };
+let fire: ReturnType<typeof campfire> | null = null;
+const cine: Actor[] = [];
+function skipTale(): void {
+  if (mode !== 'cine' || aborting) return;
+  aborting = true;
+  ui.endTalk();
+}
+hud.skip.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); skipTale(); });
+for (const [label, fn] of [['Book', openBook], ['Menu', openPause]] as const) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (free()) void fn(); });
+  hud.buttons.appendChild(b);
+}
+
+async function newGame(): Promise<void> {
+  mode = 'cine';
+  await ui.fade(true, 700);
+  S = newState(where());
+  await theTale();
+  await burial();
+}
+
+/** "A story told at Mar Farm, a long time ago": Papá tells the old story by the fire (legacy 19-intro-cinematic). */
+async function theTale(): Promise<void> {
+  aborting = false;
+  await setTime(21 * 60 + 40);
+  if (cur.id !== SPAN) await go(SPAN, 'start');
+  await (cur.area as Region).settle(FIRE.x, FIRE.z);
+  player.root.visible = false;
+  const lupe = cur.people.find((p) => p.npc.id === 'lupe');
+  if (lupe) lupe.actor.root.visible = false;
+  const y = cur.area.ground(FIRE.x, FIRE.z);
+  fire = campfire(FIRE.x, y, FIRE.z);
+  cur.scene.add(fire.group);
+  (cur.area as Region).addLamp({ pos: new THREE.Vector3(FIRE.x, y + 0.9, FIRE.z), color: new THREE.Color('#ff9a4a'), intensity: 5, dist: 9, flicker: 0.35, tag: 'tale' });
+  for (const [id, dx, dz, face] of [['elias', -1.6, 0, 'E'], ['kidjuno', -0.75, 0.8, 'E'], ['rosa', 1.5, 0.2, 'W']] as const) {
+    const a = await Actor.person(id, cur.tint);
+    a.place(FIRE.x + dx, cur.area.ground(FIRE.x + dx, FIRE.z + dz), FIRE.z + dz);
+    a.dir = face;
+    cur.scene.add(a.root);
+    cine.push(a);
+  }
+  camHold = new THREE.Vector3(FIRE.x + 0.3, 0.9, FIRE.z - 1.1); // the fire low in the frame, the sheet above it
+  camZoomTo = camZoom = 0.55;
+  camTarget.copy(camHold);
+  hud.skip.classList.add('on');
+  await hud.chapter('<p>A story told at Mar Farm,<br>a long time ago.</p>', 2800, () => aborting);
+  if (!aborting) { await ui.fade(false, 1600); await run('intro'); }
+  hud.skip.classList.remove('on');
+  tale.clear();
+  ui.endTalk();
+  if (!aborting) { await ui.fade(true, 600); await hud.chapter('<h1>The Long Noon</h1><p>Many years later.</p>', 3600, () => aborting); }
+  else await ui.fade(true, 200);
+  for (const a of cine) cur.scene.remove(a.root);
+  cine.length = 0;
+  fire?.dispose(); fire = null;
+  (cur.area as Region).dropLamps('tale');
+  player.root.visible = true;
+  if (lupe) lupe.actor.root.visible = true;
+  aborting = false;
+}
+
+/** Many years later. Lamp, and Papá on the platform, wrapped in white (dialogue.json `burial`). */
+async function burial(): Promise<void> {
+  mode = 'cine';
+  S.step = 'burial';
+  await setTime(19 * 60 + 20);
+  if (cur.id !== SPAN) await go(SPAN, 'start');
+  await (cur.area as Region).settle(START.x, START.z);
+  placeAt(START);
+  player.face(-0.3, -1);
+  camHold = new THREE.Vector3(START.x - 1.2, 0.8, START.z - 1.4);
+  camZoomTo = camZoom = 0.8;
+  camTarget.copy(camHold);
+  await ui.fade(false, 1100);
+  mode = 'play';
+  hud.show(true);
+  minimap.hidden = false;
+  showObjective(false);
+  await run('burial');
+  camHold = null;
+  camZoomTo = 1;
 }
 
 // ------------------------------------------------------------ the mini map
@@ -399,6 +720,8 @@ function drawMap(): void {
   const marks: MapMark[] = [];
   for (const p of cur.people) marks.push({ x: p.actor.x, z: p.actor.z, kind: 'person' });
   for (const t of cur.area.things) if (t.go && ROOMS[t.go.to]) marks.push({ x: t.x, z: t.z, kind: 'door' });
+  const goal = mode === 'play' ? goalPoint() : null;
+  if (goal) marks.push({ x: goal[0], z: goal[1], kind: 'goal' });
   const piece = (cur.area as Region).pieceAt(player.x, player.z);
   minimap.draw(player.x, player.z, player.dir, marks, piece?.title ?? cur.area.title);
 }
@@ -414,6 +737,10 @@ load().then(() => {
     get piece() { return cur.id === SPAN ? (cur.area as Region).pieceAt(player.x, player.z)?.id ?? null : null; },
     get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
+    get mode() { return mode; },
+    get step() { return S.step; },
+    get state() { return S; },
+    get scripting() { return director.running; },
     get busy() { return busy; },
     get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },
     get built() { return cur.id === SPAN ? (cur.area as Region).pieces.map((p) => p.id) : []; },

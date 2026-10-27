@@ -129,14 +129,15 @@ export function dressDoor(parent: THREE.Object3D, x: number, y: number, z: numbe
 
 /**
  * The promise check: every lit door must lead somewhere, and every way in
- * (a Thing that travels; a dungeon's exit) must have a lit door at it.
+ * (a Thing that travels, `go`; a dungeon's exit) must have a lit door at it.
+ * A Thing with only a `script` is something to talk to or use, not a way in.
  * Returns the broken promises, one line each.
  */
 export function checkDoors(a: Area): string[] {
   const out: string[] = [];
   const near = (x: number, z: number, px: number, pz: number, r = 2.6): boolean => Math.hypot(x - px, z - pz) < r;
   const ways: Array<{ x: number; z: number; what: string }> = [
-    ...a.things.filter((t) => t.go || t.script).map((t) => ({ x: t.x, z: t.z, what: `"${t.label}" → ${t.go?.to ?? t.script}` })),
+    ...a.things.filter((t) => t.go).map((t) => ({ x: t.x, z: t.z, what: `"${t.label}" → ${t.go!.to}` })),
     // an interior's own exits are doorways too (outdoor edge exits are roads, not doors)
     ...(!a.sky
       ? a.triggers.filter((t) => t.go).map((t) => ({ x: Math.max(t.x0, Math.min(t.x1, (t.x0 + t.x1) / 2)), z: Math.max(0, Math.min(t.z0, t.z1)), what: `exit → ${t.go!.to}` }))

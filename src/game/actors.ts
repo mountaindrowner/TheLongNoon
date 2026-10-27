@@ -19,7 +19,7 @@ const WALK = [1, 0, 2, 0];
 /** Where each figure sits in the atlas (from the old manifest). */
 export const ATLAS = {
   people: { juno: [0, 0], kit: [49, 0], lupe: [98, 0], chayo: [147, 0], beto: [196, 0], ruben: [0, 97], tavo: [49, 97], nacho: [98, 97], fina: [147, 97], memo: [196, 97], nina: [0, 194], tona: [49, 194], elias: [98, 194], rosa: [147, 194], kidjuno: [196, 194] } as Record<string, [number, number]>,
-  critters: { goat: [[141, 291, 18, 15], [160, 291, 18, 15]], chicken: [[179, 291, 10, 10], [190, 291, 10, 10]], coyote: [[87, 291, 26, 17], [114, 291, 26, 17]] } as Record<string, Array<[number, number, number, number]>>,
+  critters: { goat: [[141, 291, 18, 15], [160, 291, 18, 15]], chicken: [[179, 291, 10, 10], [190, 291, 10, 10]], coyote: [[87, 291, 26, 17], [114, 291, 26, 17]], stray: [[0, 291, 28, 24], [29, 291, 28, 24]], strayBroken: [[58, 291, 28, 24]] } as Record<string, Array<[number, number, number, number]>>,
 };
 
 interface Atlas { img: HTMLImageElement; data: Uint8ClampedArray; tex: THREE.Texture }
@@ -126,16 +126,28 @@ export class Actor {
   setTint(c: THREE.Color): void { (this.mesh.material as THREE.MeshBasicMaterial).color.copy(c); }
 
   /** The dialogue card: this figure's standing frame, trimmed and upscaled (spec §13.4). */
-  async card(): Promise<string> {
-    const a = await loadAtlas();
-    const [ox, oy] = this.origin;
-    const c = document.createElement('canvas');
-    const k = 9;
-    c.width = 16 * k; c.height = 24 * k;
-    const g = c.getContext('2d')!;
-    g.imageSmoothingEnabled = false;
-    g.translate(16 * k, 0); g.scale(-1, 1); // facing left, standing at the right of the box
-    g.drawImage(a.img, ox, oy, 16, 24, 0, 0, 16 * k, 24 * k);
-    return c.toDataURL();
+  async card(): Promise<string> { return Actor.cardOf(this.origin); }
+
+  private static cards = new Map<string, Promise<string>>();
+  /** A person's sprite, scaled up and facing left: the picture beside their lines. */
+  static portrait(id: string): Promise<string> { return Actor.cardOf(ATLAS.people[id] ?? ATLAS.people.juno!); }
+  private static cardOf(origin: [number, number]): Promise<string> {
+    const key = origin.join(',');
+    let p = Actor.cards.get(key);
+    if (!p) {
+      p = loadAtlas().then((a) => {
+        const [ox, oy] = origin;
+        const c = document.createElement('canvas');
+        const k = 9;
+        c.width = 16 * k; c.height = 24 * k;
+        const g = c.getContext('2d')!;
+        g.imageSmoothingEnabled = false;
+        g.translate(16 * k, 0); g.scale(-1, 1); // facing left, standing at the right of the box
+        g.drawImage(a.img, ox, oy, 16, 24, 0, 0, 16 * k, 24 * k);
+        return c.toDataURL();
+      });
+      Actor.cards.set(key, p);
+    }
+    return p;
   }
 }

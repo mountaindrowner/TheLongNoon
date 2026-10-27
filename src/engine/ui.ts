@@ -29,6 +29,12 @@ export class UI {
   private line = 0;
   private shown = 0;
   private onClose: (() => void) | null = null;
+  /** A scripted line waiting to be read (`speak`): the box stays open after it. */
+  private spoken: (() => void) | null = null;
+  private readonly choices: HTMLDivElement;
+  private chosen: ((i: number) => void) | null = null;
+  /** Called on each typed character with the speaker's name (a voice blip). */
+  onType: ((name: string) => void) | null = null;
 
   /** Touch stick vector in [-1,1]², and a one-shot A press. */
   stick = { x: 0, y: 0 };
@@ -44,6 +50,7 @@ export class UI {
     this.text = el('div', 'dlg-text', panel);
     this.more = el('div', 'dlg-more', panel);
     this.more.textContent = '▼';
+    this.choices = el('div', 'dlg-choices', panel);
     this.box.addEventListener('pointerdown', (e) => { e.preventDefault(); this.aPressed = true; });
     if (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window) this.touchControls();
   }
@@ -81,10 +88,11 @@ export class UI {
   }
 
   private fadeEl: HTMLDivElement | null = null;
-  /** Fade the screen to black (true) or back in (false); resolves when done. */
-  fade(on: boolean, ms = 450): Promise<void> {
+  /** Fade the screen to black, or another colour (true), or back in (false); resolves when done. */
+  fade(on: boolean, ms = 450, color = '#000'): Promise<void> {
     this.fadeEl ??= el('div', 'fade', this.root);
     const f = this.fadeEl;
+    if (on) f.style.background = color;
     f.style.transitionDuration = `${ms}ms`;
     void f.offsetWidth;
     f.classList.toggle('on', on);
@@ -197,6 +205,66 @@ export class UI {
     this.prompt.classList.add('on');
   }
 
+  /** One scripted line. Resolves once it's read; the box stays up for the next (close it with `endTalk`). */
+  speak(name: string, text: string, portrait?: string): Promise<void> {
+    return new Promise((res) => {
+      this.choices.replaceChildren();
+      this.say({ name: name || undefined, portrait, lines: [text] });
+      this.spoken = res;
+    });
+  }
+
+  /** A question with buttons under it; resolves with the option picked. */
+  choose(q: string, opts: string[]): Promise<number> {
+    return new Promise((res) => {
+      this.say({ lines: [q] });
+      clearInterval(this.typing);
+      this.shown = q.length;
+      this.text.textContent = q;
+      this.more.style.visibility = 'hidden';
+      this.choices.replaceChildren();
+      opts.forEach((o, i) => {
+        const b = el('button', 'dlg-choice', this.choices);
+        b.textContent = o;
+        b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.pick(i); });
+        b.addEventListener('mouseenter', () => b.focus());
+      });
+      (this.choices.firstElementChild as HTMLButtonElement | null)?.focus();
+      this.chosen = res;
+    });
+  }
+
+  /** Move the highlight among the choices (arrow keys). */
+  nudge(d: number): boolean {
+    if (!this.chosen) return false;
+    const bs = [...this.choices.querySelectorAll('button')];
+    const i = bs.indexOf(document.activeElement as HTMLButtonElement);
+    bs[(i + d + bs.length) % bs.length]?.focus();
+    return true;
+  }
+
+  private pick(i: number): void {
+    const cb = this.chosen;
+    if (!cb) return;
+    this.chosen = null;
+    this.choices.replaceChildren();
+    cb(i);
+  }
+
+  /** Close the box after scripted lines. */
+  endTalk(): void {
+    const spoken = this.spoken, chosen = this.chosen;
+    this.speech = null;
+    this.spoken = null;
+    this.chosen = null;
+    // anything still waiting on the box (a skipped scene) is let go
+    spoken?.();
+    chosen?.(0);
+    this.choices.replaceChildren();
+    clearInterval(this.typing);
+    this.box.classList.remove('on');
+  }
+
   say(s: Speech, onClose?: () => void): void {
     this.speech = s;
     this.line = 0;
@@ -216,9 +284,11 @@ export class UI {
     this.text.textContent = '';
     this.more.style.visibility = 'hidden';
     clearInterval(this.typing);
+    const who = this.speech!.name ?? '';
     this.typing = window.setInterval(() => {
       this.shown++;
       this.text.textContent = text.slice(0, this.shown);
+      if (this.shown % 2 === 0 && text[this.shown - 1] !== ' ') this.onType?.(who);
       if (this.shown >= text.length) { clearInterval(this.typing); this.more.style.visibility = 'visible'; }
     }, 22);
   }
@@ -226,6 +296,11 @@ export class UI {
   /** A press while talking: finish the line, or go to the next, or close. */
   advance(): void {
     if (!this.speech) return;
+    if (this.chosen) {
+      const bs = [...this.choices.querySelectorAll('button')];
+      this.pick(Math.max(0, bs.indexOf(document.activeElement as HTMLButtonElement)));
+      return;
+    }
     const text = this.speech.lines[this.line]!;
     if (this.shown < text.length) {
       clearInterval(this.typing);
@@ -234,6 +309,7 @@ export class UI {
       this.more.style.visibility = 'visible';
       return;
     }
+    if (this.spoken) { const r = this.spoken; this.spoken = null; r(); return; }
     this.line++;
     if (this.line < this.speech.lines.length) { this.showLine(); return; }
     this.speech = null;
