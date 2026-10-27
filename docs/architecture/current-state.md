@@ -211,6 +211,57 @@ north at grade, and the Lake Road joins at Memo's barricade on Del Mar.
   onto the Lake Road, Mar Farm's wall, the chapel in and out, Lupe, the
   unbuilt east road, and the clock. They pass at 1080p.
 
+## Piece 6 (done): the story, as the first version told it
+
+The owner asked (2026-10-27) to build the game out the way the first version
+did it, cinematic and all, with a mini map, and pointed out that Papá is dead
+by the time the game starts. `docs/design/legacy-breakdown.md` breaks the
+first version down beat by beat and rule by rule; this piece ports all of it.
+
+- **Papá** is no longer standing in the lot. He's on the burial platform, and
+  he appears only in the old tale.
+- **The mini map** (`engine/minimap.ts`) sits top right, north up. M or a tap
+  switches between close (about two screens) and far (most of the region).
+  - It paints every map's ground with that map's own painter, so streets
+    run on their true lines.
+  - Buildings and walls are drawn in as each map is built.
+  - It shows people, lit doors, Juno's facing and the goal; the goal is
+    pinned to the edge when it's out of range.
+  - Inside a room it shows where you went in, dimmed.
+- **The story runtime** (`src/game/`):
+  - `script.ts` runs the first version's `dialogue.json` as written: lines,
+    conditions, commands and choices.
+  - `hud.ts` holds the status panel (clock, ten drops, tins of white), the
+    objective and its marker, toasts, the staybook, and the title, pause
+    and end menus.
+  - `tale.ts` is the tale's painted panels, ported drawing for drawing.
+  - `battle.ts` is the fight, rule for rule.
+  - `sound.ts` has every synthesized effect and voice, plus the three
+    tracks.
+  - `state.ts` is the save (`longnoon.save`, v 1).
+- **The mission, "Lamp", on Seven Flags:**
+  - title, then the tale by a fire in Mar Farm's lot, then "Many years
+    later";
+  - the burial (Lupe, the staybook, page 1);
+  - the goats and the tank (milk, water, page 3);
+  - Chayo at the Plaza (white, page 2);
+  - Kit by the flags (Pancha got out);
+  - the drain (the Stray and the coyote, page 5, the fight; Kit joins and
+    Pancha follows);
+  - home before Shutter: the doors seal, the drone crosses the white sky,
+    the last page, the end card;
+  - free roam.
+- **The first version's rules:**
+  - daylight away from a roof costs a drop of water every 3.5 s;
+  - at none you faint and wake at Mar Farm the next Lamp;
+  - thirst takes a drop every 150 s;
+  - a Shutter warning;
+  - rest and save at the cot inside Mar Farm;
+  - saves at every new step.
+- **Playtests:** `tests/story.spec.js` plays the title and tale, the home
+  chores, the drain fight and the ending. `?step=<step>` starts at a mission
+  step with what the steps before it would have given.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
@@ -223,6 +274,10 @@ north at grade, and the Lake Road joins at Memo's barricade on Del Mar.
 | One map per scene, exits between maps (§9) | A region is a web of maps on one ground, walked between with no cut, brush between them | The owner chose option C (methodology §2.4): open regions joined by caravan legs. Each map is still a full spec map and could be split out. |
 | Section sizes 40×30 to 58×28 (§9.2) | Large maps are 132×96; the town is two of them | The owner's scale (2026-10-26): the first Span's maps felt too small. |
 | Edge trees: cottonwood, mesquite, dead tree (§9.3) | Walls of bramble with mesquite standing out of them; no lush trees outdoors | South Texas brush country (owner, 2026-10-26). |
+| A battle stage of its own (§14) | The fight happens where it starts, in the drain, with the first version's rules and the interface over the world | The first version's one fight, ported as it was. A stage in the spec's language can come with the next fight. |
+| The camera never rotates (§3) | In the ending, the camera tilts up to the sky while the drone crosses | It's a cutscene, as in the first version: "Look up." Play never tilts. |
+| (no mini map in the spec) | A mini map, top right | Asked for by the owner, 2026-10-27. |
+| Rest at the door (first version) | Rest at the cot inside Mar Farm | The rebuild's Mar Farm has a room behind the door; the door now goes in. |
 | No old-world names (§1) | Built on the real Laredo and I-35. Places carry survivors' names; real names appear only as Old Name hints where the sun never reached | Settled by the methodology §0 and §3. **Open:** MAR on the store roof is painted, but paint doesn't survive the sun (§3.3). Proposal: rebuild it as steel letters with the rest of the name fallen away. |
 
 ## The world methodology (2026-10-26)
@@ -236,12 +291,14 @@ chunks, `terrain.ts` `setAprons`). The owner chose C on 2026-10-26; the Span (pi
 
 ## Next pieces (proposed order)
 
-1. **What daylight costs**, once the owner decides (`docs/design/held-ideas.md`).
-2. **Out of the Span:** the first caravan leg up the Thirty-Five, or the east loop and the drain under the road.
-3. **Story runtime:** the legacy dialogue and quest data (`legacy/poc2/src/data`)
-   brought across: conditional dialogue, quest steps, the staybook.
-4. **Saves:** versioned from the start, with export and import.
-5. **Battle stage** in the spec's language (§14): local ground for panels, not a grid.
-6. **Sprites:** the cast regenerated in the spec's locked style once a PixelLab
+1. **The owner plays the first mission** on a phone and says what's off:
+   pacing, the drain, the ending, the sound levels.
+2. **What daylight costs**, once the owner decides (`docs/design/held-ideas.md`).
+   Until then the first version's rule holds: water burns away from a roof.
+3. **The newer story** (the Complete Story File) and the people with no lines
+   yet: Lourdes, Inés, Rafa, Goyo, Güero, Mari, Chuy, Don Pepe.
+4. **Out of the Span:** the first caravan leg up the Thirty-Five, or the east
+   road to the White Bowl, where the drone went.
+5. **Sprites:** the cast regenerated in the spec's locked style once a PixelLab
    key is available.
-7. **Sound:** the legacy synthesized effects and the three music tracks.
+6. **Saves:** export and import.

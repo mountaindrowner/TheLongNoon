@@ -58,7 +58,7 @@ at any angle.
 
 | Place | What happens there | Built as |
 |---|---|---|
-| **Mar Farm** | Juno's home, a dead supermarket. Walk in to enter the interior. | The store with MAR on the roof, its door lit by a caged bulb, and the lot in front. Also: the water tank, the goats, and the burial platform. **Papá and Hermana Lupe** stand where the game starts. |
+| **Mar Farm** | Juno's home, a dead supermarket. Walk in to enter the interior. | The store with MAR on the roof, its door lit by a caged bulb, and the lot in front. Also: the water tank, the goats, and the burial platform where Papá lies. **Hermana Lupe** stands by it, where the game starts. |
 | **The Plaza** | The night market, the seven flags, the well | Dead grass and two crossing paths. The flags (hero) stand along the north side, with stalls under strung bulbs. **Chayo, Beto, Rubén, Kit, Fina, Tavo and Nina** are here. |
 | **The Chapel** | The elders' table | The chapel with its lantern door and belfry, and the long table outside, with **Abuela Toña** at it |
 | **The drain** | The first fight | A concrete channel from behind the store south under Del Mar (black culverts) and out of town |
@@ -110,13 +110,9 @@ Walking to these edges turns you back with a line instead of breaking the game.
    Inés, Rafa, Goyo, Güero, Mari, Chuy and Don Pepe. The sprite sheet has no
    faces for them, and the legacy files have no lines, so they aren't placed
    yet. They need the newer story file and new sprites.
-2. **[ASK] Papá.** He's placed at the start, using the legacy sprite for Elías
-   and a line from the legacy intro: "That's why we never walk in white,
-   Juno. The day belongs to the sun."
-
-   In the legacy files Abuela Toña lights a candle for Elías and Rosa, so the
-   newer story must have changed what happened to Papá. The Complete Story
-   File will settle it.
+2. **Papá** (settled 2026-10-27): he's dead when the game starts. He's the one
+   on the burial platform, and he appears only in the old tale
+   (`docs/design/legacy-breakdown.md`).
 3. **[ASK] Toña and Fina moved outdoors** to match the map: Toña to the elders'
    table, Fina to the plaza. Their rooms are empty for now.
 4. **[ASK] The title card** now says SEVEN FLAGS, and the region is still The

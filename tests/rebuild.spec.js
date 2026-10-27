@@ -148,7 +148,7 @@ test('the clock runs, and at Lamp the town lights its lanterns', async ({ page }
   await page.evaluate(() => window.__LN.setClock(18 * 60 + 29.6, true));
   await until(page, () => window.__LN.lit === true && !window.__LN.busy, undefined, 150_000);
   expect(await page.evaluate(() => window.__LN.phase)).toBe('Lamp');
-  await expect(page.locator('.badge')).toContainText('Lamp');
+  await expect(page.locator('.status')).toContainText('Lamp');
   expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
   expect(await page.evaluate(() => window.__LN.doorIssues)).toEqual([]);
   expect(errors).toEqual([]);

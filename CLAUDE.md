@@ -8,6 +8,7 @@ spec. Every session starts fresh, so read these first:
   the lantern language). It overrides the style spec where they differ (real places, night first). `[PROPOSAL]` items await the owner.
 - `docs/design/held-ideas.md`: the owner's ideas waiting for a go (daytime shade-as-cover, …). Don't build them unasked.
 - `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
+- `docs/design/legacy-breakdown.md`: what the first version does, beat by beat, and where each part lives in the rebuild.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
 - `legacy/poc2/`: the original proof of concept: its story, dialogue and quest data, sprites and music to bring across.
@@ -21,7 +22,7 @@ npm run build          # dist/index.html, the whole game in one offline file
 npm test               # typecheck, build (rebuild + legacy), Playwright at 1080p and phone landscape
 ```
 
-`?time=lamp|night|shutter|white|day` holds the light still (tests and screenshots); `?clock=HH:MM` starts the running clock elsewhere. `window.__LN` (pos, areaId, piece, tp, face, go, talking, clock, phase, lit, setClock, doorIssues, checkAllRooms) is there for tests and checks.
+A new game opens on the title. `?time=lamp|night|shutter|white|day` holds the light still and `?clock=HH:MM` starts the running clock elsewhere; either one skips the title and starts in free roam. `?step=home|market|kit|pancha|home2|burial` starts at a mission step with what came before it. `window.__LN` (pos, areaId, piece, tp, face, go, talking, mode, step, state, scripting, clock, phase, lit, setClock, doorIssues, checkAllRooms) is there for tests and checks.
 Headless Chromium needs `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; it renders a frame or two
 a second, so tests wait on outcomes, never fixed durations.
 

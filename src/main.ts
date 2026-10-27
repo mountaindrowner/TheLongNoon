@@ -538,8 +538,8 @@ async function command(c: Cmd): Promise<void> {
 function catchUp(step: string): void {
   const order = Object.keys(STEPS), at = order.indexOf(step), past = (k: string): boolean => at > order.indexOf(k);
   if (past('burial')) { S.items.staybook = 1; S.pages.push('1'); }
-  if (past('home')) { Object.assign(S.flags, { fed: true, tank: true }); S.water = 10; S.pages.push('3'); }
-  if (past('market')) { S.white = 2; S.pages.push('2'); }
+  if (past('home')) { Object.assign(S.flags, { fed: true, tank: true }); S.water = 10; S.items.milk = 2; S.pages.push('3'); }
+  if (past('market')) { S.white = 2; S.items.milk = 0; S.pages.push('2'); }
   if (past('pancha')) {
     Object.assign(S.flags, { drainStarted: true, drainDone: true });
     S.joined.push('kit'); S.pages.push('5');
@@ -679,6 +679,12 @@ async function titleScreen(): Promise<void> {
   ui.endTalk();
   hud.show(false);
   minimap.hidden = true;
+  // the title stands in Mar Farm's lot; from anywhere else (a room, the road), Juno is brought home under it
+  if (cur.id !== SPAN || Math.hypot(player.x - START.x, player.z - START.z) > 12) {
+    await ui.fade(true, 400);
+    await go(SPAN, 'start');
+    await ui.fade(false, 600);
+  }
   camHold = new THREE.Vector3(START.x + 2, 0.8, START.z - 6);
   camZoomTo = 1.25;
   sound.music('intro');
@@ -791,8 +797,12 @@ const castActors = (): Actor[] => [kitActor, panchaActor, wreck, ...foes].filter
 async function bringCast(w: World): Promise<void> {
   if (!S || !player) return;
   const joined = S.joined.includes('kit'), drainDone = !!S.flags.drainDone;
-  // Kit leaves the plaza for good once the drain begins
+  // Kit leaves the plaza for good once the drain begins (and is back there in a new game)
   if (S.flags.drainStarted || joined) for (const p of w.people.filter((q) => q.npc.id === 'kit')) { w.scene.remove(p.actor.root); w.people.splice(w.people.indexOf(p), 1); }
+  else if (w.id === SPAN && !w.people.some((q) => q.npc.id === 'kit')) {
+    const def = w.area.npcs.find((n) => n.id === 'kit'), piece = def && (w.area as Region).pieceAt(def.x, def.z);
+    if (def && piece) await populate(w, [def], [], piece.id);
+  }
   if (joined || (S.flags.drainStarted && !drainDone)) kitActor ??= await Actor.person('kit', w.tint);
   else if (kitActor) { kitActor.root.parent?.remove(kitActor.root); kitActor = null; }
   const pancha = (S.step === 'pancha' && w.id === SPAN) || drainDone;

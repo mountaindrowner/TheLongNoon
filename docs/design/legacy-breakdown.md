@@ -70,20 +70,20 @@ the Span, from Lamp (7:20 pm) to Shutter (about 4:30 am).
 | System | In the first version | In the rebuild |
 |---|---|---|
 | **Clock** | One game minute per real second. Lamp starts at 7:20 pm. Phases: Lamp, Long night, Shutter, Day. Stops in menus and talk. | **Ported** (`game/clock.ts`). The light follows it, and the town relights at Lamp and at 6 am. |
-| **Water** | 10 drops. Starts at 6. The tank fills it to 10; the well gives +3. One drop is lost to thirst every 150 s (it never drops below 1 that way). In battle, *Drink* heals 16. | Porting now |
-| **Daylight** | In Day, outside Mar Farm's door, you lose 1 water every 3.5 s and the HUD says *"Daylight. Your water is burning."* At 0 you **faint**: you wake at Mar Farm at the next Lamp with 3 water and one less tin of white. At Shutter, a warning: *"Shutter. Get under a roof before the white."* | Porting now: the first version's rule as it was. The owner's **shade-as-cover** idea (held-ideas.md) stays held. |
-| **White** | Tins of zinc paste; the money. Shown by the water meter. Chayo trades 2 for the milk. | Porting now (the count only, as in the first version) |
-| **Items** | The staybook, milk, scrap, a dead cell, bearings. Shown in the pause menu. | Porting now |
-| **Staybook** | Pages unlock with a full-screen page: Papá's capitals or Mamá's slant, then a line saying what it teaches. Open it with B or Tab, or from the pause menu. Pages: 1, 2, 3, 5, last. | Porting now |
-| **Objective** | Top of the screen: *Mission: Lamp*, then the step's line. A marker floats over the target, and it's pinned to the screen edge when the target is off screen. | Porting now, plus the **mini map** (new, asked for by the owner) |
-| **Dialogue** | Scripts in `dialogue.json`. A talk picks its lines from what's happening (`home&!fed`, `market`, `*`). Commands: wait, item, take, white, water, page, step, flag, sfx, choice, rest, ending, cam, spawnEnemies, battle, join, salvage, lookUp, tale, waitDrone. Typed text with a voice blip per speaker. | Porting now: the same files and the same commands |
-| **Rest and save** | At Mar Farm's door: *"Rest here?"* Resting heals the party and saves. The game also saves at every new step. | Porting now. The rest spot is the cot inside Mar Farm. |
-| **Saves** | `localStorage` key `longnoon.poc2.save`, `v: 1`: step, flags, clock, day, water, white, items, pages, party HP, pipe durability, who has joined, position. | Porting now as **`longnoon.save`, `v: 1`** (a new key, so the first version's saves don't collide) |
-| **Pause menu** | Resume, Staybook, Save, Load, settings (frame counter, graphics, sound, music), Title. The side panel shows the party and items. | Porting now |
-| **Kit following** | After he joins, Kit walks Juno's trail, and Pancha follows behind him. | Battle stage |
-| **Battle** | See below | Battle stage |
-| **Sound** | All synthesized: footsteps by ground type, a voice blip per speaker, goats, chickens, a coyote's howl at night, fire crackle, wind louder in Day, menu sounds, the battle set, the drone's drone. **Three music tracks:** intro (title and tale), explore, combat. | Battle stage. The three tracks come across from `legacy/poc2/src/assets/music`. |
-| **Input** | WASD/arrows, E/Space/Z/Enter to talk, Esc/Q for pause, B/Tab for the book. On touch: a floating stick, an A button, Book and Menu buttons. | Walking and talking are **ported**; menus and the book are porting now |
+| **Water** | 10 drops. Starts at 6. The tank fills it to 10; the well gives +3. One drop is lost to thirst every 150 s (it never drops below 1 that way). In battle, *Drink* heals 16. | **Ported** |
+| **Daylight** | In Day, outside Mar Farm's door, you lose 1 water every 3.5 s and the HUD says *"Daylight. Your water is burning."* At 0 you **faint**: you wake at Mar Farm at the next Lamp with 3 water and one less tin of white. At Shutter, a warning: *"Shutter. Get under a roof before the white."* | **Ported:** the first version's rule as it was. Rooms count as a roof. The owner's **shade-as-cover** idea (held-ideas.md) stays held. |
+| **White** | Tins of zinc paste; the money. Shown by the water meter. Chayo trades 2 for the milk. | **Ported** (the count only, as in the first version) |
+| **Items** | The staybook, milk, scrap, a dead cell, bearings. Shown in the pause menu. | **Ported** |
+| **Staybook** | Pages unlock with a full-screen page: Papá's capitals or Mamá's slant, then a line saying what it teaches. Open it with B or Tab, or from the pause menu. Pages: 1, 2, 3, 5, last. | **Ported** |
+| **Objective** | Top of the screen: *Mission: Lamp*, then the step's line. A marker floats over the target, and it's pinned to the screen edge when the target is off screen. | **Ported**, plus the **mini map** (new, asked for by the owner) |
+| **Dialogue** | Scripts in `dialogue.json`. A talk picks its lines from what's happening (`home&!fed`, `market`, `*`). Commands: wait, item, take, white, water, page, step, flag, sfx, choice, rest, ending, cam, spawnEnemies, battle, join, salvage, lookUp, tale, waitDrone. Typed text with a voice blip per speaker. | **Ported:** the same files and the same commands (`src/game/data`, `game/script.ts`) |
+| **Rest and save** | At Mar Farm's door: *"Rest here?"* Resting heals the party and saves. The game also saves at every new step. | **Ported.** The rest spot is the cot inside Mar Farm. |
+| **Saves** | `localStorage` key `longnoon.poc2.save`, `v: 1`: step, flags, clock, day, water, white, items, pages, party HP, pipe durability, who has joined, position. | **Ported** as **`longnoon.save`, `v: 1`** (a new key, so the first version's saves don't collide) |
+| **Pause menu** | Resume, Staybook, Save, Load, settings (frame counter, graphics, sound, music), Title. The side panel shows the party and items. | **Ported** |
+| **Kit following** | After he joins, Kit walks Juno's trail, and Pancha follows behind him. | **Ported** |
+| **Battle** | See below | **Ported** (`game/battle.ts`) |
+| **Sound** | All synthesized: footsteps by ground type, a voice blip per speaker, goats, chickens, a coyote's howl at night, fire crackle, wind louder in Day, menu sounds, the battle set, the drone's drone. **Three music tracks:** intro (title and tale), explore, combat. | **Ported** (`game/sound.ts`). The three tracks come across from `legacy/poc2/src/assets/music`, re-encoded at 64 kbps. |
+| **Input** | WASD/arrows, E/Space/Z/Enter to talk, Esc/Q for pause, B/Tab for the book. On touch: a floating stick, an A button, Book and Menu buttons. | **Ported**; touch gets Book and Menu buttons |
 
 ## The battle (one fight, at the drain)
 
