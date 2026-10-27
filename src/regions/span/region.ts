@@ -44,7 +44,7 @@ export const PLACE: Record<string, [number, number]> = {
   'lake-road': [192, 128],
   'white-bowl': [156, 260],
 };
-/** Where a new game starts: the lot in front of Mar Farm, by Papá. */
+/** Where a new game starts: the lot in front of Mar Farm, by the platform where Papá lies. */
 export const START: Spot = { x: 137, z: 64 + 122.5, face: 'N' };
 
 export function spanRegion(mood: Mood, night: boolean, start: Spot = START): RegionSpec {

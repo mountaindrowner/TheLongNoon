@@ -7,6 +7,7 @@ import { beginArea } from './engine/world';
 import { checkDoors, clearDoorMarks } from './engine/doorway';
 import { buildRegion, type Region } from './engine/region';
 import { UI } from './engine/ui';
+import { Minimap, type MapMark } from './engine/minimap';
 import type { Area, NPC, Spot, Thing } from './engine/area';
 import { Actor } from './game/actors';
 import { Clock, fmtTime, parseClock } from './game/clock';
@@ -48,6 +49,7 @@ const CAM_OFFSET = new THREE.Vector3(0, 12.5, 14.5); // ≈ 41° down, looking n
 const camTarget = new THREE.Vector3();
 const post = createPost(renderer, new THREE.Scene(), camera);
 const ui = new UI(host);
+const minimap = new Minimap(ui.root);
 
 function resize(): void {
   renderer.setSize(innerWidth, innerHeight);
@@ -65,6 +67,7 @@ addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   keys.add(e.code);
   if (!e.repeat && ['KeyE', 'Space', 'Enter', 'KeyZ'].includes(e.code)) aQueued = true;
+  if (!e.repeat && e.code === 'KeyM') minimap.toggle();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
@@ -123,8 +126,9 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
     for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
     region.onChange = (added, removed) => {
       if (removed) unpopulate(w, removed.id);
-      if (added) void populate(w, added.npcs, added.roamers, added.id);
+      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); }
     };
+    void minimap.setRegion(region, at ?? region.spawns.start!);
   } else await populate(w, area.npcs, area.roamers ?? [], id);
   worlds.set(id, w);
   return w;
@@ -381,8 +385,22 @@ function frame(): void {
   post.tiltV.uniforms.focus!.value = focusY;
 
   area.update(t, player.root.position, camTarget);
+  if ((mapAge += dt) > 0.05) { mapAge = 0; drawMap(); }
   post.tick(t);
   post.composer.render();
+}
+
+// ------------------------------------------------------------ the mini map
+let mapAge = 0;
+let outside: { x: number; z: number; dir: Actor['dir'] } = { x: 0, z: 0, dir: 'S' };
+function drawMap(): void {
+  if (cur.id !== SPAN) { minimap.draw(outside.x, outside.z, outside.dir, [], cur.area.title, true); return; }
+  outside = { x: player.x, z: player.z, dir: player.dir };
+  const marks: MapMark[] = [];
+  for (const p of cur.people) marks.push({ x: p.actor.x, z: p.actor.z, kind: 'person' });
+  for (const t of cur.area.things) if (t.go && ROOMS[t.go.to]) marks.push({ x: t.x, z: t.z, kind: 'door' });
+  const piece = (cur.area as Region).pieceAt(player.x, player.z);
+  minimap.draw(player.x, player.z, player.dir, marks, piece?.title ?? cur.area.title);
 }
 
 // a debug handle for tests and quick checks (spec §20: prove it by looking)

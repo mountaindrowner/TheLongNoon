@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { section, sectionGrid, type Grid, type SectionSpec } from './section';
+import { section, sectionGrid, regionPaint, type Grid, type RGB, type SectionSpec } from './section';
 import { currentChunk, useChunk, hitsSolid, type Chunk } from './world';
 import { checkDoors, clearDoorMarks } from './doorway';
 import { LightPool } from './kit';
@@ -111,6 +111,8 @@ export interface Region extends Area {
   hold: boolean;
   /** Told whenever a map is built or taken down. */
   onChange?: (added: BuiltPiece | null, removed: BuiltPiece | null) => void;
+  /** The ground's colour at a point, as its map paints it (for the mini map); null past every map's edge. */
+  groundColor(x: number, z: number): RGB | null;
 }
 
 const inside = (p: PiecePlan, x: number, z: number): boolean => x >= p.ox && x < p.ox + p.cols && z >= p.oz && z < p.oz + p.rows;
@@ -345,6 +347,12 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
       if (s) await region.settle(s.x, s.z);
     },
     async idle() { while (building.size) await Promise.allSettled([...building.values()]); },
+    groundColor(x, z) {
+      const p = planAt(x, z);
+      if (!p) return null;
+      const lx = x - p.ox, lz = z - p.oz, g = grids.get(p.id)!.get(Math.floor(lx), Math.floor(lz));
+      return specs.get(p.id)!.paint?.(g, lx, lz, 0.5) ?? regionPaint(g, lx, lz, 0.5) ?? null;
+    },
     update(t, focus, camT) {
       stream(focus.x, focus.z);
       for (const b of built.values()) {

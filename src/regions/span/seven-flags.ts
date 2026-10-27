@@ -24,7 +24,7 @@ import { house, containerHome, salvageFence, yardTank, fireRing, rubble, ruinWal
  * Trail going off to the north-east. West of the Thirty-Five is outside the town.
  *
  * Where the story happens (the owner's key):
- * - Mar Farm: Juno's home, a dead supermarket. Walk in to enter the interior. Papá and Hermana Lupe at the start.
+ * - Mar Farm: Juno's home, a dead supermarket. Walk in to enter the interior. Hermana Lupe at the burial platform, where the game starts.
  * - The Plaza: the night market, the seven flags, the well.
  * - The Chapel: the elders' table outside it.
  * - The drain: the first fight.
@@ -486,7 +486,6 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         { x: 189, z: 120, r: 2.0, label: 'Barricade', lines: ['Barriers across Del Mar and a car on its side. Past it, the road goes east toward the lake.'] },
       );
       d.npcs.push(
-        { id: 'papa', name: 'Papá', sprite: 'elias', x: 134.4, z: 122.1, face: 'S', lines: ["That's why we never walk in white, Juno. The day belongs to the sun."] },
         { id: 'lupe', name: 'Hermana Lupe', sprite: 'lupe', x: 133.2, z: 123, face: 'E', lines: ['Keep the lantern lit, mija. Somebody always has to.'] },
         { id: 'tona', name: 'Abuela Toña', sprite: 'tona', x: 111.4, z: 112.8, face: 'S', lines: ['One candle for Elías. One for Rosa, in case.', "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."] },
         { id: 'nacho', name: 'Abuelo Nacho', sprite: 'nacho', x: 125.4, z: 49.2, face: 'S', lines: ["There's a bench up the way. Somebody carved a heart in it. Ancient."] },

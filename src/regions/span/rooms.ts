@@ -282,7 +282,7 @@ export function marHome(l: RoomLinks): AreaBuilder {
       for (let i = 0; i < 4; i++) g.add(cyl(0.16, 0.16, 0.42, colMat('#4f86b0', { roughness: 0.25, transparent: true, opacity: 0.88 }), 16.2 - (i % 2) * 0.36, 0, 6.2 + Math.floor(i / 2) * 0.36, 10));
       pendant(g, d.pool, 9, 4.6, true);
       d.things.push(
-        { x: 12.8, z: 4.2, r: 1.4, label: 'Staybook', lines: ["The family's staybook. Papá's capitals on one page, Mamá's slant on the next."] },
+        { x: 12.8, z: 4.2, r: 1.4, label: 'Counter', lines: ['The counter. A clean square in the dust, where a book sat for a long time.'] },
         { x: 5.0, z: 2.4, r: 1.6, label: 'Shelves', lines: ['Store shelves. Nothing on them but jars of seed, labeled by hand.'] },
         { x: 4.1, z: 8.6, r: 1.2, label: 'Cot', lines: ['The blanket is folded. Nobody has slept here in a while.'] },
       );
