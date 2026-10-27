@@ -28,6 +28,9 @@ export const ATLAS = {
   critters: { goat: [[141, 291, 18, 15], [160, 291, 18, 15]], chicken: [[179, 291, 10, 10], [190, 291, 10, 10]], coyote: [[87, 291, 26, 17], [114, 291, 26, 17]], stray: [[0, 291, 28, 24], [29, 291, 28, 24]], strayBroken: [[58, 291, 28, 24]] } as Record<string, Array<[number, number, number, number]>>,
 };
 
+/** How tall each person stands (units ≈ metres): the cast is drawn on one canvas size, so children are scaled here. */
+const HEIGHT: Record<string, number> = { kit: 1.42, tavo: 1.22, nina: 1.2, kidjuno: 1.0, juno: 1.6, nacho: 1.58, tona: 1.5, lupe: 1.55, chayo: 1.58 };
+
 // ---------------------------------------------------------------- the PixelLab cast
 interface CastAnim { fps: number; frames: number; rows: Record<string, number> }
 interface CastMeta { w: number; h: number; still: Record<string, [number, number]>; anims: Record<string, CastAnim> }
@@ -110,9 +113,9 @@ export class Actor {
   }
 
   /** A person, standing `height` units tall. */
-  static async person(id: string, tint: THREE.Color, height = 1.65): Promise<Actor> {
+  static async person(id: string, tint: THREE.Color, height = HEIGHT[id] ?? 1.65): Promise<Actor> {
     const c = castId(id);
-    if (c) return Actor.fromCast(c, tint, height, 0.34);
+    if (c) return Actor.fromCast(c, tint, height, 0.34 * height / 1.65);
     const a = await loadAtlas();
     const [ox, oy] = ATLAS.people[id] ?? ATLAS.people.juno!;
     const [top, bottom] = measure(a.data, a.img.width, ox, oy, 16, 24);
