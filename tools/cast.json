@@ -5,24 +5,228 @@
   "creature": "no humans, no rider",
   "anchor": "juno",
   "cast": {
-    "juno": { "kind": "person", "anims": ["idle", "walk"], "desc": "Juno, a teenage girl of about sixteen, the hero: long dark-brown hair in two low tails, rust-red work jacket with a white scarf at the neck, dark patched trousers, worn boots, a canvas satchel with a small battered notebook, a length of steel pipe at her belt, steady watchful face" },
-    "kit": { "kind": "person", "anims": ["idle", "walk"], "desc": "Kit, a skinny boy of about twelve, Juno's friend: spiky black hair with teal goggles pushed up on his head, mustard-yellow shirt, tan trousers, a homemade sling in his back pocket, eager talkative grin" },
-    "lupe": { "kind": "person", "anims": ["idle"], "desc": "Hermana Lupe, an elderly woman who says the town's rites: short silver-white hair, plain white blouse with a navy collar band, long dark skirt, a wooden rosary at her wrist, calm stern face" },
-    "chayo": { "kind": "person", "anims": ["idle"], "desc": "Doña Chayo, a stout middle-aged market trader: red hair tied back, teal dress with a white apron, bangles, warm bossy face" },
-    "beto": { "kind": "person", "anims": ["idle"], "desc": "Don Beto, an old man who tells ghost stories: wide straw sombrero, striped wool serape in orange, red and green over his shoulders, tan trousers, weathered face" },
-    "ruben": { "kind": "person", "anims": ["idle"], "desc": "Rubén, a quiet man in his thirties: short dark hair, olive-green work shirt, dark trousers, dusty boots, thoughtful face" },
-    "tavo": { "kind": "person", "anims": ["idle"], "desc": "Tavo, a boy of about nine: spiky dark hair, orange t-shirt, dark shorts, scabbed knees, curious face" },
-    "nacho": { "kind": "person", "anims": ["idle"], "desc": "Abuelo Nacho, a very old man: white hair and a white mustache, loose white guayabera shirt and white trousers, sandals, a walking stick, gentle proud face" },
-    "fina": { "kind": "person", "anims": ["idle"], "desc": "Doña Fina, a woman in her fifties who sells water: long black hair, purple dress, a clay water jug on her hip, sly cheerful face" },
-    "memo": { "kind": "person", "anims": ["idle"], "desc": "Memo, a lean man in his forties who watches the east barricade: flat-brimmed red hat, grey poncho over grey work clothes, a length of pipe in hand, stubble, wary face" },
-    "nina": { "kind": "person", "anims": ["idle"], "desc": "Nina, a girl of about nine: short messy dark hair, light-blue shirt, dark shorts, knowing look" },
-    "tona": { "kind": "person", "anims": ["idle"], "desc": "Abuela Toña, a very old woman: dark purple-grey rebozo shawl over her head and shoulders, long dark dress, a candle in a glass jar in her hands, kind fierce face" },
-    "elias": { "kind": "person", "anims": ["idle"], "desc": "Elías, Juno's father, a tired man in his thirties: short dark hair, faded blue work shirt, dark trousers, calloused hands, kind tired face" },
-    "rosa": { "kind": "person", "anims": ["idle"], "desc": "Rosa, Juno's mother, a woman in her thirties: dark hair in a long braid, red-orange blouse, dark trousers, sharp warm face" },
-    "kidjuno": { "kind": "person", "anims": ["idle"], "desc": "little Juno, a girl of about six: brown hair in two pigtails, cream-coloured dress, sandals, wide-eyed face" },
-    "stray": { "kind": "creature", "anims": ["idle", "walk"], "desc": "a Stray, a six-wheeled machine the size of a large dog that comes out of storm drains at night: low battered chassis, one round red sensor eye glowing at the front, sun-bleached white paint with rust and a faded stripe, stubby antennas, menacing" },
-    "coyote": { "kind": "creature", "anims": ["idle", "walk"], "desc": "a lean desert coyote, tawny grey coat, ribs showing, big ears, hungry yellow eyes" },
-    "goat": { "kind": "creature", "anims": ["idle", "walk"], "desc": "a small white goat with brown patches, short horns, a rope collar" },
-    "chicken": { "kind": "creature", "anims": ["idle", "walk"], "desc": "a small brown-and-white farm chicken, red comb" }
+    "juno": {
+      "kind": "person",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "Juno, a teenage girl of about sixteen, the hero: long dark-brown hair in two low tails, rust-red work jacket with a white scarf at the neck, dark patched trousers, worn boots, a canvas satchel with a small battered notebook, a length of steel pipe at her belt, steady watchful face"
+    },
+    "kit": {
+      "kind": "person",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "Kit, a skinny boy of about twelve, Juno's friend: spiky black hair with teal goggles pushed up on his head, mustard-yellow shirt, tan trousers, a homemade sling in his back pocket, eager talkative grin"
+    },
+    "lupe": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Hermana Lupe, an elderly woman who says the town's rites: short silver-white hair, plain white blouse with a navy collar band, long dark skirt, a wooden rosary at her wrist, calm stern face"
+    },
+    "chayo": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Doña Chayo, a stout middle-aged market trader: red hair tied back, teal dress with a white apron, bangles, warm bossy face"
+    },
+    "beto": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Don Beto, an old man who tells ghost stories: wide straw sombrero, striped wool serape in orange, red and green over his shoulders, tan trousers, weathered face"
+    },
+    "ruben": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Rubén, a quiet man in his thirties: short dark hair, olive-green work shirt, dark trousers, dusty boots, thoughtful face"
+    },
+    "tavo": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Tavo, a boy of about nine: spiky dark hair, orange t-shirt, dark shorts, scabbed knees, curious face"
+    },
+    "nacho": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Abuelo Nacho, a very old man: white hair and a white mustache, loose white guayabera shirt and white trousers, sandals, a walking stick, gentle proud face"
+    },
+    "fina": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Doña Fina, a woman in her fifties who sells water: long black hair, purple dress, a clay water jug on her hip, sly cheerful face"
+    },
+    "memo": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Memo, a lean man in his forties who watches the east barricade: flat-brimmed red hat, grey poncho over grey work clothes, a length of pipe in hand, stubble, wary face"
+    },
+    "nina": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Nina, a girl of about nine: short messy dark hair, light-blue shirt, dark shorts, knowing look"
+    },
+    "tona": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Abuela Toña, a very old woman: dark purple-grey rebozo shawl over her head and shoulders, long dark dress, a candle in a glass jar in her hands, kind fierce face"
+    },
+    "elias": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Elías, Juno's father, a tired man in his thirties: short dark hair, faded blue work shirt, dark trousers, calloused hands, kind tired face"
+    },
+    "rosa": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Rosa, Juno's mother, a woman in her thirties: dark hair in a long braid, red-orange blouse, dark trousers, sharp warm face"
+    },
+    "kidjuno": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "little Juno, a girl of about six: brown hair in two pigtails, cream-coloured dress, sandals, wide-eyed face"
+    },
+    "stray": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a Stray, a six-wheeled machine the size of a large dog that comes out of storm drains at night: low battered chassis, one round red sensor eye glowing at the front, sun-bleached white paint with rust and a faded stripe, stubby antennas, menacing"
+    },
+    "coyote": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a lean desert coyote, tawny grey coat, ribs showing, big ears, hungry yellow eyes"
+    },
+    "goat": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small white goat with brown patches, short horns, a rope collar"
+    },
+    "chicken": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small brown-and-white farm chicken, red comb"
+    },
+    "goat2": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small black-and-white goat, long floppy ears, short curved horns, a frayed rope collar"
+    },
+    "goat3": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small tan-and-brown goat with a dark stripe down its back, a little beard, no collar"
+    },
+    "pancha": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "Pancha, a small young white goat with one brown ear and a brown patch over one eye, a red cloth collar with a little bell, curious and stubborn"
+    },
+    "chicken2": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small white farm hen, red comb, dusty feathers"
+    },
+    "chicken3": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a small black-and-copper speckled rooster, tall red comb, long dark tail feathers"
+    },
+    "coyote2": {
+      "kind": "creature",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a scarred old desert coyote, darker grey-brown coat, a torn ear, lean and limping"
+    },
+    "keeper": {
+      "kind": "creature",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "the Keeper of the dry creek, a tall thin old-world cleaning machine the size of a person, a narrow sun-bleached white body on a single rolling base, two long jointed arms holding a worn broom and a dustpan, a cracked speaker grille for a mouth, one dim blue eye lens, rags tied to it like a shawl; it sweeps the sand at night and keens, and the town calls it La Llorona"
+    },
+    "hauler": {
+      "kind": "creature",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a big old-world cargo machine twice the size of a Stray, a boxy sun-bleached yellow body on two dusty rubber treads, a forklift arm folded in front like a jaw, a row of three red sensor eyes, a cracked warning beacon on top, dragging chains; it leaves big tracks around the dry lake"
+    },
+    "sprinkler": {
+      "kind": "creature",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a crawler, a low old-world irrigation robot like a metal crab, a round green-painted body gone rusty, four spindly jointed legs, a rotating sprinkler head on top that spits hot dust, two small amber eye lights; it still crawls dead fields looking for crops to water"
+    },
+    "noonrider": {
+      "kind": "person",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a Noonrider, a raider who rides the daylight for Halogen: a full-body cold-rig cooling suit of white quilted fabric and tubing, a mirrored sun visor over the face, a silver heat cape, a toll-mark tag on the chest, a long cattle prod, menacing and faceless"
+    }
   }
 }

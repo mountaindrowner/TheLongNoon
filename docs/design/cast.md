@@ -106,6 +106,51 @@ node tools/gen-cast.mjs --plan                                             # wha
 | goat | the goats, and Pancha | |
 | chicken | the chickens | |
 
+## Animals, with a little variety
+
+The owner, 2026-10-27: *"a little bit of variation, so it's not all the same."*
+
+- **Goats:**
+  - white with brown patches;
+  - black and white, with floppy ears;
+  - tan with a dark stripe and a beard.
+- **Pancha** is her own goat: young and white, with one brown ear, a patch
+  over one eye, and a red collar with a bell. She's in the story, so she
+  should stand out from the pen.
+- **Chickens:** a brown hen, a white hen, and a speckled rooster.
+- **Coyotes:** a lean tawny one, and an old scarred one with a torn ear.
+- **In the game,** each animal takes one of its looks from where it stands
+  (`variant` in `src/game/actors.ts`). A pen is mixed and stays the same
+  each visit. Looks that aren't drawn yet fall back to the first.
+
+## The first enemies (proposals: names and roles are for the owner)
+
+There's no story file in the repo yet. These come from what is written down:
+- Papá's tale: *"the machines kept going. They still walk the day, doing
+  whatever they were told a hundred years ago."*
+- The owner's Seven Flags key: *La Llorona, the Keeper* at the dry creek;
+  the Lawnkeeper.
+- The methodology's threads (§4.2), which it quotes from the Story File:
+  Keepers, Noonriders, Halogen.
+- The first version's dialogue: Memo's *"Big tracks out by the lake lately.
+  Bigger than any Stray."*
+
+| id | Working name | Where | What it is | From |
+|---|---|---|---|---|
+| stray | **the Stray** | the drains | Six wheels, one red eye. The first fight. | the first version |
+| coyote, coyote2 | **coyote** | the brush, the drains | Follows the noise, follows the meal | the first version |
+| keeper | **the Keeper ("La Llorona")** | the dry creek, the concrete pipe | A tall old cleaning machine. It sweeps the sand at the pipe's mouth at night, and its cracked speaker keens; the town calls it La Llorona. | Seven Flags key; Keepers thread; Beto's lines |
+| sprinkler | **the crawler** | dead fields, yards | An old irrigation robot on four legs, still looking for crops to water. It spits hot dust. | the methodology's routine examples (§4.3) |
+| hauler | **the hauler** | the Lake Road, the White Bowl | A cargo machine twice a Stray's size: treads, a forklift jaw, three red eyes, dragging chains. Its tracks are the big ones Memo has seen around the lake. | Memo's lines |
+| noonrider | **a Noonrider** | the road north (the Ninety Miles) | A raider who rides the daylight for Halogen: a white cold-rig suit, a mirrored visor, a heat cape, a toll tag, a cattle prod | the Noonriders thread |
+
+**Not decided:**
+- which of these fight, and which are only routines to avoid;
+- their stats and their weak parts. The first version's battle has the rules
+  (soft parts, armor, breaking an eye) but numbers only for the Stray and the
+  coyote;
+- their real names, which the newer story may already have.
+
 **Not made yet:** the people on the owner's map with no sprite or lines
 (Lourdes, Inés, Rafa, Goyo, Güero, Mari, Chuy, Don Pepe). They wait for the
 newer story.

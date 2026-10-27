@@ -39,6 +39,15 @@ const CAST_URL = Object.fromEntries(Object.entries(import.meta.glob('../assets/c
 /** The cast figure an atlas name is drawn from now (the Stray's wreck is the Stray, gone dark). */
 const CAST_OF: Record<string, string> = { strayBroken: 'stray' };
 const castId = (id: string): string | null => { const c = CAST_OF[id] ?? id; return CAST_META[c] && CAST_URL[c] ? c : null; };
+/** What an animal is when its own look isn't drawn yet. */
+const BASE: Record<string, string> = { pancha: 'goat' };
+/** Animals come in a few looks (the owner, 2026-10-27: "a little bit of variation"): one picked from where it
+ *  stands, so a pen is mixed and stays the same each visit. Only looks that have been drawn are used. */
+export function variant(kind: string, x: number, z: number): string {
+  const looks = [kind, `${kind}2`, `${kind}3`].filter((k) => k === kind || castId(k));
+  const h = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  return looks[Math.floor(h * looks.length)]!;
+}
 
 interface Sheet { img: HTMLImageElement; data: Uint8ClampedArray; tex: THREE.Texture }
 const sheets = new Map<string, Promise<Sheet>>();
@@ -131,7 +140,7 @@ export class Actor {
       return a;
     }
     const a = await loadAtlas();
-    const fr = ATLAS.critters[kind]!;
+    const fr = ATLAS.critters[kind] ?? ATLAS.critters[BASE[kind] ?? kind.replace(/\d+$/, '')] ?? ATLAS.critters.goat!;
     const [x, y, w, h] = fr[0]!;
     const [top, bottom] = measure(a.data, a.img.width, x, y, w, h);
     return new Actor(a.tex.clone(), a.img.width, a.img.height, { kind: 'atlas', frames: fr, origin: [x, y] }, w, h, height / Math.max(1, bottom - top), bottom, tint, Math.max(0.18, w / 40));

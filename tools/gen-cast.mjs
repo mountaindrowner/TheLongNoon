@@ -36,7 +36,7 @@ const COST = { figure: 15, template: 4, custom: 4 };
 // animations in four directions (the owner, 2026-10-27): front, back and both sides
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
-const BODY = { person: 'mannequin', goat: 'dog', coyote: 'dog' };
+const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog' };
 const ANIM = {
   idle: { template: 'breathing-idle', fps: 5 },
   walk: { template: 'walking-8-frames', fps: 11 },
@@ -44,6 +44,11 @@ const ANIM = {
 const CUSTOM = {
   stray: { idle: 'idle: rocking slightly on its six wheels, the red eye pulsing', walk: 'rolling forward on its six wheels, chassis bobbing' },
   chicken: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
+  chicken2: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
+  chicken3: { idle: 'idle: puffing up, head bobbing', walk: 'strutting, head bobbing with each step' },
+  keeper: { idle: 'idle: sweeping the ground slowly with its broom, swaying on its base', walk: 'rolling forward on its base, broom held out' },
+  hauler: { idle: 'idle: idling, beacon turning, chains swaying', walk: 'rolling forward on its treads, forklift jaw bobbing' },
+  sprinkler: { idle: 'idle: sprinkler head turning, legs shifting', walk: 'crawling forward on four spindly legs like a crab' },
 };
 
 const H = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };

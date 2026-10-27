@@ -9,7 +9,7 @@ import { buildRegion, type Region } from './engine/region';
 import { UI } from './engine/ui';
 import { Minimap, type MapMark } from './engine/minimap';
 import type { Area, NPC, Spot, Thing } from './engine/area';
-import { Actor } from './game/actors';
+import { Actor, variant } from './game/actors';
 import { Clock, fmtTime, parseClock } from './game/clock';
 import { Director, type Cmd, type Dialogue, type Script, type Stage } from './game/script';
 import { Hud, type Page } from './game/hud';
@@ -171,7 +171,7 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     w.people.push({ npc, actor: a, tag });
   }
   for (const r of roamers) {
-    const a = await Actor.critter(r.sprite, w.tint, r.height);
+    const a = await Actor.critter(variant(r.sprite, r.x, r.z), w.tint, r.height);
     a.place(r.x, w.area.ground(r.x, r.z), r.z);
     w.scene.add(a.root);
     w.roamers.push({ actor: a, kind: r.sprite, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3, tag });
@@ -806,7 +806,7 @@ async function bringCast(w: World): Promise<void> {
   if (joined || (S.flags.drainStarted && !drainDone)) kitActor ??= await Actor.person('kit', w.tint);
   else if (kitActor) { kitActor.root.parent?.remove(kitActor.root); kitActor = null; }
   const pancha = (S.step === 'pancha' && w.id === SPAN) || drainDone;
-  if (pancha) panchaActor ??= await Actor.critter('goat', w.tint, 0.62);
+  if (pancha) panchaActor ??= await Actor.critter('pancha', w.tint, 0.62);
   else if (panchaActor) { panchaActor.root.parent?.remove(panchaActor.root); panchaActor = null; }
   if (drainDone && w.id === SPAN) wreck ??= await Actor.critter('strayBroken', w.tint, 1.15);
   if (wreck && (!drainDone || w.id !== SPAN)) { wreck.root.parent?.remove(wreck.root); if (!drainDone) wreck = null; }
