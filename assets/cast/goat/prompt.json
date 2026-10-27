@@ -1,0 +1,20 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a small white goat with brown patches, short horns, a rope collar. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "dog"
+  },
+  "character_id": "68d22ea1-a34d-4658-9fe1-fec02b6c8ad7",
+  "anims": {},
+  "at": "2026-10-27T21:23:01.907Z"
+}

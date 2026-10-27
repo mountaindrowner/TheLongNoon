@@ -1,0 +1,19 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a small brown-and-white farm chicken, red comb. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
+  },
+  "character_id": "e1fe38aa-ce04-4e2c-8dd5-58193c9b916b",
+  "anims": {},
+  "at": "2026-10-27T21:25:55.305Z"
+}
