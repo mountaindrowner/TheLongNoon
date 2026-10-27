@@ -53,6 +53,13 @@ export class Minimap {
   async setRegion(region: Region, near: { x: number; z: number }): Promise<void> {
     const x0 = Math.min(...region.plan.map((p) => p.ox)) - 40, z0 = Math.min(...region.plan.map((p) => p.oz)) - 40;
     const x1 = Math.max(...region.plan.map((p) => p.ox + p.cols)) + 40, z1 = Math.max(...region.plan.map((p) => p.oz + p.rows)) + 40;
+    // the same region rebuilt (the town relights at Lamp and at the white): keep the map as drawn
+    if (this.base && this.bx === x0 && this.bz === z0 && this.base.width === (x1 - x0) * PPU && this.base.height === (z1 - z0) * PPU) {
+      for (const b of region.pieces) this.addPiece(b);
+      return;
+    }
+    this.painted.clear();
+    this.drawn.clear();
     const c = document.createElement('canvas');
     c.width = (x1 - x0) * PPU; c.height = (z1 - z0) * PPU;
     const g = c.getContext('2d')!;

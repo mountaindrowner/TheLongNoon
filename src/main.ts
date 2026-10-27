@@ -15,6 +15,9 @@ import { Director, type Cmd, type Dialogue, type Script, type Stage } from './ga
 import { Hud, type Page } from './game/hud';
 import { Tale } from './game/tale';
 import { campfire } from './game/fire';
+import { Sound } from './game/sound';
+import { Fight, type FightDef, type UnitDef } from './game/battle';
+import BATTLES from './game/data/battles.json';
 import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
 import DIALOGUE from './game/data/dialogue.json';
 import QUESTS from './game/data/quests.json';
@@ -60,6 +63,11 @@ const ui = new UI(host);
 const minimap = new Minimap(ui.root);
 const hud = new Hud(ui.root);
 const tale = new Tale(ui.root);
+const sound = new Sound();
+ui.onType = (name) => sound.voice(name);
+hud.sfx = (n) => sound.play(n);
+// browsers start sound only after a tap or a key
+for (const ev of ['pointerdown', 'keydown'] as const) addEventListener(ev, () => sound.init(), { capture: true });
 
 function resize(): void {
   renderer.setSize(innerWidth, innerHeight);
@@ -76,6 +84,7 @@ let aQueued = false;
 addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
   // whatever's open on top takes the key: the book, a menu, the skip of the tale, a choice
+  if (!e.repeat && fight.key(e.code)) { e.preventDefault(); return; }
   if (!e.repeat && hud.key(e.code)) return;
   if (mode === 'cine' && !e.repeat && (e.code === 'Escape' || e.code === 'KeyQ')) { skipTale(); return; }
   if (e.code.startsWith('Arrow') && ui.nudge(e.code === 'ArrowDown' || e.code === 'ArrowRight' ? 1 : -1)) return;
@@ -107,7 +116,7 @@ interface World {
   area: Area;
   lights: Lights;
   people: Array<{ npc: NPC; actor: Actor; tag: string }>;
-  roamers: Array<{ actor: Actor; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number; tag: string }>;
+  roamers: Array<{ actor: Actor; kind: string; area: [number, number, number, number]; speed: number; tx: number | null; tz: number; wait: number; tag: string }>;
   tint: THREE.Color;
   issues: string[];
 }
@@ -154,6 +163,7 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
 
 async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamers']>, tag: string): Promise<void> {
   for (const npc of npcs) {
+    if (npc.id === 'kit' && S && (S.flags.drainStarted || S.joined.includes('kit'))) continue;
     const a = await Actor.person(npc.sprite, w.tint);
     a.place(npc.x, w.area.ground(npc.x, npc.z), npc.z);
     a.dir = npc.face ?? 'S';
@@ -164,7 +174,7 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     const a = await Actor.critter(r.sprite, w.tint, r.height);
     a.place(r.x, w.area.ground(r.x, r.z), r.z);
     w.scene.add(a.root);
-    w.roamers.push({ actor: a, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3, tag });
+    w.roamers.push({ actor: a, kind: r.sprite, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3, tag });
   }
 }
 function unpopulate(w: World, tag: string): void {
@@ -190,6 +200,7 @@ function enter(w: World, spawn: string | Spot): void {
   if (w.id === SPAN) relight(true);
   player.setTint(w.tint);
   placeAt(typeof spawn === 'string' ? w.area.spawns[spawn] ?? w.area.spawns.start! : spawn);
+  bringCast(w);
 }
 
 // ------------------------------------------------------------ the clock moving the light
@@ -202,6 +213,7 @@ function relight(force = false): void {
   cur.tint.setRGB(...m.sprite);
   for (const p of cur.people) p.actor.setTint(cur.tint);
   for (const r of cur.roamers) r.actor.setTint(cur.tint);
+  for (const a of castActors()) a.setTint(cur.tint);
   player.setTint(cur.tint);
 }
 
@@ -276,11 +288,12 @@ async function load(): Promise<void> {
   if (TEST) {
     // straight into the town, for playtests and screenshots: free roam, or the mission step asked for
     S.step = STEP ?? 'free';
+    if (STEP) catchUp(STEP);
     mode = 'play';
     hud.show(true);
     showObjective(false);
     if (STEP === 'burial') void burial();
-    else ui.titleCard('SEVEN FLAGS', 'A town that stayed');
+    else { ui.titleCard('SEVEN FLAGS', 'A town that stayed'); void bringCast(cur); }
   } else void titleScreen();
 }
 
@@ -359,7 +372,13 @@ function frame(): void {
     if (time.lit !== night) void turnOfDay(time.lit);
     else if ((lightAge += dt) > 0.2) { lightAge = 0; relight(); }
     weather(dt);
+    if (S.step === 'pancha' && !S.flags.drainStarted && cur.id === SPAN && player.x > DRAIN_ZONE[0] && player.x < DRAIN_ZONE[2] && player.z > DRAIN_ZONE[1] && player.z < DRAIN_ZONE[3]) {
+      S.flags.drainStarted = true;
+      player.moving = false;
+      void run('drainIntro');
+    }
   }
+  if (lookUp > 0) skyward();
   tale.draw(dt);
   for (const c of cine) c.animate(dt);
   fire?.update(t);
@@ -379,6 +398,8 @@ function frame(): void {
       const pz = area.blocked(px, nz, 0.28) ? player.z : nz;
       player.face(m.x, m.z);
       player.place(px, area.ground(px, pz), pz);
+      trailPush();
+      if ((stepAge += dt * (m.run ? 1.6 : 1)) > 0.29) { stepAge = 0; footstep(); }
       if (!inTrigger(px, pz)) safe = [px, pz];
       void checkTriggers();
     }
@@ -399,6 +420,8 @@ function frame(): void {
   }
 
   for (const p of cur.people) p.actor.animate(dt);
+  follow(dt);
+  if ((ambAge += dt) > 0.38) { ambAge = 0; ambience(); }
   for (const r of cur.roamers) {
     const ac = r.actor;
     r.wait -= dt;
@@ -416,6 +439,7 @@ function frame(): void {
   camZoom += (camZoomTo - camZoom) * (1 - Math.exp(-dt * 1.6));
   camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
   camera.lookAt(camTarget);
+  if (tilt > 0.001) { camera.position.y -= tilt * 8; camera.lookAt(v.set(camTarget.x, camTarget.y + tilt * 17, camTarget.z - tilt * 30)); }
   cur.lights.follow(player.root.position);
   if (cur.id === SPAN) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
 
@@ -424,6 +448,8 @@ function frame(): void {
   focusY += ((v.y * 0.5 + 0.5) - focusY) * (1 - Math.exp(-dt * 6));
   post.tiltH.uniforms.focus!.value = focusY;
   post.tiltV.uniforms.focus!.value = focusY;
+  // looking up at the sky, the diorama blur would smear it: the band opens to the whole frame
+  post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = 0.1 + tilt * 0.9;
 
   area.update(t, player.root.position, camTarget);
   if ((mapAge += dt) > 0.05) { mapAge = 0; drawMap(); }
@@ -467,14 +493,16 @@ async function command(c: Cmd): Promise<void> {
   switch (c.do) {
     case 'wait': await sleep(c.ms as number); break;
     case 'item': {
+      sound.coin();
       const id = c.id as string, n = c.n as number;
       S.items[id] = (S.items[id] ?? 0) + n;
       hud.toast(n > 1 ? `${ITEM_NAMES[id]} ×${n}` : `Got ${(ITEM_NAMES[id] ?? id).toLowerCase()}`, true);
       break;
     }
     case 'take': S.items[c.id as string] = Math.max(0, (S.items[c.id as string] ?? 0) - (c.n as number)); break;
-    case 'white': S.white += c.add as number; hud.toast(`+${c.add as number} tins of white`, true); break;
+    case 'white': sound.coin(); S.white += c.add as number; hud.toast(`+${c.add as number} tins of white`, true); break;
     case 'water':
+      sound.pour();
       S.water = c.set != null ? (c.set as number) : Math.min(10, S.water + (c.add as number));
       hud.toast(c.set != null ? 'Water topped off' : `+${c.add as number} water`);
       break;
@@ -486,24 +514,56 @@ async function command(c: Cmd): Promise<void> {
     case 'rest': await rest(); break;
     case 'cam': camHold = new THREE.Vector3(c.x as number, 0.8, c.z as number); break;
     case 'tale': tale.set((c.p as string | null) ?? null); break;
-    case 'sfx': break; // the sound set comes with the battle stage
-    default: console.warn('[script] not built yet:', c.do); hud.toast('(That part of the story isn’t built yet.)');
+    case 'sfx': sound.play(c.s as string); break;
+    case 'ending': await ending(); break;
+    case 'spawnEnemies': await spawnEnemies(); break;
+    case 'battle': { ui.endTalk(); const r = await battle(); if (r === 'win') await run('drainWin'); break; }
+    case 'join': S.joined.push(c.who as string); await bringCast(cur); hud.toast('Kit joined the party', true); sound.coin(); break;
+    case 'salvage':
+      for (const [k, n] of [['scrap', 4], ['cell', 1], ['bearings', 6]] as const) S.items[k] = (S.items[k] ?? 0) + n;
+      hud.toast('Stripped the Stray: scrap ×4, dead cell, bearings ×6');
+      await sleep(400);
+      break;
+    case 'lookUp': await lookUpAt(); break;
+    case 'waitDrone': {
+      droneGone = lookUp;
+      while (lookUp > 0 && lookUp - droneGone < 7) await sleep(100);
+      break;
+    }
+    default: console.warn('[script] unknown command:', c.do);
+  }
+}
+
+/** Start at a later step with what the steps before it would have given (playtests: `?step=`). */
+function catchUp(step: string): void {
+  const order = Object.keys(STEPS), at = order.indexOf(step), past = (k: string): boolean => at > order.indexOf(k);
+  if (past('burial')) { S.items.staybook = 1; S.pages.push('1'); }
+  if (past('home')) { Object.assign(S.flags, { fed: true, tank: true }); S.water = 10; S.pages.push('3'); }
+  if (past('market')) { S.white = 2; S.pages.push('2'); }
+  if (past('pancha')) {
+    Object.assign(S.flags, { drainStarted: true, drainDone: true });
+    S.joined.push('kit'); S.pages.push('5');
+    Object.assign(S.items, { scrap: 4, cell: 1, bearings: 6 });
   }
 }
 
 function setStep(to: string): void {
   S.step = to;
   showObjective(true);
+  if (to !== 'burial') sound.chime();
+  void bringCast(cur);
   if (to !== 'burial') saveGame(true);
 }
 function showObjective(flash: boolean): void { hud.objective(QUESTS.mission, STEPS[S.step]?.obj ?? '', flash); }
 
 async function unlockPage(key: string): Promise<void> {
   if (!S.pages.includes(key)) S.pages.push(key);
+  sound.page();
   await hud.openBook(PAGES as Record<string, Page>, S.pages, key, true);
 }
 async function openBook(): Promise<void> {
   if (!S.pages.length) { hud.toast('The staybook is empty.'); return; }
+  sound.page();
   const have = ['1', '2', '3', '5', 'last'].filter((k) => S.pages.includes(k));
   await hud.openBook(PAGES as Record<string, Page>, S.pages, have[have.length - 1]!, false);
 }
@@ -540,7 +600,7 @@ function weather(dt: number): void {
   if (ph === 'Shutter' && S.flags.shutterWarn !== S.day) { S.flags.shutterWarn = S.day; hud.toast('Shutter. Get under a roof before the white.', true, 4200); }
   if (ph === 'Day' && !sheltered) {
     hud.warning('Daylight. Your water is burning.');
-    if ((exposure += dt) > 3.5) { exposure = 0; S.water = Math.max(0, S.water - 1); if (S.water === 0) void faint(); }
+    if ((exposure += dt) > 3.5) { exposure = 0; S.water = Math.max(0, S.water - 1); sound.hurt(); if (S.water === 0) void faint(); }
   } else hud.warning(ph === 'Shutter' && !sheltered ? 'Shutter. Find a roof.' : null);
   if ((thirst += dt) > 150) { thirst = 0; if (S.water > 1) S.water--; }
 }
@@ -569,6 +629,7 @@ async function setTime(m: number): Promise<void> {
 }
 
 async function rest(): Promise<void> {
+  sound.creak();
   await ui.fade(true, 500);
   S.party.juno.hp = 42; S.party.kit.hp = 26;
   saveGame(true);
@@ -585,7 +646,7 @@ function saveGame(quiet: boolean): void {
   S.clock = time.minute;
   S.where = where();
   const ok = writeSave(S);
-  if (!quiet) hud.toast(ok ? 'Game saved' : "Couldn't save. Browser storage is turned off.", ok);
+  if (!quiet) { sound.save(); hud.toast(ok ? 'Game saved' : "Couldn't save. Browser storage is turned off.", ok); }
 }
 async function loadGame(): Promise<boolean> {
   const s = readSave();
@@ -598,6 +659,8 @@ async function loadGame(): Promise<boolean> {
   hud.show(true);
   minimap.hidden = false;
   showObjective(false);
+  await bringCast(cur);
+  sound.music('explore');
   hud.toast('Loaded your last save');
   return true;
 }
@@ -618,6 +681,7 @@ async function titleScreen(): Promise<void> {
   minimap.hidden = true;
   camHold = new THREE.Vector3(START.x + 2, 0.8, START.z - 6);
   camZoomTo = 1.25;
+  sound.music('intro');
   const a = await hud.titleScreen(hasSave());
   camZoomTo = 1;
   if (a === 'continue') { await ui.fade(true, 400); camHold = null; if (await loadGame()) { await ui.fade(false, 600); return; } }
@@ -701,14 +765,279 @@ async function burial(): Promise<void> {
   camHold = new THREE.Vector3(START.x - 1.2, 0.8, START.z - 1.4);
   camZoomTo = camZoom = 0.8;
   camTarget.copy(camHold);
+  sound.music('explore');
   await ui.fade(false, 1100);
   mode = 'play';
   hud.show(true);
   minimap.hidden = false;
   showObjective(false);
+  await bringCast(cur);
   await run('burial');
   camHold = null;
   camZoomTo = 1;
+}
+
+// ---------------------------------------------------------------- Kit, Pancha, the Stray's wreck (legacy 10-game-state applyState)
+/** Where the drain beats happen in Seven Flags (region coordinates): Pancha backed against the concrete,
+ *  the culvert the Stray rolls out of, where everyone stands to fight. */
+const DRAIN_ZONE = [111, 203, 119.5, 222] as const;
+const AT = { pancha: [115, 214.2], culvert: [115, 199.6], stray: [114, 206.6], coyote: [116.7, 207.6], juno: [113.9, 210.8], kit: [116.3, 211.4] } as const;
+let kitActor: Actor | null = null, panchaActor: Actor | null = null, wreck: Actor | null = null;
+const foes: Actor[] = [];
+const castActors = (): Actor[] => [kitActor, panchaActor, wreck, ...foes].filter((a): a is Actor => !!a);
+
+/** Make the cast match the story, in world `w`: Kit following once he's joined, Pancha at the drain or
+ *  following, the wreck where the Stray fell. */
+async function bringCast(w: World): Promise<void> {
+  if (!S || !player) return;
+  const joined = S.joined.includes('kit'), drainDone = !!S.flags.drainDone;
+  // Kit leaves the plaza for good once the drain begins
+  if (S.flags.drainStarted || joined) for (const p of w.people.filter((q) => q.npc.id === 'kit')) { w.scene.remove(p.actor.root); w.people.splice(w.people.indexOf(p), 1); }
+  if (joined || (S.flags.drainStarted && !drainDone)) kitActor ??= await Actor.person('kit', w.tint);
+  else if (kitActor) { kitActor.root.parent?.remove(kitActor.root); kitActor = null; }
+  const pancha = (S.step === 'pancha' && w.id === SPAN) || drainDone;
+  if (pancha) panchaActor ??= await Actor.critter('goat', w.tint, 0.62);
+  else if (panchaActor) { panchaActor.root.parent?.remove(panchaActor.root); panchaActor = null; }
+  if (drainDone && w.id === SPAN) wreck ??= await Actor.critter('strayBroken', w.tint, 1.15);
+  if (wreck && (!drainDone || w.id !== SPAN)) { wreck.root.parent?.remove(wreck.root); if (!drainDone) wreck = null; }
+  if (wreck && w.id === SPAN) { wreck.place(AT.stray[0], w.area.ground(AT.stray[0], AT.stray[1]), AT.stray[1]); w.scene.add(wreck.root); }
+  if (panchaActor && !drainDone) { panchaActor.place(AT.pancha[0], w.area.ground(AT.pancha[0], AT.pancha[1]), AT.pancha[1]); panchaActor.dir = 'W'; }
+  // followers fall in behind Juno
+  trailReset();
+  for (const [a, dx, dz] of [[joined ? kitActor : null, 1.0, 0.5], [drainDone ? panchaActor : null, -1.1, 1.2]] as const) {
+    if (!a) continue;
+    const x = player.x + dx, z = player.z + dz;
+    a.place(x, w.area.ground(x, z), z);
+  }
+  for (const a of [kitActor, panchaActor]) if (a && (a !== kitActor || joined || S.flags.drainStarted)) { a.setTint(w.tint); w.scene.add(a.root); }
+}
+
+/** Juno's trail; followers walk it a few steps behind her (legacy 16-exploration). */
+const trail: Array<[number, number]> = [];
+function trailReset(): void { trail.length = 0; for (let i = 0; i < 40; i++) trail.push([player.x, player.z]); }
+function trailPush(): void { const l = trail[trail.length - 1]; if (!l || Math.hypot(l[0] - player.x, l[1] - player.z) > 0.16) { trail.push([player.x, player.z]); if (trail.length > 90) trail.shift(); } }
+function follow(dt: number): void {
+  if (!S || mode !== 'play' || fight.active || lookUp > 0) { kitActor?.animate(dt); panchaActor?.animate(dt); return; }
+  const go = (a: Actor | null, back: number): void => {
+    if (!a) return;
+    const [tx, tz] = trail[Math.max(0, trail.length - 1 - back)] ?? [player.x, player.z];
+    const dx = tx - a.x, dz = tz - a.z, d = Math.hypot(dx, dz);
+    a.moving = d > 0.04;
+    if (a.moving) { const st = Math.min(d, RUN * 1.15 * dt), x = a.x + (dx / d) * st, z = a.z + (dz / d) * st; a.face(dx, dz); a.place(x, cur.area.ground(x, z), z); }
+    a.animate(dt);
+  };
+  if (S.joined.includes('kit')) go(kitActor, 12); else kitActor?.animate(dt);
+  if (S.flags.drainDone) go(panchaActor, 24); else panchaActor?.animate(dt);
+}
+
+// ---------------------------------------------------------------- the fight at the drain (legacy 17-battle; game/battle.ts)
+const v2 = new THREE.Vector3();
+const fight = new Fight(ui.root, {
+  sound,
+  get state() { return S; },
+  toScreen(x, y, z) { v2.set(x, y, z).project(camera); return v2.z > 1 ? null : { x: (v2.x * 0.5 + 0.5) * innerWidth, y: (-v2.y * 0.5 + 0.5) * innerHeight }; },
+  ground: (x, z) => cur.area.ground(x, z),
+  get tint() { return cur.tint; },
+  blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
+  dead() { (cur.area as Region).dropLamps('stray'); },
+  touch: touchUI(),
+});
+
+/** Something rolls out of the culvert's dark mouth, and a coyote after it. Everyone takes their places. */
+async function spawnEnemies(): Promise<void> {
+  await bringCast(cur);
+  const g = (x: number, z: number): number => cur.area.ground(x, z);
+  player.place(AT.juno[0], g(AT.juno[0], AT.juno[1]), AT.juno[1]); player.dir = 'N';
+  if (kitActor) { kitActor.place(AT.kit[0], g(AT.kit[0], AT.kit[1]), AT.kit[1]); kitActor.dir = 'N'; cur.scene.add(kitActor.root); }
+  for (const [kind, h, to] of [['stray', 1.15, AT.stray], ['coyote', 0.8, AT.coyote]] as const) {
+    const a = await Actor.critter(kind, cur.tint, h);
+    a.place(AT.culvert[0], g(AT.culvert[0], AT.culvert[1]), AT.culvert[1]);
+    cur.scene.add(a.root);
+    foes.push(a);
+    void to;
+  }
+  // the Stray's one red eye
+  const eye = new THREE.Vector3(AT.stray[0], g(AT.stray[0], AT.stray[1]) + 0.9, AT.stray[1] + 0.4);
+  (cur.area as Region).addLamp({ pos: eye, color: new THREE.Color('#ff4a2a'), intensity: 2.2, dist: 5, flicker: 0.1, tag: 'stray' });
+  sound.servo(); setTimeout(() => sound.beep(), 500); setTimeout(() => sound.growl(), 900);
+  await Promise.all(foes.map(async (a, i) => {
+    const to = i === 0 ? AT.stray : AT.coyote;
+    await sleep(i * 500);
+    a.moving = true;
+    const sx = a.x, sz = a.z;
+    await new Promise<void>((res) => {
+      const t0 = performance.now();
+      const f = (): void => { const k = Math.min(1, (performance.now() - t0) / 1500), x = sx + (to[0] - sx) * k, z = sz + (to[1] - sz) * k; a.face(to[0] - sx, to[1] - sz); a.place(x, g(x, z), z); if (k < 1) requestAnimationFrame(f); else res(); };
+      f();
+    });
+    a.moving = false;
+  }));
+}
+
+async function battle(): Promise<'win' | 'load'> {
+  const B = BATTLES as unknown as { drain: FightDef; units: Record<string, UnitDef> };
+  sound.battleStart();
+  sound.music('combat');
+  minimap.hidden = true;
+  for (let retry = false; ; retry = true) {
+    const r = await fight.fight(B.drain, B.units, { juno: player, kit: kitActor! }, foes, retry);
+    if (r === 'win') break;
+    if (r === 'load') { clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
+    for (const a of foes) a.root.visible = true;
+  }
+  S.flags.drainDone = true;
+  minimap.hidden = false;
+  await ui.fade(true, 450);
+  clearFoes();
+  await bringCast(cur);
+  if (kitActor) { kitActor.place(player.x + 0.9, cur.area.ground(player.x + 0.9, player.z + 0.4), player.z + 0.4); kitActor.dir = 'W'; }
+  if (panchaActor) panchaActor.place(player.x + 1.6, cur.area.ground(player.x + 1.6, player.z + 0.9), player.z + 0.9);
+  sound.music('explore');
+  await ui.fade(false, 600);
+  camHold = null;
+  return 'win';
+}
+function clearFoes(): void {
+  for (const a of foes) a.root.parent?.remove(a.root);
+  foes.length = 0;
+  (cur.area as Region | undefined)?.dropLamps?.('stray');
+}
+
+// ---------------------------------------------------------------- the ending: the drone (legacy 18-rest-faint-ending, 07-the-drone)
+let tilt = 0, lookUp = 0, droneT0 = 0, droneGone = 0;
+let drone: THREE.Group | null = null, droneShadow: THREE.Mesh | null = null;
+function makeDrone(): THREE.Group {
+  const D = new THREE.Group();
+  const wM = new THREE.MeshBasicMaterial({ color: 0x3a3d46, fog: false }), pM = new THREE.MeshBasicMaterial({ color: 0x1d2433, fog: false }), dM = new THREE.MeshBasicMaterial({ color: 0x2a2c33, fog: false });
+  const add = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material): void => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); D.add(o); };
+  add(3.4, 0.35, 60, 0, 0, 0, wM); add(2.9, 0.06, 58, 0.1, 0.2, 0, pM);
+  for (const z of [-21, -7, 7, 21]) { add(3.6, 1.1, 0.9, -0.4, -0.7, z, dM); add(0.3, 1.6, 0.08, -2.3, -0.3, z, dM); }
+  add(5.2, 1.5, 2.2, -0.6, -0.9, 0, wM); add(9, 0.3, 0.3, -4.5, -0.5, -6, dM); add(9, 0.3, 0.3, -4.5, -0.5, 6, dM); add(1.4, 0.2, 13, -9, -0.4, 0, wM);
+  add(3.6, 0.12, 60.4, 0.2, -0.05, 0, new THREE.MeshBasicMaterial({ color: 0x8a8e98, fog: false }));
+  return D;
+}
+/** Everybody's up on the roofs. Look up: something the length of a street, low over town, going toward the lake. */
+async function lookUpAt(): Promise<void> {
+  player.dir = 'N';
+  if (kitActor) kitActor.dir = 'N';
+  drone = makeDrone();
+  drone.position.set(player.x - 70, 20, player.z - 40);
+  droneGone = 0;
+  cur.scene.add(drone);
+  const c = document.createElement('canvas');
+  c.width = 16; c.height = 64;
+  const x = c.getContext('2d')!, gr = x.createLinearGradient(0, 0, 16, 0);
+  gr.addColorStop(0, 'rgba(30,26,40,0)'); gr.addColorStop(0.5, 'rgba(30,26,40,0.55)'); gr.addColorStop(1, 'rgba(30,26,40,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 16, 64);
+  droneShadow = new THREE.Mesh(new THREE.PlaneGeometry(5, 60), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  droneShadow.rotation.x = -Math.PI / 2;
+  cur.scene.add(droneShadow);
+  lookUp = 0.001;
+  droneT0 = performance.now();
+  sound.drone();
+  await sleep(2600);
+}
+function skyward(): void {
+  // the flight runs on the wall clock, so a slow frame never stretches it
+  lookUp = (performance.now() - droneT0) / 1000;
+  tilt = Math.min(1, lookUp / 2.2);
+  if (!drone || !droneShadow) return;
+  // it glides in over the town and seems to hang there while you look; told to wait for it, it goes on east
+  if (!droneGone) drone.position.x = player.x - 2 - 68 * Math.exp(-lookUp / 2.4);
+  else drone.position.x = player.x - 2 - 68 * Math.exp(-droneGone / 2.4) + (lookUp - droneGone) * 12;
+  drone.position.y = 20 - Math.min(lookUp, 12) * 0.2;
+  drone.position.z = player.z - 40 + Math.sin(lookUp * 0.4) * 1.2;
+  drone.rotation.x = Math.sin(lookUp * 0.7) * 0.05; drone.rotation.z = -0.04;
+  droneShadow.position.set(drone.position.x + 6, cur.area.ground(player.x, player.z) + 0.06, drone.position.z + 22);
+}
+function dropDrone(): void {
+  for (const o of [drone, droneShadow]) if (o) { o.parent?.remove(o); o.traverse((q) => { const m = q as THREE.Mesh; m.geometry?.dispose(); (m.material as THREE.Material | undefined)?.dispose(); }); }
+  drone = null; droneShadow = null; lookUp = 0; tilt = 0;
+}
+
+/** Home before Shutter: the doors sealed, the day, the drone, the last page, the end card. */
+async function ending(): Promise<void> {
+  sound.creak();
+  sound.music('none');
+  await ui.fade(true, 800);
+  await stage.say('', 'Shutter. Doors sealed. The Span sleeps through the heat.');
+  ui.endTalk();
+  S.party.juno.hp = 42; S.party.kit.hp = 26;
+  S.day++;
+  await setTime(6 * 60 + 50);
+  await go(SPAN, 'seven-flags:home');
+  await bringCast(cur);
+  await ui.fade(true, 0);
+  player.dir = 'N';
+  if (kitActor) { kitActor.place(player.x + 1.4, cur.area.ground(player.x + 1.4, player.z + 0.5), player.z + 0.5); kitActor.dir = 'W'; }
+  if (panchaActor) panchaActor.place(player.x + 4, cur.area.ground(player.x + 4, player.z + 1.6), player.z + 1.6);
+  camHold = new THREE.Vector3(player.x + 0.6, 0.8, player.z - 0.4);
+  camZoomTo = camZoom = 0.8;
+  mode = 'cine';
+  hud.show(false);
+  minimap.hidden = true;
+  await ui.fade(true, 0, '#f4f0e6');
+  await ui.fade(false, 1100);
+  await run('fall');
+  await sleep(900);
+  if (!S.pages.includes('last')) S.pages.push('last');
+  ui.endTalk();
+  sound.music('intro');
+  for (;;) {
+    const a = await hud.endCard();
+    if (a === 'read') { await hud.openBook(PAGES as Record<string, Page>, S.pages, 'last', true); continue; }
+    await afterEnding();
+    if (a === 'title') await titleScreen();
+    return;
+  }
+}
+/** First mission complete: the next Lamp, Kit and Pancha with you, the Span yours to walk. */
+async function afterEnding(): Promise<void> {
+  dropDrone();
+  camHold = null; camZoomTo = 1;
+  await ui.fade(true, 500);
+  await setTime(19 * 60 + 30);
+  await go(SPAN, 'seven-flags:home');
+  S.step = 'free';
+  mode = 'play';
+  hud.show(true);
+  minimap.hidden = false;
+  showObjective(true);
+  await bringCast(cur);
+  saveGame(true);
+  sound.music('explore');
+  sound.chime();
+  await ui.fade(false, 600);
+}
+
+// ---------------------------------------------------------------- footsteps and the night's sounds (legacy 22-audio amb)
+let stepAge = 0, ambAge = 0;
+const T = { goat: 4, chick: 3, pancha: 2, howl: 40 };
+function footstep(): void {
+  if (cur.id !== SPAN) { sound.step('floor'); return; }
+  const c = (cur.area as Region).groundColor(player.x, player.z);
+  // grey ground is road or concrete; anything browner is dirt
+  sound.step(c && Math.abs(c[0] - c[2]) < 26 ? 'hard' : 'dirt');
+}
+function ambience(): void {
+  if (!sound.started || !S || mode === 'title') return;
+  const day = time.phase === 'Day';
+  sound.setDay(day);
+  if (fight.active) return;
+  for (const k of Object.keys(T) as Array<keyof typeof T>) T[k] -= 0.38;
+  if (!day && Math.random() < 0.5) sound.tone('sine', 4300 + Math.random() * 300, 4300, 0.04, 0.008); // crickets
+  const near = (kind: string, r: number): [Actor, number] | null => {
+    let best: [Actor, number] | null = null;
+    for (const o of cur.roamers) { if (o.kind !== kind) continue; const d = Math.hypot(o.actor.x - player.x, o.actor.z - player.z); if (d < r && (!best || d < best[1])) best = [o.actor, d]; }
+    return best;
+  };
+  if (T.goat <= 0) { T.goat = 5 + Math.random() * 9; const g = near('goat', 11); if (g) sound.goat(0.012 + 0.05 * (1 - g[1] / 11), (g[0].x - player.x) / 8); }
+  if (T.chick <= 0) { T.chick = 4 + Math.random() * 6; const c = near('chicken', 8); if (c) sound.chicken(0.01 + 0.035 * (1 - c[1] / 8), (c[0].x - player.x) / 8); }
+  if (T.pancha <= 0) {
+    T.pancha = 4 + Math.random() * 3;
+    if (panchaActor && S.step === 'pancha' && !S.flags.drainDone) { const d = Math.hypot(panchaActor.x - player.x, panchaActor.z - player.z); if (d < 26) sound.goat(0.015 + 0.06 * (1 - d / 26), (panchaActor.x - player.x) / 10); }
+  }
+  if (T.howl <= 0) { T.howl = 70 + Math.random() * 60; if (!day) sound.howl(); }
 }
 
 // ------------------------------------------------------------ the mini map
@@ -741,6 +1070,7 @@ load().then(() => {
     get step() { return S.step; },
     get state() { return S; },
     get scripting() { return director.running; },
+    get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
     get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },
     get built() { return cur.id === SPAN ? (cur.area as Region).pieces.map((p) => p.id) : []; },

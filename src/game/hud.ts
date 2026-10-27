@@ -30,7 +30,7 @@ const touch = (): boolean => matchMedia('(pointer: coarse)').matches || 'ontouch
 class Menu {
   private readonly box: HTMLDivElement;
   private res: ((id: string | null) => void) | null = null;
-  constructor(parent: HTMLElement, cls: string) { this.box = el('div', `menu ${cls}`, parent); }
+  constructor(parent: HTMLElement, cls: string, private readonly sfx: (n: string) => void) { this.box = el('div', `menu ${cls}`, parent); }
   get open(): boolean { return this.res !== null; }
   show(items: Array<{ id: string; label: string; sub?: string; hidden?: boolean }>, back = false): Promise<string | null> {
     this.box.replaceChildren();
@@ -46,7 +46,7 @@ class Menu {
     return new Promise((r) => { this.res = r; });
   }
   private back = false;
-  done(id: string | null): void { const r = this.res; this.res = null; this.box.replaceChildren(); r?.(id); }
+  done(id: string | null): void { const r = this.res; this.res = null; this.box.replaceChildren(); this.sfx(id === null ? 'back' : 'blip'); r?.(id); }
   key(code: string): boolean {
     if (!this.res) return false;
     const bs = [...this.box.querySelectorAll('button')];
@@ -54,6 +54,7 @@ class Menu {
     if (code === 'ArrowDown' || code === 'ArrowRight' || code === 'ArrowUp' || code === 'ArrowLeft') {
       const d = code === 'ArrowDown' || code === 'ArrowRight' ? 1 : -1;
       bs[(i + d + bs.length) % bs.length]?.focus();
+      this.sfx('tick');
       return true;
     }
     if (code === 'Enter' || code === 'Space' || code === 'KeyE' || code === 'KeyZ') { (bs[Math.max(0, i)] as HTMLButtonElement | undefined)?.click(); return true; }
@@ -86,6 +87,8 @@ export class Hud {
   private readonly pauseMenu: Menu;
   private readonly cardMenu: Menu;
   private bookClose: (() => void) | null = null;
+  /** Plays an interface sound by name (game/sound.ts). */
+  sfx: (n: string) => void = () => {};
   private bookKey: ((code: string) => boolean) | null = null;
 
   constructor(parent: HTMLElement) {
@@ -117,13 +120,14 @@ export class Hud {
     const tm = el('div', 'ts-inner', this.title);
     el('h1', '', tm, 'The Long Noon');
     el('p', 'ts-tag', tm, 'Never walk in white.');
-    this.titleMenu = new Menu(tm, 'ts-menu');
+    const sfx = (n: string): void => this.sfx(n);
+    this.titleMenu = new Menu(tm, 'ts-menu', sfx);
     el('p', 'ts-foot', this.title, touch() ? 'Drag on the left to walk. Tap A to talk.' : 'WASD or arrows to walk · E to talk · B the staybook · M the map · Esc the menu');
-    this.pauseMenu = new Menu(this.pause, 'pause-menu');
+    this.pauseMenu = new Menu(this.pause, 'pause-menu', sfx);
     el('div', 'pause-side', this.pause);
     el('h2', '', this.card, 'Mission: Lamp');
     el('p', '', this.card, 'First mission complete.');
-    this.cardMenu = new Menu(this.card, 'card-menu');
+    this.cardMenu = new Menu(this.card, 'card-menu', sfx);
     this.menus.push(this.titleMenu, this.pauseMenu, this.cardMenu);
     this.show(false);
   }
@@ -217,13 +221,13 @@ export class Hud {
       prev.hidden = next.hidden = isNew || list.length < 2;
     };
     draw();
-    const turn = (d: number): void => { i = (i + d + list.length) % list.length; draw(); };
+    const turn = (d: number): void => { i = (i + d + list.length) % list.length; draw(); this.sfx('page'); };
     prev.addEventListener('click', (e) => { e.stopPropagation(); turn(-1); });
     next.addEventListener('click', (e) => { e.stopPropagation(); turn(1); });
     b.classList.add('on');
     return new Promise((res) => {
       const opened = performance.now();
-      const done = (): void => { b.classList.remove('on'); this.bookClose = null; this.bookKey = null; res(); };
+      const done = (): void => { b.classList.remove('on'); this.bookClose = null; this.bookKey = null; this.sfx('close'); res(); };
       close.addEventListener('click', (e) => { e.stopPropagation(); done(); });
       this.bookClose = done;
       this.bookKey = (code) => {
@@ -255,6 +259,7 @@ export class Hud {
     for (const [k, n] of Object.entries(s.items)) if (n > 0) el('p', '', side, `${ITEM_NAMES[k] ?? k}${n > 1 ? ` ×${n}` : ''}`);
     el('p', '', side, `Water ${s.water}/10  ·  White ${s.white} ${s.white === 1 ? 'tin' : 'tins'}`);
     this.pause.classList.add('on');
+    this.sfx('open');
     const a = await this.pauseMenu.show([
       { id: 'resume', label: 'Resume' },
       { id: 'book', label: 'Staybook', hidden: s.pages.length === 0 },
