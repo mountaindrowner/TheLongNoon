@@ -858,7 +858,13 @@ const fight = new Fight(ui.root, {
   blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
   dead() { (cur.area as Region).dropLamps('stray'); },
   touch: touchUI(),
-  onAct: (who, target) => cutTo(who, target),
+  onAct: (who, target) => { if (who === player || who === kitActor) cutTo(who, target); },
+  onTurn: (side) => {
+    if (!staged?.director) return;
+    // being attacked: the hero shot, low behind the enemy, for the whole of its turn; back to the rotation after
+    if (side === 'foe') { if (direct.hold !== 'hero') direct.quick = performance.now() + 900; direct.hold = 'hero'; }
+    else if (direct.hold) { direct.hold = null; direct.quick = performance.now() + 900; direct.next = performance.now() + DIRECTOR.every; }
+  },
 });
 
 // ---------------------------------------------------------------- battle stagings
@@ -884,7 +890,33 @@ interface Staging {
   band: number;
   /** Turn everyone this far toward the camera, the way actors cheat out on a stage (0 = squarely at each other). */
   cheat?: number;
+  /** A directed staging: everyone holds one formation and the camera moves between shots (`DIRECTOR`). */
+  director?: boolean;
 }
+
+/** One camera set-up around the director's formation. */
+interface Shot { pos: [number, number, number]; look: [number, number, number]; fov: number; band: number; cheat: number; letterbox?: boolean }
+/**
+ * The director (the owner, 2026-10-27): everyone keeps their place, and the camera floats between four
+ * shots of the same formation. It opens over the shoulder, then glides to the next shot every five
+ * seconds (shoulder, diorama, face-off); an enemy's turn swings to the hero shot for as long as you're
+ * being attacked; your own blows cut in over the attacker's shoulder for a beat.
+ */
+const DIRECTOR = {
+  /** The formation all four shots look at: the party to the south, the enemy to the north, along the drain. */
+  party: [[-0.9, 1.8], [1.1, 3.4]] as Array<[number, number]>,
+  foes: [[-0.5, -2.6], [2.2, -1.6]] as Array<[number, number]>,
+  shots: {
+    shoulder: { pos: [1.5, 3.0, 8.8], look: [-0.5, 0.9, -1.2], fov: 38, band: 0.2, cheat: 0 },
+    diorama: { pos: [-8.2, 4.2, 0.7], look: [0.3, 0.7, 0.3], fov: 32, band: 0.2, cheat: 0.75 },
+    faceoff: { pos: [8.8, 9.4, 8.6], look: [0.2, 0.4, 0.2], fov: 24, band: 0.14, cheat: 0.85 },
+    hero: { pos: [2.2, 0.7, -8.4], look: [-0.7, 1.4, 1.8], fov: 42, band: 0.22, cheat: 0.3, letterbox: true },
+  } as Record<string, Shot>,
+  rotation: ['shoulder', 'diorama', 'faceoff'],
+  every: 5000,
+};
+/** Where the director is: the shot in the rotation, when it moves on, and a shot held for a turn (the hero shot). */
+const direct = { rot: 0, next: 0, hold: null as string | null, quick: 0 };
 const STAGINGS: Record<string, Staging> = {
   topdown: {
     title: 'In place', after: 'Sea of Stars, Chrono Trigger: the fight happens where you stand, from the overworld camera',
@@ -911,13 +943,18 @@ const STAGINGS: Record<string, Staging> = {
     party: [[1.7, 1.9], [3.0, 0.8]], foes: [[-1.9, -1.5], [-0.6, -2.9]],
     cam: { pos: [9.4, 9.8, 9.4], look: [0.2, 0.4, 0.2], fov: 24 }, band: 0.14, cheat: 0.85,
   },
+  director: {
+    title: 'Directed', after: 'The owner\'s mix: one formation; the camera floats between over the shoulder, the diorama and the face-off, swings to the hero shot when you\'re attacked, and cuts in on your blows',
+    party: DIRECTOR.party, foes: DIRECTOR.foes,
+    cam: { ...DIRECTOR.shots.shoulder! }, band: 0.2, director: true, cuts: true,
+  },
   cuts: {
     title: 'Diorama with cuts', after: 'Octopath Traveler II: the diorama, but the camera swings in on every blow',
     party: [[-0.7, 2.3], [0.9, 3.5]], foes: [[-0.1, -2.2], [1.4, -1.0]],
     cam: { pos: [-7.6, 4.4, 1.2], look: [0.3, 0.7, 0.6], fov: 32 }, band: 0.2, sway: 0.35, cuts: true, cheat: 0.75,
   },
 };
-const BATTLE = [params.get('battle'), HASH_FIGHT].find((b) => b && STAGINGS[b]) ?? 'topdown';
+const BATTLE = [params.get('battle'), HASH_FIGHT].find((b) => b && STAGINGS[b]) ?? 'director';
 /** The fight's centre at the drain, and the staging in use (null outside a fight). */
 const CENTRE = { x: 115.2, z: 209.4 };
 let staged: Staging | null = null;
@@ -934,8 +971,10 @@ function stageFight(st: Staging): void {
   staged = st;
   stageSnap = true;
   ui.root.classList.add('fighting');
-  fight.setLayout(Object.keys(STAGINGS).find((k) => STAGINGS[k] === st) ?? 'topdown');
+  // the director keeps one set of panels while its camera moves: in the corners, out of every shot's middle
+  fight.setLayout(st.director ? 'topdown' : Object.keys(STAGINGS).find((k) => STAGINGS[k] === st) ?? 'topdown');
   letterbox.classList.toggle('on', !!st.letterbox);
+  Object.assign(direct, { rot: 0, next: performance.now() + DIRECTOR.every, hold: null, quick: 0 });
   const g = (x: number, z: number): number => cur.area.ground(x, z);
   const party = [player, kitActor].filter((a): a is Actor => !!a);
   party.forEach((a, i) => { const [x, z] = stageAt(st.party[i]!); a.place(x, g(x, z), z); });
@@ -973,26 +1012,39 @@ function stageFrame(dt: number, t: number): void {
   const st = staged!;
   const y = cur.area.ground(CENTRE.x, CENTRE.z);
   const sw = st.sway ? Math.sin(t * 0.25) * st.sway : 0;
-  if (stageCut && performance.now() > stageCut.until) stageCut = null;
+  const now = performance.now();
+  if (stageCut && now > stageCut.until) stageCut = null;
+  // the director: which shot, and a gentle float around it
+  let cam = st.cam, band = st.band, cheatNow = st.cheat ?? 0, drift = [0, 0, 0];
+  if (st.director) {
+    if (!direct.hold && !stageCut && now > direct.next) { direct.rot = (direct.rot + 1) % DIRECTOR.rotation.length; direct.next = now + DIRECTOR.every; }
+    const shot = DIRECTOR.shots[direct.hold ?? DIRECTOR.rotation[direct.rot]!]!;
+    cam = shot; band = shot.band; cheatNow = shot.cheat;
+    letterbox.classList.toggle('on', !!shot.letterbox && !stageCut);
+    const ft = now / 1000;
+    drift = [Math.sin(ft * 0.21) * 0.45, Math.sin(ft * 0.17) * 0.16, Math.cos(ft * 0.23) * 0.4];
+  }
   if (stageCut) { camGoal.copy(stageCut.pos); lookGoal.copy(stageCut.look); }
   else {
-    camGoal.set(CENTRE.x + st.cam.pos[0] + sw, y + st.cam.pos[1], CENTRE.z + st.cam.pos[2] - sw * 0.5);
-    lookGoal.set(CENTRE.x + st.cam.look[0], y + st.cam.look[1], CENTRE.z + st.cam.look[2]);
+    camGoal.set(CENTRE.x + cam.pos[0] + sw + drift[0]!, y + cam.pos[1] + drift[1]!, CENTRE.z + cam.pos[2] - sw * 0.5 + drift[2]!);
+    lookGoal.set(CENTRE.x + cam.look[0], y + cam.look[1], CENTRE.z + cam.look[2]);
   }
-  const k = stageSnap ? 1 : 1 - Math.exp(-dt * (stageCut ? 7 : 3));
+  // glides are gentle; a swing to the hero shot or a cut is quick
+  const rate = stageCut ? 7 : now < direct.quick ? 4.5 : st.director ? 1.7 : 3;
+  const k = stageSnap ? 1 : 1 - Math.exp(-dt * rate);
   stageSnap = false;
   camera.position.lerp(camGoal, k);
   lookNow.lerp(lookGoal, k);
   camera.lookAt(lookNow);
-  const fov = stageCut ? stageCut.fov : st.cam.fov;
+  const fov = stageCut ? stageCut.fov : cam.fov;
   if (Math.abs(camera.fov - fov) > 0.01) { camera.fov += (fov - camera.fov) * k; camera.updateProjectionMatrix(); }
-  post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = st.band;
+  post.tiltH.uniforms.band!.value = post.tiltV.uniforms.band!.value = band;
   // everyone faces the other side, turned to the camera, drawn from whichever of their eight sides shows
   const vx = lookNow.x - camera.position.x, vz = lookNow.z - camera.position.z;
   const party = [player, kitActor].filter((a): a is Actor => !!a);
   const mid = (list: Actor[]): [number, number] => [list.reduce((s, a) => s + a.x, 0) / list.length, list.reduce((s, a) => s + a.z, 0) / list.length];
   const pm = mid(party), fm = foes.length ? mid(foes) : pm;
-  const vl = Math.hypot(vx, vz) || 1, cheat = st.cheat ?? 0;
+  const vl = Math.hypot(vx, vz) || 1, cheat = stageCut ? 0.2 : cheatNow;
   for (const [list, other] of [[party, fm], [foes, pm]] as const) for (const a of list) {
     if (!a.root.visible) continue;
     const fx = other[0] - a.x, fz = other[1] - a.z, fl = Math.hypot(fx, fz) || 1;
@@ -1246,6 +1298,9 @@ load().then(() => {
     cutDemo() { if (!staged || !foes[0]) return; const c = staged.cuts; staged.cuts = true; cutTo(player, foes[0]); staged.cuts = c; if (stageCut) stageCut.until = performance.now() + 120_000; },
     /** Straight into the drain fight in the staging `?battle=` picked (for looking at stagings). */
     battleDemo: () => fightDemo(),
+    /** Hold one of the director's shots (for screenshots), or null to let it rotate. */
+    directorShot(name: string | null) { direct.hold = name; stageSnap = true; },
+    get directorNow() { return direct.hold ?? DIRECTOR.rotation[direct.rot]; },
     get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
     get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },

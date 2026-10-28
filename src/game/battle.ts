@@ -42,6 +42,8 @@ export interface FightWorld {
   touch: boolean;
   /** Someone acts on someone: the stage can cut the camera to it. */
   onAct?(who: Actor, target: Actor): void;
+  /** A turn begins: the party's, or the enemy's (the stage can frame each side its own way). */
+  onTurn?(side: 'party' | 'foe', who: Actor): void;
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -369,6 +371,7 @@ export class Fight {
     while (!result) {
       const u = nextTurn(all);
       this.renderTurns(u, all);
+      this.w.onTurn?.(u.party ? 'party' : 'foe', u.actor);
       if (u.party) { this.w.sound.turn(); await this.playerTurn(u, foes, def); } else await this.enemyTurn(u);
       this.renderParty(null);
       if (foes.every((f) => !alive(f))) result = 'win';
