@@ -51,6 +51,7 @@ const ANIM = {
 };
 const CUSTOM = {
   stray: { idle: 'idle: rocking slightly on its six wheels, the red eye pulsing', walk: 'rolling forward on its six wheels, chassis bobbing' },
+  juno: { attack: 'swinging a length of steel pipe down hard in front of her with both hands, then back to guard' },
   chicken: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken2: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken3: { idle: 'idle: puffing up, head bobbing', walk: 'strutting, head bobbing with each step' },

@@ -30,6 +30,96 @@
           "west"
         ]
       }
+    },
+    "walk": {
+      "animation_group_id": "de48f671-e6d8-48a9-bd0c-b3b3301db0fd",
+      "fps": 11,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "walking-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "run": {
+      "animation_group_id": "2350ff1c-605c-487c-8642-b208e1a0eb13",
+      "fps": 14,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "stance": {
+      "animation_group_id": "646892a4-3cdd-4bc5-aa4a-9e2804e80ba6",
+      "fps": 8,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "fight-stance-idle-8-frames",
+        "animation_name": "stance",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "throw": {
+      "animation_group_id": "04f5fcf8-2d29-4378-ae88-68d0490c32ec",
+      "fps": 12,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "throw-object",
+        "animation_name": "throw",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "655cfb21-bb29-4afb-ba4b-c62341c7c633",
+      "fps": 10,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "taking-punch",
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "down": {
+      "animation_group_id": "e31d60ec-826d-4576-8fb9-34e5d283741a",
+      "fps": 10,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "falling-back-death",
+        "animation_name": "down",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
     }
   },
   "at": "2026-10-27T20:22:45.262Z"

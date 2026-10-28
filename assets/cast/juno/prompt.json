@@ -30,6 +30,51 @@
           "west"
         ]
       }
+    },
+    "walk": {
+      "animation_group_id": "05d04c9e-da69-4f0e-917a-282dfa0bfece",
+      "fps": 11,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "walking-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "run": {
+      "animation_group_id": "9e4b9c4f-0592-4bac-98de-70a488d18bfc",
+      "fps": 14,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "stance": {
+      "animation_group_id": "48029d9a-1992-42a1-9b7d-a773b1898ba5",
+      "fps": 8,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "fight-stance-idle-8-frames",
+        "animation_name": "stance",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
     }
   },
   "at": "2026-10-27T20:13:27.607Z"

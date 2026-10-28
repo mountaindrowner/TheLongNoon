@@ -22,6 +22,9 @@ SRC = os.path.join(ROOT, 'assets/cast')
 OUT = os.path.join(ROOT, 'src/assets/cast')
 CAST = json.load(open(os.path.join(ROOT, 'tools/cast.json')))['cast']
 STILL = ['south', 'east', 'north', 'west', 'south-east', 'north-east', 'north-west', 'south-west']
+# PixelLab's folder names for its templates, where they differ from the template's own name
+FOLDER = {'breathing-idle': 'idle', 'walking': 'walk', 'running': 'run', 'fight-stance-idle': 'stance', 'throw-object': 'throw',
+          'taking-a-punch': 'hurt', 'falling-backward': 'down', 'drinking': 'drink'}
 FPS = {'idle': 5, 'walk': 11, 'run': 14, 'stance': 8, 'attack': 12, 'throw': 12, 'hurt': 10, 'down': 10, 'drink': 8}
 
 
@@ -57,9 +60,9 @@ def animations(char):
         if not os.path.isdir(p):
             continue
         slug = re.sub(r'[^a-z0-9]+', '-', folder.lower()).strip('-')
-        name = known.get(slug) or next((n for k, n in known.items() if k and (slug.startswith(k) or k.startswith(slug))), None)
+        name = FOLDER.get(slug) or known.get(slug) or next((n for k, n in known.items() if k and (slug.startswith(k) or k.startswith(slug))), None)
         if not name:
-            name = 'walk' if 'walk' in slug else 'idle' if ('idle' in slug or 'breath' in slug) else slug
+            name = FOLDER.get(slug) or ('walk' if 'walk' in slug else 'idle' if ('idle' in slug or 'breath' in slug) else slug)
         dirs = {d: frames_in(os.path.join(p, d)) for d in os.listdir(p) if os.path.isdir(os.path.join(p, d))}
         dirs = {d: f for d, f in dirs.items() if f}
         if dirs:

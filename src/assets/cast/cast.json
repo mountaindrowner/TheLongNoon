@@ -660,7 +660,78 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   },
+   "down": {
+    "fps": 10,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 7
+   },
+   "stance": {
+    "fps": 8,
+    "rows": {
+     "south": 9,
+     "east": 10,
+     "north": 11,
+     "west": 12
+    },
+    "frames": 8
+   },
+   "run": {
+    "fps": 14,
+    "rows": {
+     "south": 13,
+     "east": 14,
+     "north": 15,
+     "west": 16
+    },
+    "frames": 8
+   },
+   "hurt": {
+    "fps": 10,
+    "rows": {
+     "south": 17,
+     "east": 18,
+     "north": 19,
+     "west": 20
+    },
+    "frames": 6
+   },
+   "throw": {
+    "fps": 12,
+    "rows": {
+     "south": 21,
+     "east": 22,
+     "north": 23,
+     "west": 24
+    },
+    "frames": 7
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 25,
+     "east": 26,
+     "north": 27,
+     "west": 28
+    },
+    "frames": 8
+   }
+  }
  },
  "lupe": {
   "w": 64,
