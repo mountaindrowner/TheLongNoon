@@ -301,8 +301,9 @@ edge is *"a physical barrier, or a person who talks to you and turns you back."*
 - **The drone comes down on day five** (the owner, 2026-10-28: *"it's what changes the dynamic the first 5 nights
   have established"*). The flyover is kept whole for the end of night five (`droneDay` in `main.ts`, `#drone` to
   see it now). The story file had it at the end of night three, with NIM found on night four.
-  - **Open:** night three's search for Güero, where the drone passes over, and the White Bowl and the Choice
-    (nights four and five in the story file) move after it. How the nights are reshaped is for the owner.
+  - The prologue is now **seven nights** (the owner, 2026-10-28): the White Bowl is night six, the Choice night
+    seven. `docs/design/prologue.md` has the plan; nights four and five, and the end of night three's search for
+    Güero, are open for the owner.
 - On screen the town is **Seven Flags**: the objective reads *Seven Flags · Night one*.
 - **Saves are v2** (rule 8): `conds` and `sunTime`; a v1 save loads clean of both.
 - **Checks:**
