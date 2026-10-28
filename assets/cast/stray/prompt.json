@@ -14,6 +14,75 @@
     "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
   },
   "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "2071e159-7db6-47c9-a489-2d1e8bdd7c0e",
+      "fps": 5,
+      "body": {
+        "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
+        "mode": "v3",
+        "action_description": "idle: rocking slightly on its six wheels, the red eye pulsing",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "1496562b-5352-4543-9181-b117701676a2",
+      "fps": 11,
+      "body": {
+        "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
+        "mode": "v3",
+        "action_description": "rolling forward on its six wheels, chassis bobbing",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "6390029f-9a65-4e72-8eb8-fb2254df7219",
+      "fps": 12,
+      "body": {
+        "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
+        "mode": "v3",
+        "action_description": "ramming forward hard on its six wheels, red eye flaring bright, then rolling back",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "e5eb6996-bf16-4c5a-8991-82fda553bbe5",
+      "fps": 10,
+      "body": {
+        "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
+        "mode": "v3",
+        "action_description": "jolting backward from a heavy hit, sparks and bolts flying from its chassis",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T21:07:35.762Z"
 }

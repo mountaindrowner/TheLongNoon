@@ -14,6 +14,41 @@
     "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
   },
   "character_id": "43cb70b1-ce6a-4df0-915a-b0d9ccabdab8",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "17e0fbd2-3f39-4a4e-a4ab-a0c925cb7d55",
+      "fps": 5,
+      "body": {
+        "character_id": "43cb70b1-ce6a-4df0-915a-b0d9ccabdab8",
+        "mode": "v3",
+        "action_description": "idle: sweeping the ground slowly with its broom, swaying on its base",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "c23305ef-b5d8-427c-a9bd-045271f1e0c6",
+      "fps": 11,
+      "body": {
+        "character_id": "43cb70b1-ce6a-4df0-915a-b0d9ccabdab8",
+        "mode": "v3",
+        "action_description": "rolling forward on its base, broom held out",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T22:11:08.839Z"
 }

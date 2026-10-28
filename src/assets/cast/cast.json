@@ -136,7 +136,27 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7
+    },
+    "frames": 9
+   }
+  }
  },
  "chicken2": {
   "w": 64,
@@ -175,7 +195,23 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 2,
+     "east": 3
+    },
+    "frames": 9
+   }
+  }
  },
  "chicken3": {
   "w": 64,
@@ -214,7 +250,28 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 9
+   }
+  }
  },
  "coyote": {
   "w": 64,
@@ -253,7 +310,56 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "attack": {
+    "fps": 12,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "hurt": {
+    "fps": 10,
+    "rows": {
+     "south": 5,
+     "east": 6
+    },
+    "frames": 9
+   },
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 7,
+     "east": 8,
+     "north": 9,
+     "west": 10
+    },
+    "frames": 8
+   },
+   "run": {
+    "fps": 14,
+    "rows": {
+     "south": 11,
+     "east": 12,
+     "north": 13,
+     "west": 14
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 15,
+     "east": 16,
+     "north": 17,
+     "west": 18
+    },
+    "frames": 8
+   }
+  }
  },
  "coyote2": {
   "w": 64,
@@ -292,7 +398,56 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "attack": {
+    "fps": 12,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "hurt": {
+    "fps": 10,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 9
+   },
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 9,
+     "east": 10,
+     "north": 11,
+     "west": 12
+    },
+    "frames": 8
+   },
+   "run": {
+    "fps": 14,
+    "rows": {
+     "south": 13,
+     "east": 14,
+     "north": 15,
+     "west": 16
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 17,
+     "east": 18
+    },
+    "frames": 8
+   }
+  }
  },
  "elias": {
   "w": 64,
@@ -1206,7 +1361,25 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 3,
+     "east": 4,
+     "north": 5
+    },
+    "frames": 8
+   }
+  }
  },
  "rosa": {
   "w": 64,

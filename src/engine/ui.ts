@@ -45,8 +45,7 @@ export class UI {
     this.prompt = el('div', 'prompt', this.root);
     this.box = el('div', 'dlg', this.root);
     this.portrait = el('img', 'dlg-portrait', this.box);
-    // a drawn bust portrait (square, 128 or 160 px) is shown at whole-pixel scale; a figure card at its own size
-    this.portrait.onload = () => { const i = this.portrait; this.portrait.classList.toggle('bust', i.naturalWidth === i.naturalHeight && i.naturalWidth <= 160); };
+    this.portrait.onload = () => this.fitPortrait();
     const panel = el('div', 'dlg-panel', this.box);
     this.plate = el('div', 'dlg-name', panel);
     this.text = el('div', 'dlg-text', panel);
@@ -267,6 +266,15 @@ export class UI {
     this.box.classList.remove('on');
   }
 
+  /** A drawn bust portrait (square, 128 or 160 px) stands in front of the panel's corner at whole-pixel scale;
+   *  a figure card stands behind the panel at its own size. */
+  private fitPortrait(): void {
+    const i = this.portrait;
+    const bust = i.style.display !== 'none' && i.complete && i.naturalWidth > 0 && i.naturalWidth === i.naturalHeight && i.naturalWidth <= 160;
+    i.classList.toggle('bust', bust);
+    this.box.classList.toggle('has-bust', bust);
+  }
+
   say(s: Speech, onClose?: () => void): void {
     this.speech = s;
     this.line = 0;
@@ -274,6 +282,7 @@ export class UI {
     this.plate.textContent = s.name ?? '';
     this.plate.style.display = s.name ? '' : 'none';
     if (s.portrait) { this.portrait.src = s.portrait; this.portrait.style.display = ''; } else this.portrait.style.display = 'none';
+    this.fitPortrait();
     this.box.classList.toggle('narr', !s.name);
     this.box.classList.add('on');
     this.showLine();
