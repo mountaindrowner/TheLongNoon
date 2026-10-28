@@ -14,6 +14,41 @@
     "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
   },
   "character_id": "5a4c1713-d8a6-4d74-b695-9dd0c1aef0f5",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "9663546a-2d7f-4b7b-90ac-c85e6619f88f",
+      "fps": 5,
+      "body": {
+        "character_id": "5a4c1713-d8a6-4d74-b695-9dd0c1aef0f5",
+        "mode": "v3",
+        "action_description": "idle: sprinkler head turning, legs shifting",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "7c563a7e-24db-44e3-a7d9-65b6834a37bf",
+      "fps": 11,
+      "body": {
+        "character_id": "5a4c1713-d8a6-4d74-b695-9dd0c1aef0f5",
+        "mode": "v3",
+        "action_description": "crawling forward on four spindly legs like a crab",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T22:10:55.043Z"
 }
