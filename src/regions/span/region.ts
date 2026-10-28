@@ -53,7 +53,7 @@ export function spanRegion(mood: Mood, night: boolean, start: Spot = START): Reg
   let seen = 0;
   return {
     id: SPAN,
-    title: 'The Span',
+    title: 'Seven Flags',
     sub: 'A town that stayed',
     mood,
     heightSeed: 41,
