@@ -55,10 +55,21 @@ made the same way, and nothing below changes without the owner.
   - **Animations come in four directions** (the owner, 2026-10-27): front,
     back and both sides.
 - **Animations:**
-  - **People:** a breathing idle (PixelLab's `breathing-idle`, 5 fps).
-    Juno and Kit also get a walk (`walking-8-frames`, 11 fps), because they
-    move.
-  - **Animals and the Stray:** an idle and a walk each.
+  - **Everyone:** a breathing idle (PixelLab's `breathing-idle`, 5 fps).
+  - **Juno and Kit** (the main characters, the owner 2026-10-27: *"our main
+    characters definitely have to have that"*):
+    - walk (`walking-8-frames`, 11 fps) and run (`running-8-frames`, 14
+      fps; Shift or a full push of the stick);
+    - a fight stance between turns (`fight-stance-idle-8-frames`);
+    - taking a hit (`taking-punch`) and going down (`falling-back-death`,
+      held until the fight ends);
+    - Juno drinks water (`drinking`);
+    - Kit throws with the sling (`throw-object`). PixelLab's person skeleton
+      has no weapon swing, so Juno's pipe swing is drawn from a line of text
+      (v3).
+  - **Animals and the enemies:** an idle and a walk each (still to make).
+  - A few idles came back missing one direction (Beto, Tavo, Memo, Toña);
+    that side shows the still figure until it's remade.
   - The goat and the coyote use PixelLab's four-legged skeleton; the chicken
     and the Stray are animated from a line of text.
 - **Portraits for the dialogue box** are made from each person's front

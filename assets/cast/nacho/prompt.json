@@ -4,6 +4,22 @@
   "adopted": true,
   "description": "Abuelo Nacho, a very old man: white hair and a white mustache, loose white guayabera shirt and white trousers, sandals, a walking stick, gentle proud face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
   "character_id": "75b28a78-8c26-458a-8584-f352392ad90e",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "0d482108-17da-498b-8f6d-6b743200e32a",
+      "fps": 5,
+      "body": {
+        "character_id": "75b28a78-8c26-458a-8584-f352392ad90e",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T20:40:57.983Z"
 }

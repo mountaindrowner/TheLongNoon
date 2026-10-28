@@ -36,7 +36,17 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 4
+   }
+  }
  },
  "chayo": {
   "w": 64,
@@ -75,7 +85,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "chicken": {
   "w": 64,
@@ -309,7 +330,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "fina": {
   "w": 64,
@@ -348,7 +380,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "goat": {
   "w": 64,
@@ -543,7 +586,88 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "attack": {
+    "fps": 12,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 4
+   },
+   "drink": {
+    "fps": 8,
+    "rows": {
+     "south": 9,
+     "east": 10,
+     "north": 11,
+     "west": 12
+    },
+    "frames": 6
+   },
+   "down": {
+    "fps": 10,
+    "rows": {
+     "south": 13,
+     "east": 14,
+     "north": 15,
+     "west": 16
+    },
+    "frames": 7
+   },
+   "stance": {
+    "fps": 8,
+    "rows": {
+     "south": 17,
+     "east": 18,
+     "north": 19,
+     "west": 20
+    },
+    "frames": 8
+   },
+   "run": {
+    "fps": 14,
+    "rows": {
+     "south": 21,
+     "east": 22,
+     "north": 23,
+     "west": 24
+    },
+    "frames": 8
+   },
+   "hurt": {
+    "fps": 10,
+    "rows": {
+     "south": 25,
+     "east": 26,
+     "north": 27,
+     "west": 28
+    },
+    "frames": 6
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 29,
+     "east": 30,
+     "north": 31,
+     "west": 32
+    },
+    "frames": 8
+   }
+  }
  },
  "keeper": {
   "w": 64,
@@ -621,7 +745,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "kit": {
   "w": 64,
@@ -770,7 +905,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "memo": {
   "w": 64,
@@ -809,7 +955,17 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 4
+   }
+  }
  },
  "nacho": {
   "w": 64,
@@ -848,7 +1004,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "nina": {
   "w": 64,
@@ -887,7 +1054,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "noonrider": {
   "w": 64,
@@ -1004,7 +1182,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "ruben": {
   "w": 64,
@@ -1043,7 +1232,18 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   }
+  }
  },
  "sprinkler": {
   "w": 64,
@@ -1160,7 +1360,17 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 4
+   }
+  }
  },
  "tona": {
   "w": 64,
@@ -1199,6 +1409,16 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 4
+   }
+  }
  }
 }

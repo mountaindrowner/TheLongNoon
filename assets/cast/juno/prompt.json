@@ -75,6 +75,68 @@
           "west"
         ]
       }
+    },
+    "attack": {
+      "animation_group_id": "2cf582df-44e5-4575-afe2-b441f7bacedb",
+      "fps": 12,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "mode": "v3",
+        "action_description": "swinging a length of steel pipe down hard in front of her with both hands, then back to guard",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "696d4763-433a-4ea9-8c9b-164db8f92c8a",
+      "fps": 10,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "taking-punch",
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "down": {
+      "animation_group_id": "8a48ee08-50e2-4e02-8581-9cbdee31d599",
+      "fps": 10,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "falling-back-death",
+        "animation_name": "down",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "drink": {
+      "animation_group_id": "5f55a6f9-746e-45c4-95aa-95aa766c6bfe",
+      "fps": 8,
+      "body": {
+        "character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+        "template_animation_id": "drinking",
+        "animation_name": "drink",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
     }
   },
   "at": "2026-10-27T20:13:27.607Z"
