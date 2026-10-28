@@ -88,6 +88,13 @@
       ],
       "desc": "Memo, a lean man in his forties who watches the east barricade: flat-brimmed red hat, grey poncho over grey work clothes, a length of pipe in hand, stubble, wary face"
     },
+    "chuy": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Chuy, a wiry lookout in his thirties who watches the road north: a mustard-yellow bandana tied over his head, sun-bleached denim shirt with the sleeves cut off, patched brown trousers, a coil of rope over one shoulder, a long steel pipe resting on the other, squinting watchful face"
+    },
     "nina": {
       "kind": "person",
       "anims": [

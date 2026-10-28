@@ -1,0 +1,42 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Chuy, a wiry lookout in his thirties who watches the road north: a mustard-yellow bandana tied over his head, sun-bleached denim shirt with the sleeves cut off, patched brown trousers, a coil of rope over one shoulder, a long steel pipe resting on the other, squinting watchful face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "bbb66edd-0212-4438-99c7-60cab330e1d7",
+  "anims": {
+    "idle": {
+      "animation_group_id": "bb2be67f-240f-4dc6-9589-a1cd542ab2dd",
+      "fps": 5,
+      "body": {
+        "character_id": "bbb66edd-0212-4438-99c7-60cab330e1d7",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-28T19:46:58.767Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-28T19:49:50.479Z"
+  }
+}

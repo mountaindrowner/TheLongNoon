@@ -6,6 +6,9 @@ when it comes up, with what already exists that it would build on.
 
 ## Daytime: shade as cover, the sun as damage (owner, 2026-10-26)
 
+**Built (2026-10-28):** the owner said go, with the rules: a timed night, then water, then health, and conditions
+until Juno sleeps. See `docs/architecture/current-state.md`, piece 7. The notes below are kept for the history.
+
 > "I like the idea of using shadows during daytime as cover and taking damage
 > over time when you travel above ground. Maybe we could use that later, or
 > maybe it could be a normal function."

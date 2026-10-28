@@ -11,6 +11,13 @@
   --lamp: #ffcf8a;
   color-scheme: dark;
 }
+/* the panels take the hour (the owner, 2026-10-28: night and day should look different): deep blue by night, warm
+   at Lamp, cold gray at Shutter, bleached by day. Same layout, same contrast; only the colour of the glass changes. */
+body.ph-lamp { --panel: rgba(30, 18, 12, 0.8); --gold: #e0a850; --gold-dim: rgba(224, 168, 80, 0.42); }
+body.ph-night { --panel: rgba(8, 14, 30, 0.8); --gold: #a8b8d8; --gold-dim: rgba(150, 170, 210, 0.36); --muted: #a4aec4; --lamp: #ffd79a; }
+body.ph-shutter { --panel: rgba(30, 28, 40, 0.8); --gold: #c8b4c8; --gold-dim: rgba(200, 180, 200, 0.36); --muted: #b8b0c0; }
+body.ph-day { --panel: rgba(54, 44, 30, 0.72); --gold: #f0e0b0; --gold-dim: rgba(240, 224, 176, 0.45); --text: #fff8e8; --muted: #e4d6b8; --lamp: #fff2c8; }
+body .status, body .objective, body .dlg-panel, body .f-party .pc, body .f-menu button, body .minimap { transition: background-color 2s, border-color 2s; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: #0b0a09; overflow: hidden; }
 body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -91,6 +98,20 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
 .drop { display: block; width: 10px; height: 10px; background: #6fb4e0; border-radius: 0 50% 50% 50%; transform: rotate(45deg); box-shadow: 0 0 0 1px rgba(0,0,0,0.5); }
 .drop.e { background: rgba(236, 228, 210, 0.14); }
 .st-white { display: flex; gap: 6px; align-items: center; font-size: 17px; }
+/* Juno's health under the drops, and what the white did to her (game/sun.ts) */
+.st-hp { display: flex; gap: 8px; align-items: center; margin-top: 5px; }
+.st-hp .bar { width: 112px; height: 6px; background: rgba(236, 228, 210, 0.15); }
+.st-hp .bar i { display: block; height: 100%; background: #7fbf6a; transition: width 0.3s; }
+.st-hp.low .bar i { background: #d0644a; }
+.st-hp span { font-size: 13px; color: var(--muted); }
+.st-conds { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.st-conds:empty { display: none; }
+.cond { padding: 0 7px 1px; font-size: 12px; font-weight: 500; }
+.cond.burn { background: #b0402a; color: #fff0e0; } .cond.blind { background: #e8e2d4; color: #2a2620; } .cond.heat { background: #c9822e; color: #1e1406; }
+/* Noonblind: the edges of the world swim white */
+.glare { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s; background: radial-gradient(ellipse at center, rgba(255, 252, 240, 0) 45%, rgba(255, 250, 236, 0.55) 100%); mix-blend-mode: screen; z-index: 1; }
+.glare.on { opacity: 1; animation: swim 5s ease-in-out infinite; }
+@keyframes swim { 50% { opacity: 0.6; } }
 .tin { display: block; width: 13px; height: 10px; background: #e9e4d8; border-radius: 2px 2px 3px 3px; box-shadow: inset 0 -3px 0 #b9b2a2, 0 0 0 1px rgba(0,0,0,0.5); }
 
 /* the objective, under the status */
@@ -273,6 +294,7 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
   .minimap { right: 10px; top: 8px; width: 118px; }
   .status { left: 10px; top: 8px; padding: 3px 10px 5px; }
   .st-time b { font-size: 17px; } .st-time span { font-size: 13px; }
+  .st-hp { margin-top: 3px; } .st-hp .bar { width: 84px; height: 5px; } .st-hp span { font-size: 11px; } .cond { font-size: 10px; padding: 0 5px; }
   .drop { width: 7px; height: 7px; } .st-meter { margin-top: 3px; gap: 10px; } .st-white { font-size: 14px; }
   .objective { left: 10px; top: 56px; padding: 3px 10px 4px; max-width: 38vw; }
   .obj-mission { font-size: 11px; } .obj-text { font-size: 13px; }

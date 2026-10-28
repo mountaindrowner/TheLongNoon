@@ -1,12 +1,19 @@
 /**
  * The clock (legacy 10-game-state, 16-exploration): minutes after midnight,
- * one game minute per real second, stopped while people talk. The phases are
- * the proof of concept's, and they are the game's rhythm: Lamp, the long
- * night, Shutter, the white.
+ * stopped while people talk. The phases are the proof of concept's, and they
+ * are the game's rhythm: Lamp, the long night, Shutter, the white.
+ *
+ * A night is timed (the owner, 2026-10-28: "5–10 min in real time"): Lamp to
+ * Shutter, ten game hours, takes NIGHT_MINUTES of play.
  */
 export type Phase = 'Lamp' | 'Long night' | 'Shutter' | 'Day';
 
 const wrap = (m: number): number => ((m % 1440) + 1440) % 1440;
+
+/** Real minutes of play from Lamp (6:30 pm) to Shutter (4:30 am). */
+export const NIGHT_MINUTES = 8;
+/** Game minutes per real second. */
+export const RATE = 600 / (NIGHT_MINUTES * 60);
 
 export function phaseOf(minute: number): Phase {
   const m = wrap(minute);
@@ -40,10 +47,10 @@ export class Clock {
   /** A frozen clock holds its light (screenshots, playtests: `?time=`). */
   frozen: boolean;
   constructor(start: number, frozen = false) { this.minute = wrap(start); this.frozen = frozen; }
-  /** Advance by `dt` real seconds (one game minute each). */
+  /** Advance by `dt` real seconds. */
   tick(dt: number): void {
     if (this.frozen) return;
-    this.minute += dt;
+    this.minute += dt * RATE;
     if (this.minute >= 1440) { this.minute -= 1440; this.day++; }
   }
   set(minute: number): void { this.minute = wrap(minute); }

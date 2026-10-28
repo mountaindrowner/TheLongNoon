@@ -88,6 +88,16 @@ export function ramp(night: boolean): SectionSpec {
     ],
     dress(d) {
       const { scene } = d;
+      // the lookout on the road north, day and night under his wraps: he holds a line across the deck (the caravan leaves this way, later)
+      d.npcs.push({
+        id: 'chuy', name: 'Chuy', sprite: 'chuy', x: 20.8, z: 5.4, face: 'W', allDay: true,
+        lines: ['Machines don’t come past the ramp. Usually.', '“Usually” is my whole job.'],
+        guard: {
+          x0: 5, x1: 22, z0: 1.5, z1: 4.2, back: [14.6, 8.6],
+          lines: ['Whoa. That’s the Thirty-Five, Juno. Nobody walks north alone.', 'Go on home. Whatever’s up that road will still be there tomorrow.'],
+          again: ['Still the Thirty-Five. Still no.'],
+        },
+      });
       const seed = (): number => d.seed();
 
       // ------------------------------------------------ the highway: the median, the overpass that came down (hero)

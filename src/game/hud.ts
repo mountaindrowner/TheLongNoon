@@ -1,11 +1,12 @@
 import type { GameState } from './state';
+import { CONDITIONS } from './sun';
 import { ITEM_NAMES } from './state';
 
 /**
  * The story's screen furniture, ported from the first version (legacy/poc2
  * 13-staybook, 14-quests-hud, 19-intro-cinematic, 21-menus) into the
  * rebuild's interface style (spec §15: dark glass, a thin gold rule):
- * - the status panel: the clock, ten drops of water, the tins of white;
+ * - the status panel: the clock, ten drops of water, the tins of white, Juno's health and what the white did to her;
  * - the objective under it, and a marker over the target;
  * - toasts and the daylight warning;
  * - the staybook's pages;
@@ -69,6 +70,12 @@ export class Hud {
   private readonly time: HTMLElement;
   private readonly phase: HTMLElement;
   private readonly drops: HTMLDivElement;
+  private readonly hpBar: HTMLElement;
+  private readonly hpText: HTMLElement;
+  private readonly conds: HTMLDivElement;
+  private readonly glare: HTMLDivElement;
+  private condKey = '';
+  private objTop = 0;
   private readonly tins: HTMLElement;
   private readonly obj: HTMLDivElement;
   private readonly objText: HTMLDivElement;
@@ -103,6 +110,11 @@ export class Hud {
     const t = el('div', 'st-white', meter);
     el('i', 'tin', t);
     this.tins = el('span', '', t, '0');
+    const hp = el('div', 'st-hp', this.status);
+    this.hpBar = el('i', '', el('div', 'bar', hp));
+    this.hpText = el('span', '', hp);
+    this.conds = el('div', 'st-conds', this.status);
+    this.glare = el('div', 'glare', this.root);
     this.obj = el('div', 'objective', this.root);
     el('div', 'obj-mission', this.obj);
     this.objText = el('div', 'obj-text', this.obj);
@@ -150,13 +162,27 @@ export class Hud {
     if (!on) { this.marker.classList.remove('on'); this.warn.classList.remove('on'); }
   }
 
-  update(s: GameState, clock: string, phase: string): void {
+  update(s: GameState, clock: string, phase: string, most: number): void {
     if (this.time.textContent !== clock) this.time.textContent = clock;
     if (this.phase.textContent !== phase) this.phase.textContent = phase;
     const ds = this.drops.children;
     for (let i = 0; i < 10; i++) ds[i]!.classList.toggle('e', i >= s.water);
     const w = String(s.white);
     if (this.tins.textContent !== w) this.tins.textContent = w;
+    const hp = s.party.juno.hp, pct = `${Math.round((100 * hp) / most)}%`, txt = `${hp}/${most}`;
+    if (this.hpBar.style.width !== pct) this.hpBar.style.width = pct;
+    if (this.hpText.textContent !== txt) this.hpText.textContent = txt;
+    this.hpBar.parentElement!.parentElement!.classList.toggle('low', hp <= most * 0.3);
+    const key = s.conds.join(',');
+    if (key !== this.condKey) {
+      this.condKey = key;
+      this.conds.innerHTML = '';
+      for (const c of s.conds) el('span', `cond ${c}`, this.conds, CONDITIONS[c].name).title = CONDITIONS[c].what;
+      this.glare.classList.toggle('on', s.conds.includes('blind'));
+    }
+    // the objective sits just under the status panel, however tall the conditions make it
+    const below = this.status.offsetTop + this.status.offsetHeight + 8;
+    if (below > 8 && below !== this.objTop) { this.objTop = below; this.obj.style.top = `${below}px`; }
   }
 
   objective(mission: string, text: string, flash: boolean): void {

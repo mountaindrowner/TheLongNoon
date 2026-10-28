@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { section, sectionGrid, regionPaint, type Grid, type RGB, type SectionSpec } from './section';
 import { currentChunk, useChunk, hitsSolid, type Chunk } from './world';
-import { checkDoors, clearDoorMarks } from './doorway';
+import { checkDoors, clearDoorMarks, doorMarks, type DoorMark } from './doorway';
 import { LightPool, type Lamp } from './kit';
 import { motes, pruneSways } from './foliage';
 import { planeGeo } from './geo';
@@ -81,6 +81,8 @@ export interface BuiltPiece {
   roamers: Roamer[];
   triggers: Trigger[];
   doorIssues: string[];
+  /** Every door the map built (lit, shut or boarded), in region coordinates: where people go in at Shutter. */
+  doors: DoorMark[];
 }
 
 /** A map of the region, built or not: its place and size are always known. */
@@ -191,6 +193,7 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     const area = await section(spec, grids.get(pl.id)!, streaming ? nextFrame : undefined)(group as unknown as THREE.Scene, night);
     const chunk = currentChunk();
     const doorIssues = checkDoors(area).map((i) => `${pl.id}: ${i}`);
+    const doors = doorMarks().map((m) => ({ ...m, x: m.x + pl.ox, z: m.z + pl.oz }));
     clearDoorMarks();
     // its point lights become lamps in the pool
     group.traverse((o) => {
@@ -204,9 +207,13 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     group.traverse((o) => { if ((o as THREE.PointLight).isPointLight) dead.push(o); });
     for (const l of dead) l.parent?.remove(l);
     const bp: BuiltPiece = {
-      ...pl, grid: grids.get(pl.id)!, area, chunk, group, doorIssues,
+      ...pl, grid: grids.get(pl.id)!, area, chunk, group, doorIssues, doors,
       things: area.things.map((t) => ({ ...shift(pl, t), go: t.go })),
-      npcs: area.npcs.map((n) => ({ ...shift(pl, n), wander: n.wander && [n.wander[0] + pl.ox, n.wander[1] + pl.oz, n.wander[2] + pl.ox, n.wander[3] + pl.oz] })),
+      npcs: area.npcs.map((n) => ({
+        ...shift(pl, n),
+        wander: n.wander && [n.wander[0] + pl.ox, n.wander[1] + pl.oz, n.wander[2] + pl.ox, n.wander[3] + pl.oz],
+        guard: n.guard && { ...n.guard, x0: n.guard.x0 + pl.ox, x1: n.guard.x1 + pl.ox, z0: n.guard.z0 + pl.oz, z1: n.guard.z1 + pl.oz, back: [n.guard.back[0] + pl.ox, n.guard.back[1] + pl.oz] as [number, number] },
+      })),
       roamers: (area.roamers ?? []).map((ro) => ({ ...shift(pl, ro), area: [ro.area[0] + pl.ox, ro.area[1] + pl.oz, ro.area[2] + pl.ox, ro.area[3] + pl.oz] })),
       triggers: area.triggers.map((tr) => ({ ...tr, x0: tr.x0 + pl.ox, x1: tr.x1 + pl.ox, z0: tr.z0 + pl.oz, z1: tr.z1 + pl.oz })),
     };

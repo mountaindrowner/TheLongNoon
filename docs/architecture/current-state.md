@@ -1,6 +1,6 @@
 # Current state: the rebuild
 
-Updated 2026-10-26. The game is being rebuilt from the ground up on the world
+Updated 2026-10-28. The game is being rebuilt from the ground up on the world
 style spec (`docs/style/world-style-spec.md`), one playable, screenshot-checked
 piece at a time. The proof of concept it replaces is in `legacy/poc2/` (its
 audit is `legacy/poc2/AUDIT.md`).
@@ -125,12 +125,9 @@ The whole of the region's design is in `docs/design/regions/span.md`. In short:
 - **URL controls:** `?clock=HH:MM` starts the clock elsewhere.
   `?time=lamp|night|shutter|white|day` holds one light still (screenshots,
   playtests).
-- **Not built (held for the owner):** what daylight costs. The legacy rule
-  (water burns in the white, faint at zero) and the owner's newer idea (shade
-  as cover) are both in `docs/design/held-ideas.md`.
-- **Open:** people are out on the Plaza by day as well as by night. The
-  methodology's §5.3 proposal ("shutters down, nobody out") would move them
-  indoors by day; that waits on the owner.
+- **What daylight costs** was held for the owner here; piece 7 builds it.
+- **People out by day** was open here; in piece 7 they go in at Shutter, as the
+  methodology's §5.3 proposed ("shutters down, nobody out").
 - **Fixed on the way:** collision in a room you've visited before read the
   wrong collision data, so you could walk through its furniture. Rooms now
   keep their own.
@@ -262,15 +259,59 @@ first version down beat by beat and rule by rule; this piece ports all of it.
   chores, the drain fight and the ending. `?step=<step>` starts at a mission
   step with what the steps before it would have given.
 
+## Piece 7 (done): the timed night, what daylight costs, and edges that hold
+
+The owner, 2026-10-28: *"a timed night run, 5–10 min in real time, and if you stay out it costs water then
+health and also might produce certain condition effects until you sleep"*; *"shadows should be dynamic"*; *"during
+the day, most NPCs go back in before the sun rises"*; *"color theming night vs day is important"*; and every reachable
+edge is *"a physical barrier, or a person who talks to you and turns you back."*
+
+- **A night is timed** (`game/clock.ts`): Lamp (6:30 pm) to Shutter (4:30 am) takes 8 minutes of play
+  (`NIGHT_MINUTES`); the clock stops while people talk. Sleeping at the cot ("Sleep until Lamp?") skips to the next
+  Lamp and saves.
+- **What the white costs** (`game/sun.ts`, every number a first guess to tune):
+  - out from under a roof by day, a drop of water every 3.5 s;
+  - with no water left, 3 health every 3.5 s; at none, Juno faints and wakes at Mar Farm at Lamp with 3 water,
+    half her health and a tin of white fewer;
+  - **conditions**, until she sleeps: *Sunburned* after 20 s of sun (a quarter less health), *Noonblind* after 45 s
+    (the screen's edges swim white; a quarter of her blows miss), *Heat-sick* when her water runs out (no running;
+    slower walking and fighting);
+  - **shade halves all of it.** Shade is read straight from the sun's shadow map just above Juno's head
+    (`engine/shade.ts`), so it's exactly the shadow on screen: sails, stalls, walls, trees, people.
+  - The thirst drain (a drop every 150 s at any hour) is gone: the Complete Story File says water is spent only
+    in daylight and to heal.
+- **The sun and the moon cross the sky** (`SKY` in `regions/span/moods.ts`): by day the sun comes up in the east, is
+  overhead at noon and goes down in the west, so shade moves through the day and noon has least of it. By night the
+  moon does the same.
+- **People go in at Shutter:** each walks to the nearest door and goes inside. By day nobody is out and the
+  animals are under cover, except lookouts (`allDay`).
+- **The panels take the hour:** blue glass by night, warm at Lamp, gray at Shutter, bleached by day.
+- **The HUD** adds Juno's health under the drops, and her conditions under that.
+- **Edges hold** (rule 3 in CLAUDE.md):
+  - **Barriers:** concrete barriers and wrecked cars close the road south out of town and the boulevard east past
+    the Lake Road. A line of barriers is now solid end to end (it had gaps a person could slip through).
+  - **A lookout:** Chuy holds the Thirty-Five north on the Ramp, day and night. Step onto his line and he talks, then
+    Juno walks back (NPC `guard`). The road north is where the caravan leaves, later.
+  - **The check:** `__LN.edgeIssues()` walks out from Juno over every map and lists anywhere she can reach past a
+    map's edge or onto a road to a map not built. It's empty, and the playtests assert it.
+- **Saves are v2** (rule 8): `conds` and `sunTime`; a v1 save loads clean of both.
+- **Checks:**
+  - Playtests: the edge check, the barriers east, and Chuy turning Juno back.
+  - Driven by hand in the browser:
+    - the shade map against the stalls and the palm at 10 am and noon;
+    - the conditions coming on in turn;
+    - fainting and waking at Lamp;
+    - the town empty by day.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
 |---|---|---|
-| One fixed mood per scene, no clock (§5) | A clock moves the light through Lamp, the long night, Shutter and the white. The town is built twice (lanterns lit, lanterns out). | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The clock is the legacy game's own rhythm. |
+| One fixed mood per scene, no clock (§5); the key light over the viewer's left shoulder | A clock moves the light through Lamp, the long night, Shutter and the white. The town is built twice (lanterns lit, lanterns out). By day the sun, and by night the moon, cross the sky east to west. | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The owner asked for a timed night and moving shadows (2026-10-28), over the Complete Story File's "no running clock". |
 | Prairie ground, lush green as the norm | Desert ground (caliche, sand, old asphalt); green only where water has been | The Span is a desert. The spec's mood line still holds: bleak, with bright life where it's tended. |
 | 64px, 8-direction PixelLab sprites (§13), every figure styled on the protagonist | 64px PixelLab figures in the spec's style, styled on Juno (`docs/design/cast.md`). The game plays four directions; animations are made in four (the owner, 2026-10-27). | Juno is the anchor in place of the spec's style character, so the cast is The Long Noon's own; the owner locked the look on 2026-10-27. Anyone not remade yet still uses the old 16×24 sprites. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
-| Every exit lands on its target (§9.4, §20 #12) | Unbuilt targets turn you back with a note | The roads out of the Span (north up the Thirty-Five, east into the brush) lead to regions not built yet. |
+| Every exit lands on its target (§9.4, §20 #12) | Roads to maps not built yet are closed by a barrier or held by a person who turns Juno back | The roads out of the Span lead to regions not built yet (the owner, 2026-10-28). The old turn-back note stays only as a safety net. |
 | One map per scene, exits between maps (§9) | A region is a web of maps on one ground, walked between with no cut, brush between them | The owner chose option C (methodology §2.4): open regions joined by caravan legs. Each map is still a full spec map and could be split out. |
 | Section sizes 40×30 to 58×28 (§9.2) | Large maps are 132×96; the town is two of them | The owner's scale (2026-10-26): the first Span's maps felt too small. |
 | Edge trees: cottonwood, mesquite, dead tree (§9.3) | Walls of bramble with mesquite standing out of them; no lush trees outdoors | South Texas brush country (owner, 2026-10-26). |
@@ -293,8 +334,7 @@ chunks, `terrain.ts` `setAprons`). The owner chose C on 2026-10-26; the Span (pi
 
 1. **The owner plays the first mission** on a phone and says what's off:
    pacing, the drain, the ending, the sound levels.
-2. **What daylight costs**, once the owner decides (`docs/design/held-ideas.md`).
-   Until then the first version's rule holds: water burns away from a roof.
+2. **Tune the night and the white** on a phone: the night's length, the drain, the conditions.
 3. **The newer story** (the Complete Story File) and the people with no lines
    yet: Lourdes, Inés, Rafa, Goyo, Güero, Mari, Chuy, Don Pepe.
 4. **Out of the Span:** the first caravan leg up the Thirty-Five, or the east

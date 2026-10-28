@@ -5,10 +5,13 @@
  *
  * CLAUDE.md rule 8: any change to this shape needs a version bump and a
  * migration in `load`.
+ *
+ * - v2 (2026-10-28): `conds` (what the white did to Juno, until she sleeps) and `sunTime` (seconds of daylight
+ *   today). A v1 save comes in clean of both.
  */
 
 export interface GameState {
-  v: 1;
+  v: 2;
   step: string;
   flags: Record<string, boolean | number>;
   /** Minutes after midnight. */
@@ -23,6 +26,10 @@ export interface GameState {
   party: { juno: { hp: number; dur: number }; kit: { hp: number } };
   joined: string[];
   where: { world: string; x: number; z: number; face: 'N' | 'S' | 'E' | 'W' };
+  /** Conditions from the white (game/sun.ts), until Juno sleeps. */
+  conds: Array<'burn' | 'blind' | 'heat'>;
+  /** Seconds of daylight today, shade at half. */
+  sunTime: number;
 }
 
 export const SAVE_KEY = 'longnoon.save';
@@ -31,8 +38,8 @@ export const ITEM_NAMES: Record<string, string> = { staybook: 'The staybook', mi
 
 export function newState(start: GameState['where']): GameState {
   return {
-    v: 1, step: 'burial', flags: {}, clock: 19 * 60 + 20, day: 1, water: 6, white: 0, items: {}, pages: [],
-    party: { juno: { hp: 42, dur: 12 }, kit: { hp: 26 } }, joined: [], where: start,
+    v: 2, step: 'burial', flags: {}, clock: 19 * 60 + 20, day: 1, water: 6, white: 0, items: {}, pages: [],
+    party: { juno: { hp: 42, dur: 12 }, kit: { hp: 26 } }, joined: [], where: start, conds: [], sunTime: 0,
   };
 }
 
@@ -48,6 +55,10 @@ export function save(s: GameState): boolean {
 export function load(): GameState | null {
   let s: unknown = null;
   try { s = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null'); } catch { return null; }
-  if (!s || typeof s !== 'object' || (s as { v?: unknown }).v !== 1) return null;
-  return s as GameState;
+  if (!s || typeof s !== 'object') return null;
+  const o = s as Record<string, unknown>;
+  // v1 → v2: nothing from the white yet
+  if (o.v === 1) { o.v = 2; o.conds = []; o.sunTime = 0; }
+  if (o.v !== 2) return null;
+  return o as unknown as GameState;
 }

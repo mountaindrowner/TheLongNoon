@@ -380,6 +380,10 @@ export function jerseys(s: O, pts: Array<[number, number]>, seed: number, y?: nu
       j.rotation.y = rot + Math.PI / 2 + (r() < 0.12 ? (r() - 0.5) * 0.5 : 0);
       j.position.set(x, (y ?? heightAt(x, z)) - 0.02, z);
       s.add(j);
+    }
+    // solid end to end, not just under each block's middle: a line of barriers is a wall
+    for (let k = 0, m = Math.max(1, Math.ceil(len / 0.5)); k <= m; k++) {
+      const x = ax + ((bx - ax) * k) / m, z = az + ((bz - az) * k) / m;
       addSolid(x - 0.35, z - 0.35, x + 0.35, z + 0.35);
     }
   }

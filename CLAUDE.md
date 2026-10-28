@@ -23,7 +23,7 @@ npm run build          # dist/index.html, the whole game in one offline file
 npm test               # typecheck, build (rebuild + legacy), Playwright at 1080p and phone landscape
 ```
 
-A new game opens on the title. `?time=lamp|night|shutter|white|day` holds the light still and `?clock=HH:MM` starts the running clock elsewhere; either one skips the title and starts in free roam. `?step=home|market|kit|pancha|home2|burial` starts at a mission step with what came before it. `?battle=director|topdown|diorama|shoulder|hero|iso|cuts` frames fights (default `director`); `#fight-<name>` jumps straight into the drain fight framed that way (it works on the shared page, where `?` doesn't). `window.__LN` (pos, areaId, piece, tp, face, go, talking, mode, step, state, scripting, clock, phase, lit, setClock, doorIssues, checkAllRooms) is there for tests and checks.
+A new game opens on the title. `?time=lamp|night|shutter|white|day` holds the light still and `?clock=HH:MM` starts the running clock elsewhere; either one skips the title and starts in free roam. `?step=home|market|kit|pancha|home2|burial` starts at a mission step with what came before it. `?battle=director|topdown|diorama|shoulder|hero|iso|cuts` frames fights (default `director`); `#fight-<name>` jumps straight into the drain fight framed that way (it works on the shared page, where `?` doesn't). `window.__LN` (pos, areaId, piece, tp, face, go, talking, mode, step, state, scripting, clock, phase, lit, setClock, doorIssues, checkAllRooms, edgeIssues, shadeAt, people) is there for tests and checks.
 Headless Chromium needs `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; it renders a frame or two
 a second, so tests wait on outcomes, never fixed durations.
 
@@ -33,6 +33,7 @@ a second, so tests wait on outcomes, never fixed durations.
    Props from primitives. One hero, one routine, one signature per map. Glow only where it promises something.
 2. **Prove it by looking.** Build, screenshot at 1280×720 and 844×340, and check against spec §20 before calling a map done.
 3. **The door language is enforced:** `checkDoors` must come back empty (the playtests assert it).
+   **So are the edges:** everywhere Juno can reach ends in a physical barrier or a person who turns her back (NPC `guard`); `__LN.edgeIssues()` must come back empty.
 4. Engine code (`src/engine`) stays region-agnostic. Region kits and maps live in `src/regions/<region>/`.
 5. Never invent game systems (XP, gold, crafting, shops) without the owner's approval.
    The in-world economy is **water** and **tins of white**, not gold.

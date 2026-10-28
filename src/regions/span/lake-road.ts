@@ -4,7 +4,7 @@ import { boardSign } from '../../engine/props';
 import { fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, nopal, carHulk, tires, lanternPost, skull, drum } from './props';
-import { spanPaint, tracks, billboard, trafficSignal, busShelter, cairn, headwall } from './kit';
+import { spanPaint, tracks, billboard, trafficSignal, busShelter, cairn, headwall, jerseys } from './kit';
 import { SPAN_FLORA, mesquite, deadMesquite } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
 import { salvageFence, rubble, ruinWall } from './ruins';
@@ -133,7 +133,11 @@ export function lakeRoad(night: boolean): SectionSpec {
       openScatter(d, 80, ['x', 's'], 0.7, (x, z) => clearOf(ROAD, 4)(x, z) && !(z > BLVD.z0 - 3 && z < BLVD.z1 + 3) && !(x > YARD.x0 - 1 && x < YARD.x1 + 1 && z > YARD.z0 - 1 && z < YARD.z1 + 1));
 
       // ------------------------------------------------ things, people
+      // ------------------------------------------------ the boulevard east, closed: barriers and two cars nose to nose
+      jerseys(scene, [[90.6, BLVD.z0 - 2.2], [90.6, BLVD.z1 + 2.2]], seed());
+      carHulk(scene, 93.2, BLVD.z0 + 1.6, 1.62, seed()); carHulk(scene, 93.6, BLVD.z1 - 1.5, 1.5, seed());
       d.things.push(
+        { x: 89.4, z: (BLVD.z0 + BLVD.z1) / 2, r: 2.4, label: 'Barrier', lines: ['Concrete barriers across the boulevard, two cars pushed up nose to nose behind them. Past them, the road runs on east into the brush.'] },
         { x: 69, z: BLVD.z0 - 2.0, r: 2.0, label: 'Culvert', lines: ['The drain goes under the road here. The pipe is black all the way in. Something in there drips.'] },
         { x: 52, z: 49.4, r: 2.8, label: 'Billboard', lines: ['A billboard on two legs. Paper on paper on paper, all of it peeled. Not one word left.'] },
         { x: 46, z: 55.6, r: 1.8, label: 'Light', lines: ['Green, then yellow, then red. Then green again.'] },

@@ -106,17 +106,43 @@ test('talking to Hermana Lupe opens her dialogue, and it closes', async ({ page 
   expect(await page.evaluate(() => window.__LN.talking)).toBe(false);
 });
 
-test('an unbuilt road turns you back at the edge instead of breaking', async ({ page }) => {
+test('every edge Juno can reach is a barrier, or a person who turns her back', async ({ page }) => {
+  test.setTimeout(300_000);
+  await boot(page, 'night');
+  // walks out from Juno over every map: nothing reachable past a map's edge or onto a road to a map not built
+  expect(await page.evaluate(() => window.__LN.edgeIssues())).toEqual([]);
+});
+
+test('the boulevard east is closed with barriers, and they stop her', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = watchErrors(page);
   await boot(page);
-  // Del Mar goes on east past the Lake Road's fork (x 288, z 128 + 60); the next region isn't built
-  await page.evaluate(() => window.__LN.tp(286.6, 188));
+  // Del Mar goes on east past the Lake Road's fork (x 288, z 128 + 60); barriers stand across it near x 282.6
+  await page.evaluate(() => window.__LN.tp(278, 188));
   await page.keyboard.down('KeyD');
-  await until(page, () => !!document.querySelector('.hint'), undefined, 150_000);
+  await until(page, () => window.__LN.pos[0] > 280);
+  let prev = -1;
+  for (;;) { const x = (await pos(page))[0]; if (Math.abs(x - prev) < 1e-4) break; prev = x; await page.waitForTimeout(1500); }
   await page.keyboard.up('KeyD');
-  await expect(page.locator('.hint')).toContainText('east road');
-  expect((await pos(page))[0]).toBeLessThan(288);
+  expect((await pos(page))[0]).toBeLessThan(282.6);
+  expect(errors).toEqual([]);
+});
+
+test('Chuy holds the road north: stepping onto his line, he talks and turns Juno back', async ({ page }) => {
+  test.setTimeout(300_000);
+  const errors = watchErrors(page);
+  await boot(page);
+  // the Ramp is at (40, 0); Chuy's line runs across the highway at z 1.5 to 4.2
+  await page.evaluate(() => window.__LN.tp(54, 8));
+  await page.keyboard.down('KeyW');
+  await until(page, () => window.__LN.talking, undefined, 150_000);
+  await page.keyboard.up('KeyW');
+  await expect(page.locator('.dlg-name')).toContainText('Chuy');
+  while (await page.evaluate(() => window.__LN.talking || window.__LN.busy)) {
+    if (await page.evaluate(() => window.__LN.talking)) await page.keyboard.press('KeyE');
+    await page.waitForTimeout(600);
+  }
+  expect((await pos(page))[1]).toBeGreaterThan(7);
   expect(errors).toEqual([]);
 });
 

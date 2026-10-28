@@ -48,6 +48,8 @@ export interface FightWorld {
   onHurt?(who: Actor, down: boolean): void;
   /** Someone drinks water. */
   onDrink?(who: Actor): void;
+  /** The chance a party member's blow goes wide (Noonblind, game/sun.ts). */
+  miss?(id: string): number;
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -288,6 +290,11 @@ export class Fight {
   private async attack(u: Unit, f: Foe, part: Part): Promise<void> {
     const s = this.w.state;
     if (u.sling) await this.shoot(u.actor, f.actor); else await this.lunge(u.actor, f.actor);
+    if (Math.random() < (this.w.miss?.(u.id) ?? 0)) {
+      this.float(f.actor, 'Miss', 'miss');
+      await this.say(`The white swims in ${u.name}'s eyes. The blow goes wide.`, 1000);
+      return;
+    }
     let mult = 1, brk = false;
     if (part.soft) mult *= u.sling ? 2.2 : 1.4;
     if (part.armor) { if (f.stunned) { mult *= 2; brk = true; } else mult *= u.sling ? 0.3 : f.eyeBroken ? 0.6 : part.armor; }

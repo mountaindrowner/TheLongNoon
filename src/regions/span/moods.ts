@@ -46,7 +46,7 @@ export const SPAN_NIGHT: Mood = {
 /** Shutter: the gray hour before the white. Lanterns still lit, the sky going pale and cold, the sun not up. */
 export const SHUTTER: Mood = {
   night: true,
-  sun: { color: '#e8c8b8', intensity: 1.3, from: new THREE.Vector3(-10, 9, 6) },
+  sun: { color: '#e8c8b8', intensity: 1.3, from: new THREE.Vector3(10, 9, 6) }, // the glow comes up in the east
   hemi: { sky: '#8a8cb0', ground: '#4a4240', intensity: 0.95 },
   fog: { color: '#6a6478', density: 0.026 },
   exposure: 1.15,
@@ -65,7 +65,17 @@ export const MOODS: Record<string, Mood> = { lamp: LAMP, night: SPAN_NIGHT, shut
  * Lamp to Shutter, UNLIT the day. Each ends where the other begins, so the
  * swap between them changes the lamps, not the light.
  */
+/**
+ * By day the sun crosses the sky (the owner, 2026-10-28: "shadows should be dynamic"): up in the east, overhead at
+ * noon, down in the west at Lamp. Shade moves through the day, and noon has the least of it. Departs from the spec's
+ * fixed key light (§5), written down in current-state.md.
+ */
+const sunFrom = (m: Mood, x: number, y: number, z: number): Mood => ({ ...m, sun: { ...m.sun, from: new THREE.Vector3(x, y, z) } });
+const MORNING = sunFrom(DAY, 13, 10.5, 6.5), FORENOON = sunFrom(WHITE, 6, 15.5, 4.5), NOON = sunFrom(WHITE, 0, 17, 3);
+/** By night the moon does the same: up in the east after Lamp, high at midnight, down in the west before Shutter. */
+const MOONRISE = sunFrom(SPAN_NIGHT, 11, 11, 6), MIDNIGHT = sunFrom(SPAN_NIGHT, 0, 16, 4), MOONSET = sunFrom(SPAN_NIGHT, -11, 11, 6);
+
 export const SKY: { lit: MoodKeys; unlit: MoodKeys } = {
-  lit: [[1110, LAMP], [1170, LAMP], [1250, SPAN_NIGHT], [270, SPAN_NIGHT], [330, SHUTTER], [360, SHUTTER]],
-  unlit: [[360, SHUTTER], [420, DAY], [600, WHITE], [930, WHITE], [1050, DAY], [1110, LAMP]],
+  lit: [[1110, LAMP], [1170, LAMP], [1250, MOONRISE], [0, MIDNIGHT], [270, MOONSET], [330, SHUTTER], [360, SHUTTER]],
+  unlit: [[360, SHUTTER], [420, MORNING], [600, FORENOON], [765, NOON], [930, WHITE], [1050, DAY], [1110, LAMP]],
 };

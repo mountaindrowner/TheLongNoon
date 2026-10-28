@@ -404,6 +404,9 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       addSolid(45, JUNCTION, 57, JUNCTION + 0.6);
       // where Del Mar runs into the wall: barriers stacked across what's left of it
       jerseys(scene, [[20.4, 134], [21.6, 141.4]], seed());
+      // the road south, closed: barriers across it where it leaves town, a car on its side behind them
+      jerseys(scene, [[154.4, 157.8], [165.6, 157.8]], seed());
+      carHulk(scene, 160.4, 155.2, 0.08, seed());
       carHulk(scene, 23.6, 136.6, 1.3, seed());
 
       // ------------------------------------------------ the east barricade on Del Mar (Memo)
@@ -483,6 +486,7 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         { x: 186, z: 18.6, r: 2.6, label: 'Concrete pipe', lines: ['A pipe as tall as a man, where the creek used to go under the road. Something lives in it. The sand at its mouth is swept.'] },
         { x: 22.6, z: 138.6, r: 2.4, label: 'Barricade', lines: ['The boulevard runs into the highway’s wall. Somebody stacked barriers across what’s left of it.'] },
         { ...xz(ONRAMP[0]!), r: 2.4, label: 'On-ramp', lines: ['The ramp climbs up onto the Thirty-Five. Up there, the highway goes north out of town.'] },
+        { x: 160, z: 153.4, r: 2.6, label: 'Barrier', lines: ['Concrete barriers across the road, a car turned over behind them. Past them, the road runs south out of town.'] },
         { x: 189, z: 120, r: 2.0, label: 'Barricade', lines: ['Barriers across the boulevard and a car on its side. Past it, the road goes east toward the lake.'] },
       );
       d.npcs.push(

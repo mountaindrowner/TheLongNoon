@@ -25,7 +25,14 @@ export interface Trigger { x0: number; z0: number; x1: number; z1: number; go?: 
 /** Something to inspect or use: describes, never interprets (spec §11.3). */
 export interface Thing { x: number; z: number; label: string; r?: number; lines?: string[]; script?: string; go?: Go }
 
-export interface NPC { id: string; name: string; sprite: string; x: number; z: number; face?: Face; lines?: string[]; script?: string; wander?: [number, number, number, number] }
+/**
+ * A line a person holds across a way out: Juno can't cross it while they stand there. Stepping onto it, they
+ * talk (`lines` the first time, `again` after) and she walks back to `back`. Map coordinates, like the NPC.
+ */
+export interface Guard { x0: number; z0: number; x1: number; z1: number; back: [number, number]; lines: string[]; again?: string[] }
+
+/** A person. Outdoors they go in at Shutter and stay in by day, unless `allDay` (a lookout under wraps). */
+export interface NPC { id: string; name: string; sprite: string; x: number; z: number; face?: Face; lines?: string[]; script?: string; wander?: [number, number, number, number]; guard?: Guard; allDay?: boolean }
 
 export interface Roamer { sprite: string; frames: string[]; x: number; z: number; area: [number, number, number, number]; speed: number; height: number }
 

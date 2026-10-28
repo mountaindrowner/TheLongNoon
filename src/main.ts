@@ -19,6 +19,8 @@ import { Sound } from './game/sound';
 import { Fight, type FightDef, type UnitDef } from './game/battle';
 import BATTLES from './game/data/battles.json';
 import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
+import { SUN, CONDITIONS, has, afflict, maxHp, sleepOff, type Condition } from './game/sun';
+import { shadedFromSun, last as shadeLast } from './engine/shade';
 import DIALOGUE from './game/data/dialogue.json';
 import QUESTS from './game/data/quests.json';
 import PAGES from './game/data/pages.json';
@@ -164,13 +166,16 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
 async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamers']>, tag: string): Promise<void> {
   for (const npc of npcs) {
     if (npc.id === 'kit' && S && (S.flags.drainStarted || S.joined.includes('kit'))) continue;
+    // by day the town is shut: outdoors, only the lookouts stay out
+    if (w.id === SPAN && !night && !npc.allDay) continue;
     const a = await Actor.person(npc.sprite, w.tint);
     a.place(npc.x, w.area.ground(npc.x, npc.z), npc.z);
     a.dir = npc.face ?? 'S';
     w.scene.add(a.root);
     w.people.push({ npc, actor: a, tag });
   }
-  for (const r of roamers) {
+  // the animals are under the shade-cloth by day too (the bible: "let out only at night")
+  for (const r of w.id === SPAN && !night ? [] : roamers) {
     const a = await Actor.critter(variant(r.sprite, r.x, r.z), w.tint, r.height);
     a.place(r.x, w.area.ground(r.x, r.z), r.z);
     w.scene.add(a.root);
@@ -333,8 +338,43 @@ async function interact(tg: Target): Promise<void> {
 }
 
 // ------------------------------------------------------------ exits
+/** Someone holding a line across a way out (NPC `guard`), if (x, z) is on it. */
+const onGuard = (n: NPC, x: number, z: number): boolean => !!n.guard && x >= n.guard.x0 && x <= n.guard.x1 && z >= n.guard.z0 && z <= n.guard.z1;
+function guardAt(x: number, z: number): boolean {
+  const region = worlds.get(SPAN)?.area as Region | undefined;
+  return !!region && region.npcs.some((n) => onGuard(n, x, z));
+}
+/** Juno walking under the story's control (turned back at a guard's line), so the frame plays her walk. */
+let walking = false;
+/** Stepping onto a guard's line: they turn to her, say their piece, and she walks back the way she came. */
+async function turnBack(p: World['people'][number]): Promise<void> {
+  const g = p.npc.guard!;
+  busy = true;
+  player.moving = false;
+  p.actor.face(player.x - p.actor.x, player.z - p.actor.z);
+  player.face(p.actor.x - player.x, p.actor.z - player.z);
+  const seen = S.flags[`turned:${p.npc.id}`];
+  S.flags[`turned:${p.npc.id}`] = true;
+  const portrait = await p.actor.card();
+  for (const line of seen && g.again ? g.again : g.lines) await ui.speak(p.npc.name, line, portrait);
+  ui.endTalk();
+  const [sx, sz] = [player.x, player.z], [bx, bz] = g.back, ms = (Math.hypot(bx - sx, bz - sz) / SPEED) * 1000;
+  walking = true;
+  player.face(bx - sx, bz - sz);
+  await new Promise<void>((res) => {
+    const t0 = performance.now();
+    const f = (): void => { const k = Math.min(1, (performance.now() - t0) / ms), x = sx + (bx - sx) * k, z = sz + (bz - sz) * k; player.place(x, cur.area.ground(x, z), z); if (k < 1) requestAnimationFrame(f); else res(); };
+    f();
+  });
+  walking = false;
+  safe = [bx, bz];
+  p.actor.dir = p.npc.face ?? p.actor.dir;
+  busy = false;
+}
 let safe: [number, number] = [0, 0];
 async function checkTriggers(): Promise<void> {
+  const held = cur.people.find((p) => onGuard(p.npc, player.x, player.z));
+  if (held) { await turnBack(held); return; }
   for (const tr of cur.area.triggers) {
     if (!tr.go || player.x < tr.x0 || player.x > tr.x1 || player.z < tr.z0 || player.z > tr.z1) continue;
     if (tr.go.to === SPAN || ROOMS[tr.go.to]) { await go(tr.go.to, tr.go.spawn); return; }
@@ -383,7 +423,9 @@ function frame(): void {
   tale.draw(dt);
   for (const c of cine) c.animate(dt);
   fire?.update(t);
-  hud.update(S, fmtTime(time.minute), time.phase);
+  hud.update(S, fmtTime(time.minute), time.phase, maxHp(S));
+  const ph = `ph-${time.phase === 'Long night' ? 'night' : time.phase.toLowerCase()}`;
+  if (!document.body.classList.contains(ph)) { document.body.classList.remove('ph-lamp', 'ph-night', 'ph-shutter', 'ph-day'); document.body.classList.add(ph); }
 
   const a = aQueued || ui.takeA();
   aQueued = false;
@@ -393,7 +435,9 @@ function frame(): void {
     const l = Math.hypot(m.x, m.z);
     player.moving = l > 0.12;
     if (player.moving) {
-      const sp = (m.run ? RUN : SPEED) * Math.min(1, l);
+      const sick = has(S, 'heat');
+      if (sick) m.run = false;
+      const sp = (m.run ? RUN : SPEED) * (sick ? 0.8 : 1) * Math.min(1, l);
       const nx = player.x + m.x * sp * dt, nz = player.z + m.z * sp * dt;
       const px = area.blocked(nx, player.z, 0.28) ? player.x : nx;
       const pz = area.blocked(px, nz, 0.28) ? player.z : nz;
@@ -413,7 +457,7 @@ function frame(): void {
       ui.showPrompt(tg.kind === 'npc' ? `Talk to ${tg.p.npc.name}` : tg.t.label, (v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight);
       if (a) { ui.showPrompt(null); void interact(tg); }
     } else ui.showPrompt(null);
-  } else { player.moving = false; player.animate(dt); }
+  } else { player.moving = walking; player.animate(dt); }
 
   // crossing from one section of the region into the next: just the name tag, no cut
   if (cur.id === SPAN) {
@@ -422,6 +466,7 @@ function frame(): void {
   }
 
   for (const p of cur.people) p.actor.animate(dt);
+  if (cur.id === SPAN && time.phase === 'Shutter' && !fight.active) goingIn(dt);
   follow(dt);
   if ((ambAge += dt) > 0.38) { ambAge = 0; ambience(); }
   for (const r of cur.roamers) {
@@ -598,8 +643,56 @@ function markGoal(): void {
   hud.mark({ x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, behind: v.z > 1 });
 }
 
-// ---------------------------------------------------------------- the white: daylight costs water (legacy 16-exploration)
-let exposure = 0, thirst = 0, fainting = false;
+// ---------------------------------------------------------------- Shutter: people go in (the owner, 2026-10-28)
+/** Where each person outdoors is headed at Shutter: the nearest door, then gone inside. */
+const headingIn = new Map<string, { to: [number, number]; t: number }>();
+function goingIn(dt: number): void {
+  if (ui.talking || director.running) return;
+  const region = cur.area as Region;
+  for (const p of [...cur.people]) {
+    if (p.npc.allDay) continue;
+    let h = headingIn.get(p.npc.id);
+    if (!h) {
+      // each sets off at its own moment, toward its nearest door that isn't boarded
+      if (Math.random() > dt * 0.6) continue;
+      const doors = region.pieces.flatMap((b) => b.doors).filter((d) => d.state !== 'boarded');
+      let best: [number, number] | null = null, bd = 40;
+      for (const d of doors) { const k = Math.hypot(d.x - p.actor.x, d.z - p.actor.z); if (k < bd) { bd = k; best = [d.x, d.z]; } }
+      h = { to: best ?? [p.actor.x, p.actor.z], t: 0 };
+      headingIn.set(p.npc.id, h);
+    }
+    h.t += dt;
+    const dx = h.to[0] - p.actor.x, dz = h.to[1] - p.actor.z, d = Math.hypot(dx, dz);
+    const step = Math.min(d, 1.4 * dt), nx = p.actor.x + (dx / (d || 1)) * step, nz = p.actor.z + (dz / (d || 1)) * step;
+    const stuck = cur.area.blocked(nx, nz, 0.2) && d > 1.2;
+    if (d < 1.0 || stuck || h.t > 25) {
+      // inside: the door shuts behind them
+      cur.scene.remove(p.actor.root);
+      cur.people.splice(cur.people.indexOf(p), 1);
+      headingIn.delete(p.npc.id);
+      continue;
+    }
+    p.actor.moving = true;
+    p.actor.face(dx, dz);
+    p.actor.place(nx, cur.area.ground(nx, nz), nz);
+  }
+}
+
+// ---------------------------------------------------------------- the white: what daylight costs (game/sun.ts)
+let exposure = 0, fainting = false, shadeAge = 0, shaded = false;
+const head = new THREE.Vector3();
+/** In the sun's shadow right now? Read from the shadow map a few times a second (engine/shade.ts). */
+function inShade(dt: number): boolean {
+  if ((shadeAge += dt) < 0.25) return shaded;
+  shadeAge = 0;
+  // just above her head: nothing of hers stands between there and the sun, but sails, roofs and walls do
+  head.set(player.x, player.root.position.y + 1.72, player.z);
+  shaded = shadedFromSun(renderer, cur.lights.sun, head) ?? false;
+  return shaded;
+}
+function condition(c: Condition): void {
+  if (afflict(S, c)) hud.toast(`${CONDITIONS[c].name}. ${CONDITIONS[c].what}`, false, 4200);
+}
 function weather(dt: number): void {
   if (time.frozen || fainting) { hud.warning(null); return; }
   const ph = time.phase;
@@ -607,19 +700,34 @@ function weather(dt: number): void {
   const sheltered = cur.id !== SPAN || (!!door && Math.hypot(player.x - door[0], player.z - door[1]) < 3.4);
   if (ph === 'Shutter' && S.flags.shutterWarn !== S.day) { S.flags.shutterWarn = S.day; hud.toast('Shutter. Get under a roof before the white.', true, 4200); }
   if (ph === 'Day' && !sheltered) {
-    hud.warning('Daylight. Your water is burning.');
-    if ((exposure += dt) > 3.5) { exposure = 0; S.water = Math.max(0, S.water - 1); sound.hurt(); if (S.water === 0) void faint(); }
+    const shade = inShade(dt), k = shade ? 1 / SUN.shadeSlows : 1;
+    S.sunTime += dt * k;
+    if (S.sunTime > SUN.burnAfter) condition('burn');
+    if (S.sunTime > SUN.blindAfter) condition('blind');
+    if (S.water > 0) {
+      hud.warning(shade ? 'In the shade. Your water burns slower.' : 'Daylight. Your water is burning.');
+      if ((exposure += dt * k) > SUN.dropEvery) { exposure = 0; S.water--; sound.hurt(); if (S.water === 0) condition('heat'); }
+    } else {
+      // no water left: the sun takes health instead
+      hud.warning(shade ? 'No water. Even the shade is hot.' : 'No water. The white is taking you.');
+      if ((exposure += dt * k) > SUN.hurtEvery) {
+        exposure = 0;
+        S.party.juno.hp = Math.max(0, S.party.juno.hp - SUN.hurt);
+        sound.hurt();
+        if (S.party.juno.hp === 0) void faint();
+      }
+    }
   } else hud.warning(ph === 'Shutter' && !sheltered ? 'Shutter. Find a roof.' : null);
-  if ((thirst += dt) > 150) { thirst = 0; if (S.water > 1) S.water--; }
 }
 
-/** Out in the white with no water: you wake at home the next Lamp, one tin of white poorer. */
+/** Out in the white with nothing left: you wake at home the next Lamp, one tin of white poorer, still marked by it. */
 async function faint(): Promise<void> {
   fainting = true;
   hud.warning(null);
   await ui.fade(true, 900, '#f4f0e6');
   await run('faint');
   S.day++; S.water = 3; S.white = Math.max(0, S.white - 1);
+  S.party.juno.hp = Math.round(maxHp(S) * SUN.faintHp);
   await setTime(19 * 60 + 30);
   await go(SPAN, 'seven-flags:home');
   saveGame(true);
@@ -639,11 +747,16 @@ async function setTime(m: number): Promise<void> {
 async function rest(): Promise<void> {
   sound.creak();
   await ui.fade(true, 500);
-  S.party.juno.hp = 42; S.party.kit.hp = 26;
+  // sleep through the day to the next Lamp: whatever the white did wears off
+  const lamp = 18 * 60 + 30, from = time.minute;
+  if (from >= lamp) S.day++;
+  sleepOff(S);
+  exposure = 0;
+  await setTime(lamp);
   saveGame(true);
   await sleep(350);
   await ui.fade(false, 500);
-  hud.toast('Rested. Game saved.', true);
+  hud.toast('You sleep through the white. Lamp. Game saved.', true);
 }
 
 // ---------------------------------------------------------------- saves (game/state.ts; rule 8)
@@ -869,6 +982,7 @@ const fight = new Fight(ui.root, {
   },
   onHurt: (who, down) => { void who.play(down ? 'down' : 'hurt', down); },
   onDrink: (who) => { void who.play('drink'); },
+  miss: (id) => (id === 'juno' && has(S, 'blind') ? 0.25 : 0),
   onTurn: (side) => {
     if (!staged?.director) return;
     // being attacked: the hero shot, low behind the enemy, for the whole of its turn; back to the rotation after
@@ -1112,7 +1226,9 @@ async function battle(): Promise<'win' | 'load'> {
   sound.music('combat');
   minimap.hidden = true;
   for (let retry = false; ; retry = true) {
-    const r = await fight.fight(B.drain, B.units, { juno: player, kit: kitActor! }, foes, retry);
+    // what the white did to Juno follows her into the fight (game/sun.ts)
+    const j = B.units.juno!, units = { ...B.units, juno: { ...j, hp: maxHp(S), spd: has(S, 'heat') ? j.spd * 0.75 : j.spd } };
+    const r = await fight.fight(B.drain, units, { juno: player, kit: kitActor! }, foes, retry);
     if (r === 'win') break;
     if (r === 'load') { unstage(); clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
     for (const a of foes) a.root.visible = true;
@@ -1337,6 +1453,47 @@ load().then(() => {
       return issues;
     },
     rooms: Object.keys(ROOMS),
+    blockedAt: (x: number, z: number) => cur.area.blocked(x, z, 0.28),
+    /** In the sun's shadow at (x, z), just above head height (near Juno: the shadow map follows her). */
+    shadeAt: (x: number, z: number) => shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + 1.72, z)),
+    get shaded() { return shaded; },
+    get people() { return cur.people.map((p) => p.npc.id); },
+    shadeDebug(x: number, z: number, y: number) { const r = shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + y, z)); return [r, ...shadeLast]; },
+    /**
+     * Walk out from Juno over the whole region (every map built) and report anywhere she can reach that she
+     * shouldn't: ground past every map's edge, or a road on to a map that isn't built. Empty is clean: every
+     * edge she can get to is a physical barrier or a person who turns her back.
+     */
+    async edgeIssues(step = 0.5) {
+      const region = worlds.get(SPAN)?.area as Region | undefined;
+      if (!region) return ['no region'];
+      region.hold = true;
+      await region.buildAll();
+      const unbuilt = region.triggers.filter((tr) => tr.go && tr.go.to !== SPAN && !ROOMS[tr.go.to]);
+      const [sx, sz] = cur.id === SPAN ? [player.x, player.z] : [START.x, START.z];
+      const key = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096);
+      const seen = new Set<number>([key(Math.round(sx / step), Math.round(sz / step))]);
+      const todo: Array<[number, number]> = [[Math.round(sx / step), Math.round(sz / step)]];
+      const found = new Map<string, [number, number]>();
+      while (todo.length) {
+        const [i, j] = todo.pop()!;
+        const x = i * step, z = j * step;
+        // reported once per patch of about 16 units, so one leak reads as one line
+        const patch = `${Math.floor(x / 16) * 16},${Math.floor(z / 16) * 16}`;
+        if (!region.pieceAt(x, z)) { if (!found.has(`off:${patch}`)) found.set(`off:${patch}`, [x, z]); continue; }
+        const tr = unbuilt.find((t) => x >= t.x0 && x <= t.x1 && z >= t.z0 && z <= t.z1);
+        if (tr) { const k = `road:${tr.go!.to}`; if (!found.has(k)) found.set(k, [x, z]); continue; }
+        if (guardAt(x, z)) continue;
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const k = key(i + di, j + dj);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          if (!region.blocked((i + di) * step, (j + dj) * step, 0.28)) todo.push([i + di, j + dj]);
+        }
+      }
+      region.hold = false;
+      return [...found].map(([k, [x, z]]) => `${k.startsWith('off') ? 'off every map' : k} at ${x.toFixed(1)}, ${z.toFixed(1)}`);
+    },
     /** A map of the current world drawn straight down, north up, `ppu` pixels per unit, with what's placed on it.
      *  For the overview (docs/design/regions/): no fog, no post, the shadow stretched over the whole map. */
     async overview(ppu = 10, bounds?: [number, number, number, number]) {

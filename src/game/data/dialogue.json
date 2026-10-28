@@ -755,14 +755,14 @@
   "cot": [
     [
       "",
-      "Home. Under the floor, forty feet down, it's cool."
+      "Her cot, in the cooler, beside their bed."
     ],
     {
       "do": "choice",
-      "q": "Rest here?",
+      "q": "Sleep until Lamp?",
       "opts": [
         [
-          "Rest and save",
+          "Sleep",
           [
             {
               "do": "rest"
