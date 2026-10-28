@@ -15,6 +15,22 @@
     "template_id": "dog"
   },
   "character_id": "6322d65b-fa7c-48cf-b036-cf73068e3bee",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "a18283f0-bbf0-4878-842e-1de15255b595",
+      "fps": 5,
+      "body": {
+        "character_id": "6322d65b-fa7c-48cf-b036-cf73068e3bee",
+        "template_animation_id": "idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T21:37:01.874Z"
 }

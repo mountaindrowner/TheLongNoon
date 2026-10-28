@@ -127,7 +127,10 @@
       "kind": "creature",
       "anims": [
         "idle",
-        "walk"
+        "walk",
+        "attack",
+        "hurt",
+        "spark"
       ],
       "desc": "a Stray, a six-wheeled machine the size of a large dog that comes out of storm drains at night: low battered chassis, one round red sensor eye glowing at the front, sun-bleached white paint with rust and a faded stripe, stubby antennas, menacing"
     },
@@ -135,7 +138,10 @@
       "kind": "creature",
       "anims": [
         "idle",
-        "walk"
+        "walk",
+        "run",
+        "attack",
+        "hurt"
       ],
       "desc": "a lean desert coyote, tawny grey coat, ribs showing, big ears, hungry yellow eyes"
     },
@@ -199,7 +205,10 @@
       "kind": "creature",
       "anims": [
         "idle",
-        "walk"
+        "walk",
+        "run",
+        "attack",
+        "hurt"
       ],
       "desc": "a scarred old desert coyote, darker grey-brown coat, a torn ear, lean and limping"
     },

@@ -37,6 +37,8 @@ const COST = { figure: 15, template: 4, custom: 4 };
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
 const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog' };
+/** The four-legged skeleton has its own templates (idle, walk, run; no attack). */
+const DOG = { idle: 'idle', walk: 'walk-8-frames', run: 'running-8-frames' };
 const ANIM = {
   idle: { template: 'breathing-idle', fps: 5 },
   walk: { template: 'walking-8-frames', fps: 11 },
@@ -50,8 +52,15 @@ const ANIM = {
   drink: { template: 'drinking', fps: 8 },
 };
 const CUSTOM = {
-  stray: { idle: 'idle: rocking slightly on its six wheels, the red eye pulsing', walk: 'rolling forward on its six wheels, chassis bobbing' },
   juno: { attack: 'swinging a length of steel pipe down hard in front of her with both hands, then back to guard' },
+  stray: {
+    idle: 'idle: rocking slightly on its six wheels, the red eye pulsing', walk: 'rolling forward on its six wheels, chassis bobbing',
+    attack: 'ramming forward hard on its six wheels, red eye flaring bright, then rolling back',
+    hurt: 'jolting backward from a heavy hit, sparks and bolts flying from its chassis',
+    spark: 'crackling with blue electric arcs all over its chassis, red eye flashing',
+  },
+  coyote: { attack: 'lunging forward with jaws snapping, then springing back', hurt: 'yelping and recoiling from a hit, tail tucked' },
+  coyote2: { attack: 'lunging forward with jaws snapping, then springing back', hurt: 'yelping and recoiling from a hit, tail tucked' },
   chicken: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken2: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken3: { idle: 'idle: puffing up, head bobbing', walk: 'strutting, head bobbing with each step' },
@@ -141,18 +150,39 @@ async function figure(id) {
   return `${id}: made (${cid})`;
 }
 
+/** Which of the four directions an animation's downloaded frames lack. */
+function missingDirs(id, name) {
+  const root = join(OUT, id, 'character', 'animations');
+  if (!existsSync(root)) return DIRS4;
+  const key = { idle: ['idle', 'breath'], walk: ['walk'], run: ['run'] }[name] ?? [name];
+  const folder = readdirSync(root).find((f) => key.some((k) => f.toLowerCase().includes(k)));
+  if (!folder) return DIRS4;
+  const have = readdirSync(join(root, folder));
+  return DIRS4.filter((d) => !have.includes(d));
+}
+
 async function animate(id) {
   const p = made(id);
   if (!p) throw new Error(`${id}: no figure yet`);
   for (const name of C.cast[id].anims) {
+    // --fill: an animation that came back missing a direction gets just that direction, in the same group
+    if (p.anims[name] && flag('--fill')) {
+      const missing = missingDirs(id, name);
+      if (!missing.length) continue;
+      const b = { ...p.anims[name].body, animation_group_id: p.anims[name].animation_group_id, directions: missing };
+      const sub = await api('/animate-character', b);
+      await Promise.all((sub.background_job_ids ?? []).map(job));
+      continue;
+    }
     if (p.anims[name] && !flag('--force')) continue;
     const custom = CUSTOM[id]?.[name];
+    const template = BODY[id] === 'dog' ? DOG[name] : ANIM[name]?.template;
     const body = custom
       ? { character_id: p.character_id, mode: 'v3', action_description: custom, frame_count: 8, animation_name: name, directions: DIRS4 }
-      : { character_id: p.character_id, template_animation_id: ANIM[name].template, animation_name: name, directions: DIRS4 };
+      : { character_id: p.character_id, template_animation_id: template, animation_name: name, directions: DIRS4 };
     const sub = await api('/animate-character', body);
     await Promise.all((sub.background_job_ids ?? []).map(job));
-    p.anims[name] = { animation_group_id: sub.animation_group_id, fps: ANIM[name].fps, body };
+    p.anims[name] = { animation_group_id: sub.animation_group_id, fps: ANIM[name]?.fps ?? 10, body };
     writeFileSync(join(OUT, id, 'prompt.json'), JSON.stringify(p, null, 2));
   }
   await fetchZip(id, p.character_id);
@@ -163,6 +193,7 @@ async function animate(id) {
 // the look is locked on the anchor (docs/design/cast.md): she's never remade by accident
 if (flag('--force') && want.includes(C.anchor) && !flag('--remake-anchor')) throw new Error(`${C.anchor} is the style anchor for the whole cast; remaking her needs the owner, and --remake-anchor`);
 const todo = want.filter((id) => flag('--anims') ? made(id) : flag('--force') || !made(id));
+if (flag('--fill')) console.log('fill:', todo.map((id) => `${id} ${C.cast[id].anims.map((n) => missingDirs(id, n).join('+')).join(' ')}`).join(', '));
 const cost = todo.reduce((n, id) => n + (flag('--anims') ? C.cast[id].anims.length * COST.template : COST.figure), 0);
 console.log(`${flag('--anims') ? 'animate' : 'make'}: ${todo.join(', ') || 'nothing'} (about ${cost} generations)`);
 if (flag('--plan') || !todo.length) process.exit(0);

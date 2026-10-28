@@ -284,6 +284,10 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
   .f-turns span { font-size: 12px; padding: 2px 8px; } .f-msg { top: 34px; font-size: 14px; }
   .f-party { left: 10px; bottom: 8px; } .f-party .pc { grid-template-columns: 52px 90px 50px; padding: 3px 8px 4px; }
   .f-party b { font-size: 15px; } .f-party .hp { font-size: 13px; }
-  .f-menu { right: 10px; bottom: 8px; min-width: 180px; } .f-menu button { font-size: 15px; padding: 4px 10px 5px; }
+  .f-party .wpn { display: none; } .f-party { gap: 4px; }
+  .f-menu { right: 10px; bottom: 8px; min-width: 0; max-width: 34vw; max-height: 56vh; gap: 3px; }
+  .f-menu .hd { font-size: 14px; padding: 0 4px; }
+  .f-menu button { font-size: 15px; padding: 3px 10px 4px; white-space: nowrap; }
+  .f-menu button small { display: inline; margin-left: 8px; font-size: 12px; }
   .mm-label { font-size: 12px; padding: 1px 4px 2px; }
 }

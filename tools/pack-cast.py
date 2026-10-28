@@ -25,7 +25,7 @@ STILL = ['south', 'east', 'north', 'west', 'south-east', 'north-east', 'north-we
 # PixelLab's folder names for its templates, where they differ from the template's own name
 FOLDER = {'breathing-idle': 'idle', 'walking': 'walk', 'running': 'run', 'fight-stance-idle': 'stance', 'throw-object': 'throw',
           'taking-a-punch': 'hurt', 'falling-backward': 'down', 'drinking': 'drink'}
-FPS = {'idle': 5, 'walk': 11, 'run': 14, 'stance': 8, 'attack': 12, 'throw': 12, 'hurt': 10, 'down': 10, 'drink': 8}
+FPS = {'idle': 5, 'walk': 11, 'run': 14, 'stance': 8, 'attack': 12, 'throw': 12, 'hurt': 10, 'down': 10, 'drink': 8, 'spark': 12}
 
 
 def frames_in(d):
