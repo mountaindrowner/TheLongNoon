@@ -21,5 +21,11 @@
       }
     }
   },
-  "at": "2026-10-27T20:40:57.983Z"
+  "at": "2026-10-27T20:40:57.983Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-28T05:04:38.520Z"
+  }
 }

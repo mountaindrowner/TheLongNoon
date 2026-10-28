@@ -15,6 +15,37 @@
     "template_id": "dog"
   },
   "character_id": "b112de78-f8a2-406b-9572-4f61ddbabf93",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "45d51692-fca5-46d2-a5b5-65e6d0cfba26",
+      "fps": 5,
+      "body": {
+        "character_id": "b112de78-f8a2-406b-9572-4f61ddbabf93",
+        "template_animation_id": "idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "51ea7381-200d-42ce-aa51-7788fe95d45b",
+      "fps": 11,
+      "body": {
+        "character_id": "b112de78-f8a2-406b-9572-4f61ddbabf93",
+        "template_animation_id": "walk-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T21:34:19.037Z"
 }

@@ -14,6 +14,41 @@
     "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
   },
   "character_id": "e1fe38aa-ce04-4e2c-8dd5-58193c9b916b",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "06aa7971-cb6b-4b77-999f-59bdcd13995e",
+      "fps": 5,
+      "body": {
+        "character_id": "e1fe38aa-ce04-4e2c-8dd5-58193c9b916b",
+        "mode": "v3",
+        "action_description": "idle: pecking at the ground, head bobbing",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "bfe8d1a9-3bb2-415c-8d61-e72c6a10a7cd",
+      "fps": 11,
+      "body": {
+        "character_id": "e1fe38aa-ce04-4e2c-8dd5-58193c9b916b",
+        "mode": "v3",
+        "action_description": "walking, head bobbing with each step",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T21:25:55.305Z"
 }

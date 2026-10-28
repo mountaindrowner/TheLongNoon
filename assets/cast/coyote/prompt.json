@@ -15,6 +15,86 @@
     "template_id": "dog"
   },
   "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "8fa81529-99d8-400a-9a38-c9a46a7d099e",
+      "fps": 5,
+      "body": {
+        "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
+        "template_animation_id": "idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "5f3a0fb3-98d8-410e-9cec-0a996d5f52d5",
+      "fps": 11,
+      "body": {
+        "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
+        "template_animation_id": "walk-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "run": {
+      "animation_group_id": "602a8f8e-edd7-4811-bbd9-ea0810d53a77",
+      "fps": 14,
+      "body": {
+        "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "fc10bd0c-e595-4c4d-aa33-6b542194af07",
+      "fps": 12,
+      "body": {
+        "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
+        "mode": "v3",
+        "action_description": "lunging forward with jaws snapping, then springing back",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "a418ef3c-1f26-4aac-8af8-dff71fb8ea8e",
+      "fps": 10,
+      "body": {
+        "character_id": "cbd4977d-204d-42ce-aec9-894a3c63bd4e",
+        "mode": "v3",
+        "action_description": "yelping and recoiling from a hit, tail tucked",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T21:23:07.630Z"
 }
