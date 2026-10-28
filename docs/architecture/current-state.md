@@ -299,6 +299,9 @@ chunks, `terrain.ts` `setAprons`). The owner chose C on 2026-10-26; the Span (pi
    yet: Lourdes, Inés, Rafa, Goyo, Güero, Mari, Chuy, Don Pepe.
 4. **Out of the Span:** the first caravan leg up the Thirty-Five, or the east
    road to the White Bowl, where the drone went.
-5. **Sprites:** the cast regenerated in the spec's locked style once a PixelLab
-   key is available.
+5. **Sprites:** done for everyone with lines, the animals and the first
+   enemies (`docs/design/cast.md`), with portraits for the fifteen speakers.
+   Left: the people on the owner's map with no sprite yet, and the fights for
+   the Keeper, hauler, crawler and Noonrider (they have idles and walks, but
+   no fight moves until the owner decides which of them fight).
 6. **Saves:** export and import.

@@ -151,15 +151,12 @@ async function figure(id) {
   return `${id}: made (${cid})`;
 }
 
-/** Which of the four directions an animation's downloaded frames lack. */
+/** Which of the four directions an animation lacks, read from the packed sheet's meta (src/assets/cast/cast.json,
+ *  written by tools/pack-cast.py, which knows PixelLab's folder names): pack first, then --fill. */
 function missingDirs(id, name) {
-  const root = join(OUT, id, 'character', 'animations');
-  if (!existsSync(root)) return DIRS4;
-  const key = { idle: ['idle', 'breath'], walk: ['walk'], run: ['run'] }[name] ?? [name];
-  const folder = readdirSync(root).find((f) => key.some((k) => f.toLowerCase().includes(k)));
-  if (!folder) return DIRS4;
-  const have = readdirSync(join(root, folder));
-  return DIRS4.filter((d) => !have.includes(d));
+  const metaPath = join(ROOT, 'src/assets/cast/cast.json');
+  const rows = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8'))[id]?.anims?.[name]?.rows : null;
+  return DIRS4.filter((d) => !rows?.[d]);
 }
 
 async function animate(id) {

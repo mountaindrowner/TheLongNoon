@@ -67,18 +67,33 @@ made the same way, and nothing below changes without the owner.
     - Kit throws with the sling (`throw-object`). PixelLab's person skeleton
       has no weapon swing, so Juno's pipe swing is drawn from a line of text
       (v3).
-  - **Animals and the enemies:** an idle and a walk each (still to make).
-  - A few idles came back missing one direction (Beto, Tavo, Memo, Toña);
-    that side shows the still figure until it's remade.
-  - The goat and the coyote use PixelLab's four-legged skeleton; the chicken
-    and the Stray are animated from a line of text.
-- **Portraits for the dialogue box** are made from each person's front
-  sprite, using PixelLab's character-to-portrait conversion.
+  - **Animals and the enemies:** an idle and a walk each.
+    - The coyotes also run, bite (`attack`) and flinch (`hurt`).
+    - The Stray rams (`attack`), flinches with sparks (`hurt`) and throws
+      blue arcs over its body (`spark`, its spark attack).
+    - In the fight, a foe plays its move when it acts and flinches when hit
+      (`onAct` / `onHurt` in `src/main.ts`).
+  - The goat and the coyote use PixelLab's four-legged skeleton; the chicken,
+    the Stray and the other machines are animated from a line of text.
+  - **Missing sides:** PixelLab sometimes returns an animation without one
+    of its four directions. Pack the sheets, then `--fill` asks for only
+    the missing directions, in the same animation (about 1 generation
+    each). Until then, that side shows the still figure.
+- **Portraits for the dialogue box** (`--portraits`, the fifteen speakers):
+  - PixelLab's `portrait-character-pro` draws a 128 px bust from each
+    person's front still (`character_to_portrait`), about 17 generations
+    each.
+  - In the box the bust stands in front of the panel's right corner at
+    whole-pixel scale: 2× on desktop, 1× on phones.
+  - Anyone without one shows their figure instead.
 
 ```
 PIXELLAB_API_KEY=… NODE_USE_ENV_PROXY=1 node tools/gen-cast.mjs juno       # the anchor, alone
 PIXELLAB_API_KEY=… NODE_USE_ENV_PROXY=1 node tools/gen-cast.mjs            # everyone not made yet
 PIXELLAB_API_KEY=… NODE_USE_ENV_PROXY=1 node tools/gen-cast.mjs --anims    # their idles and walks
+python3 tools/pack-cast.py                                                  # the sheets the game imports
+PIXELLAB_API_KEY=… NODE_USE_ENV_PROXY=1 node tools/gen-cast.mjs --anims --fill   # directions that came back missing
+PIXELLAB_API_KEY=… NODE_USE_ENV_PROXY=1 node tools/gen-cast.mjs --portraits      # bust portraits for the speakers
 node tools/gen-cast.mjs --plan                                             # what it would make, roughly what it costs
 ```
 
@@ -97,8 +112,8 @@ node tools/gen-cast.mjs --plan                                             # wha
 
 | id | Who | Notes |
 |---|---|---|
-| juno | Juno, the hero | anchor; idle and walk |
-| kit | Kit | idle and walk (he follows Juno) |
+| juno | Juno, the hero | anchor; idle, walk, run, stance, pipe swing, hurt, down, drink |
+| kit | Kit | idle, walk, run, stance, sling, hurt, down (he follows Juno) |
 | lupe | Hermana Lupe | |
 | chayo | Doña Chayo | |
 | beto | Don Beto | |

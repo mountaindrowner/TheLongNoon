@@ -764,7 +764,28 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 9
+   }
+  }
  },
  "juno": {
   "w": 64,
@@ -923,7 +944,25 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 2,
+     "east": 3,
+     "north": 4,
+     "west": 5
+    },
+    "frames": 9
+   }
+  }
  },
  "kidjuno": {
   "w": 64,
@@ -1322,7 +1361,28 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 4
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 8
+   }
+  }
  },
  "pancha": {
   "w": 64,
@@ -1557,7 +1617,55 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "attack": {
+    "fps": 12,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 9
+   },
+   "hurt": {
+    "fps": 10,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 9
+   },
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 9,
+     "east": 10,
+     "north": 11
+    },
+    "frames": 9
+   },
+   "spark": {
+    "fps": 12,
+    "rows": {
+     "south": 12,
+     "east": 13,
+     "north": 14,
+     "west": 15
+    },
+    "frames": 9
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 16,
+     "east": 17
+    },
+    "frames": 9
+   }
+  }
  },
  "tavo": {
   "w": 64,
