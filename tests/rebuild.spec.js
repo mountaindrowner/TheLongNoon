@@ -158,8 +158,8 @@ test('the highway is walled off; the on-ramp at the top of town leads up onto it
   for (;;) { const x = (await pos(page))[0]; if (Math.abs(x - prev) < 1e-4) break; prev = x; await page.waitForTimeout(1500); }
   await page.keyboard.up('KeyA');
   expect((await pos(page))[0]).toBeGreaterThan(26);
-  // up on the deck north of the junction, walking north leaves town for the Ramp
-  await page.evaluate(() => window.__LN.tp(53, 64 + 4));
+  // up on the deck north of the junction, walking north up the west lanes (the median barriers are solid) leaves town for the Ramp
+  await page.evaluate(() => window.__LN.tp(50, 64 + 4));
   await page.keyboard.down('KeyW');
   await until(page, () => window.__LN.pos[1] < 63.4, undefined, 150_000);
   await page.keyboard.up('KeyW');
