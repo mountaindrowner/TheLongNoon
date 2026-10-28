@@ -128,15 +128,16 @@ export function abandonedMall(night: boolean): SectionSpec {
 
       // ------------------------------------------------ the pylon sign (signature), face down by the access road
       const py = new THREE.Group();
-      py.position.set(92, heightAt(92, 14), 14);
-      py.rotation.y = 0.12;
+      // out in the lot east of the access road, clear of the north-east stores; its posts point back where it stood
+      py.position.set(113, heightAt(113, 8.6), 8.6);
+      py.rotation.y = Math.PI + 0.1;
       const face = box(10, 0.3, 2.6, colMat('#9a948a', { metalness: 0.4, roughness: 0.6 }), 0, 0, 0);
       py.add(face);
       for (const sx of [-4.2, 4.2]) { const post = box(0.5, 0.5, 5.0, M.steel(), sx, 0.1, 3.6); post.rotation.x = 0; py.add(post); }
       py.add(box(1.2, 0.8, 1.2, M.concrete(), -4.2, -0.2, 6.4), box(1.2, 0.8, 1.2, M.concrete(), 4.2, -0.2, 6.4));
       scene.add(py);
-      addSolid(86.6, 12, 97.4, 16.4);
-      d.things.push({ x: 92, z: 17.2, r: 2.6, label: 'Sign', lines: [
+      addSolid(107.4, 4.4, 118.6, 10.4);
+      d.things.push({ x: 113, z: 11.2, r: 2.8, label: 'Sign', lines: [
         'A sign the size of a house, down on its face across the stalls. Its posts still stand in their footings.',
         'Underneath, out of the sun all this time, the letters kept their color: MALL DEL NORTE.',
       ] });
