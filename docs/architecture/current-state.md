@@ -314,6 +314,46 @@ edge is *"a physical barrier, or a person who talks to you and turns you back."*
     - fainting and waking at Lamp;
     - the town empty by day.
 
+## Piece 8 (done): north-east to the church, south-west to the mall
+
+The owner, 2026-10-28: *"more exploration areas … north east could lead to a separate area through a transition
+space that leads to an old church in the shape of Laredo Church of the Crossroads, there's still people there helping
+others and preaching the gospel (low-key, not too heavy-handed) … south west could lead to an abandoned mall area the
+shape of Mall del Norte."* The owner sent a map and a photo of the church.
+
+- **The Trail North** (`regions/span/trail.ts`, medium 88×72, road leg): the Old Trail goes on out of town as a
+  footpath. It crosses the dry creek on a plank footbridge (hero), passes a windmill filling a stock tank someone
+  keeps clean (routine), and has lanterns lit every night along it (signature: they promise the hill).
+- **The Open Door** (`church.ts`, large 120×96), laid out from the owner's map and photo:
+  - a tall mission front facing the old boulevard, its gable carrying an arched belfry and a cross (hero);
+  - the long low wing to the east, its arched windows lit all night where people sleep (signature);
+  - the parking lot between building and road, live palms by the door with green under them, and the big tree
+    at the end of the wing, dead, a sail tied off it;
+  - a water table under shade sails (routine) with Doña Marta and Benny, and a traveler from the river side;
+  - the door is lantern-lit and never shuts. Inside (`churchHall`, rooms.ts): chairs facing a plain cross, cots
+    along the walls, bread on the long table, and Pastor Abel. A plaque inside the door, out of the sun, keeps most
+    of the old name: *…CH OF THE CROSSROADS* (the Old Name).
+  - The writing keeps the faith plain and light: they fed whoever came, and they knew who they did it for.
+- **The Mall** (`mall.ts`, large 132×96), on the real mall's lines:
+  - one long concourse with a big store at each end, the north-east wing to two two-storey stores, the cinema
+    (its marquee is the hero), all ringed by a road and parking;
+  - a roof ventilator spinning (routine); the pylon sign face down by the access road, its underside keeping
+    *MALL DEL NORTE* (signature, the Old Name);
+  - a Stray works the lot (machines are out by day too);
+  - the centre court's broken doors have a scavenger's lantern hung at them. Inside (`mallCourt`): the dry
+    fountain, grilles down on every shop but one, sand blown in under the broken skylight, the scavenger's camp.
+- **Getting there:** the town's east edge opens where the Old Trail runs out; its south edge opens at the side
+  street west of the boulevard. The church's boulevard and the mall's ring road run into brush, closed with wrecks.
+  `edgeIssues` is clean across all eight maps, and every door promise holds.
+- **New people** (`tools/gen-cast.mjs`, the locked look): Pastor Abel, Doña Marta, Benny, the traveler, the scavenger.
+- **Open:**
+  - **The church's name on screen** is *the Open Door*. The real name shows only on the plaque, an Old Name hint,
+    per CLAUDE.md rule 5. If the owner wants *the Crossroads* as its name, that's a change to that rule.
+  - **The camera shows only about six units north of Juno** at ground level, so tall fronts facing the camera are
+    cropped at the top unless she stands right under them. The church front was scaled to the town's tallest (the
+    water tower). Lowering the camera or framing Juno lower on screen is the owner's call.
+  - **The real roads are compressed** (method §3): the mall is reached without crossing the Thirty-Five.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

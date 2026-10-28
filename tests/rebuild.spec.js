@@ -41,12 +41,13 @@ for (const time of ['lamp', 'night', 'white']) {
 }
 
 // Region coordinates (src/regions/span/region.ts PLACE): the Ramp (40,0) 88×64; Seven Flags, the town (0,64) 192×160;
-// the Lake Road (192,128) 96×132; the White Bowl (156,260) 132×96.
+// the Lake Road (192,128) 96×132; the White Bowl (156,260) 132×96; the Trail North (192,48) 88×72; the church (208,-48)
+// 120×96; the mall (-40,224) 132×96.
 test('every map is where the region says it is', async ({ page }) => {
   test.setTimeout(240_000);
   await boot(page, 'night');
-  const where = await page.evaluate(() => [[80, 30], [100, 150], [240, 200], [240, 300]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
-  expect(where).toEqual(['ramp', 'seven-flags', 'lake-road', 'white-bowl']);
+  const where = await page.evaluate(() => [[80, 30], [100, 150], [240, 200], [240, 300], [230, 80], [260, 0], [20, 280]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
+  expect(where).toEqual(['ramp', 'seven-flags', 'lake-road', 'white-bowl', 'trail', 'church', 'mall']);
   expect(await page.evaluate(() => window.__LN.piece)).toBe('seven-flags');
 });
 

@@ -174,8 +174,8 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     w.scene.add(a.root);
     w.people.push({ npc, actor: a, tag });
   }
-  // the animals are under the shade-cloth by day too (the bible: "let out only at night")
-  for (const r of w.id === SPAN && !night ? [] : roamers) {
+  // the animals are under the shade-cloth by day too (the bible: "let out only at night"); the machines own the day
+  for (const r of w.id === SPAN && !night ? roamers.filter((q) => q.sprite === 'stray') : roamers) {
     const a = await Actor.critter(variant(r.sprite, r.x, r.z), w.tint, r.height);
     a.place(r.x, w.area.ground(r.x, r.z), r.z);
     w.scene.add(a.root);

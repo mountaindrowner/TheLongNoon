@@ -1,0 +1,42 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Pastor Abel, a tall gentle man in his fifties who keeps the church on the hill: short grey beard, a sun-faded blue work shirt buttoned to the collar, a small wooden cross on a cord, patched khaki trousers, a canvas bag of bread on one shoulder, kind tired face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "8e0211e4-b804-42cd-88b3-025777717768",
+  "anims": {
+    "idle": {
+      "animation_group_id": "c60985b7-e519-4268-a823-b8e903689bc1",
+      "fps": 5,
+      "body": {
+        "character_id": "8e0211e4-b804-42cd-88b3-025777717768",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-28T21:40:44.665Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-28T21:55:11.496Z"
+  }
+}

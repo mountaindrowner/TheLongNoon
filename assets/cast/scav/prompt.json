@@ -1,0 +1,36 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a scavenger who camps in the dead mall, a wiry man in his forties: a welder's goggles pushed up on a shaved head, a patched orange safety vest over a bare chest, cargo shorts with bulging pockets, wrapped forearms, a crowbar through his belt, suspicious face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "3a3f811e-aa43-4a8c-9c63-deeb7a542d9a",
+  "anims": {
+    "idle": {
+      "animation_group_id": "9dc61f89-3c04-428e-bc9a-3804fa952fec",
+      "fps": 5,
+      "body": {
+        "character_id": "3a3f811e-aa43-4a8c-9c63-deeb7a542d9a",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-28T22:06:19.509Z"
+}

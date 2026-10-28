@@ -1,0 +1,42 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a traveler from the river side, a thin woman in her thirties: a dusty grey wrap over her head and shoulders, a faded red scarf, a bedroll tied on her back, worn boots, wary tired face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "a532c091-efbc-44fd-bd3b-6373007a767c",
+  "anims": {
+    "idle": {
+      "animation_group_id": "c17cf485-5bcd-464e-9838-9120d7157782",
+      "fps": 5,
+      "body": {
+        "character_id": "a532c091-efbc-44fd-bd3b-6373007a767c",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-28T21:49:23.793Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-28T21:56:48.718Z"
+  }
+}

@@ -395,3 +395,103 @@ export function kidsHouse(l: RoomLinks): AreaBuilder {
   });
 }
 
+
+/**
+ * The hall at the Open Door (church.ts): the old sanctuary, kept. Chairs in rows facing a plain cross, cots along
+ * the walls for whoever's sleeping out the white, a long table with bread by the door. By the inner door, out of
+ * the sun for a century, a plaque that still has most of the church's old name (methodology §3.5: the Old Name).
+ */
+export function churchHall(l: RoomLinks): AreaBuilder {
+  const COLS = 14, ROWS = 18, DOOR = 7;
+  return interior({
+    id: 'church-hall', title: 'The Open Door', sub: 'The hall', kind: 'town', cols: COLS, rows: ROWS, seed: 505, wall: 'concrete',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) { carve(g, DOOR, 1.8); },
+    floor: (_g, x, z, f) => saltillo(x, z, f),
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night, 1.8);
+      // the platform at the far end, a lectern, and a cross of two plain beams on the wall
+      g.add(box(8, 0.3, 2.6, M.wood(), 7, 0, 2.2));
+      addSolid(3, 0.9, 11, 3.5);
+      g.add(box(0.7, 1.1, 0.5, M.wood(), 7, 0.3, 2.6));
+      g.add(box(0.24, 3.2, 0.14, M.wood(), 7, 0.6, 1.06), box(1.7, 0.24, 0.14, M.wood(), 7, 2.9, 1.06));
+      const alt = candles(g, 4.6, 0.32, 2.0, 8, 5, 0.6), alt2 = candles(g, 9.4, 0.32, 2.0, 8, 6, 0.6);
+      d.pool.add({ pos: new THREE.Vector3(7, 2.2, 2.6), color: new THREE.Color('#ffc070'), intensity: 8, dist: 9, flicker: 0.15 });
+      // chairs in rows; the back ones pushed aside for the cots
+      for (let i = 0; i < 3; i++) { pew(g, 4.4, 5.6 + i * 1.5, 3.4); pew(g, 9.6, 5.6 + i * 1.5, 3.4); }
+      for (let i = 0; i < 4; i++) { cot(g, 1.3, 6.2 + i * 2.1, ['#8a3a2a', '#3f6a8a', '#d8b23a', '#6a8a4a'][i]!, Math.PI / 2, i % 2 === 0); cot(g, 12.7, 6.6 + i * 2.1, ['#a87a5a', '#7a8a9a', '#8a3a2a', '#3f6a8a'][i]!, Math.PI / 2, i % 2 === 1); }
+      // the long table by the door: bread under a cloth, jugs, cups turned over to dry
+      table(g, 4.4, 14.6, 3.4, 1.0); table(g, 9.6, 14.6, 3.4, 1.0);
+      g.add(box(1.4, 0.04, 0.6, colMat('#ece4d2', { roughness: 1 }), 4.0, 0.82, 14.6));
+      for (let i = 0; i < 4; i++) g.add(cyl(0.15, 0.15, 0.4, colMat('#4f86b0', { roughness: 0.25, transparent: true, opacity: 0.88 }), 9.0 + i * 0.36, 0.8, 14.5, 10));
+      pendant(g, d.pool, 7, 9, true);
+      pendant(g, d.pool, 7, 14, true);
+      d.npcs.push({ id: 'abel', name: 'Pastor Abel', sprite: 'abel', x: 7, z: 4.4, face: 'S', lines: [
+        'Come in out of it. Nobody here is going to ask you for anything.',
+        'We don’t know much about the people who built this place. We know they fed whoever came up the road, and we know who they did it for.',
+        'So we keep doing it. That’s most of what I preach.',
+      ] });
+      d.things.push(
+        { x: 7, z: 1.8, r: 1.6, label: 'Cross', lines: ['A cross of two plain beams on the wall. Candles in jars along the platform under it.'] },
+        { x: 11.6, z: ROWS - 1.6, r: 1.3, label: 'Plaque', lines: ['A brass plaque inside the door, out of the sun all these years. The first letters are worn away.', '…CH OF THE CROSSROADS'] },
+        { x: 4.4, z: 13.6, r: 1.4, label: 'Bread', lines: ['Flat bread under a cloth, still warm. Mesquite flour, by the color of it.'] },
+      );
+      d.built.push({ update(t) { alt.emissiveIntensity = 3 * (0.9 + Math.sin(t * 6.7) * 0.08); alt2.emissiveIntensity = 3 * (0.9 + Math.sin(t * 8.3 + 1) * 0.08); } });
+    },
+  });
+}
+
+/**
+ * Inside the mall's centre court (mall.ts): the concourse running off both ways into the dark, shop fronts behind
+ * pulled-down grilles, a dry fountain, a skylight with half its panes gone letting the outside in. A scavenger's
+ * camp by the fountain: whoever hangs the lantern at the doors sleeps here.
+ */
+export function mallCourt(l: RoomLinks): AreaBuilder {
+  const COLS = 24, ROWS = 12, DOOR = 12;
+  return interior({
+    id: 'mall-court', title: 'The Mall', sub: 'The centre court', kind: 'town', cols: COLS, rows: ROWS, seed: 506, wall: 'concrete',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) { carve(g, DOOR, 2.2); },
+    floor: (_g, x, z, f) => {
+      // terrazzo under a skin of sand blown in through the broken skylight
+      const sand = fbmLike(x, z) > 0.62 || (Math.abs(x - 12) < 3 && z < 7 && f > 0.4);
+      if (sand) return [196, 178, 140];
+      return f > 0.97 ? [120, 116, 110] : [(176 + f * 14) | 0, (170 + f * 12) | 0, (160 + f * 10) | 0];
+    },
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night, 2.2);
+      // shop fronts along the back: grilles pulled down, one up a foot off the floor
+      const grille = colMat('#5a5c5e', { metalness: 0.5, roughness: 0.5 });
+      for (let i = 0; i < 5; i++) {
+        const x = 2.6 + i * 4.7;
+        g.add(box(4.2, 0.5, 0.2, colMat('#2a2826', { roughness: 1 }), x, 2.6, 0.7)); // the dark sign band, letters long gone
+        const up = i === 3 ? 0.35 : 0;
+        for (let b = 0; b < 18; b++) g.add(box(0.04, 2.5 - up, 0.04, grille, x - 2 + b * 0.235, up, 0.95));
+        g.add(box(4.2, 0.08, 0.1, grille, x, 2.5, 0.95));
+      }
+      addSolid(0.4, 0.4, COLS - 0.4, 1.2);
+      // the fountain: a ring of tile, dry, a century of coins gone green in the bottom
+      g.add(cyl(1.8, 1.9, 0.5, colMat('#8aa4a8', { roughness: 0.6 }), 12, 0, 5.4, 18), cyl(1.55, 1.55, 0.06, colMat('#4a6a5a', { roughness: 1 }), 12, 0.46, 5.4, 18));
+      g.add(cyl(0.2, 0.26, 1.4, colMat('#8aa4a8', { roughness: 0.6 }), 12, 0.5, 5.4, 10));
+      addSolid(10.2, 3.6, 13.8, 7.2);
+      // benches either side, and the scavenger's camp: a bedroll, a pack, a lantern burning low
+      for (const x of [5, 19]) { g.add(box(2.2, 0.1, 0.6, M.wood(), x, 0.45, 6.4)); for (const sx of [-0.9, 0.9]) g.add(box(0.1, 0.45, 0.5, M.steel(), x + sx, 0, 6.4)); }
+      g.add(box(0.9, 0.12, 2.0, colMat('#6a5a3e', { roughness: 1 }), 15.6, 0, 7.4), box(0.5, 0.5, 0.4, colMat('#4a5a3a', { roughness: 1 }), 16.4, 0, 6.2));
+      tableLantern(d, 15.0, 0.02, 6.4);
+      // the skylight's light falling through, pale by night, white by day
+      d.pool.add({ pos: new THREE.Vector3(12, 4, 5.4), color: new THREE.Color(l.night ? '#7a90c0' : '#fff2d8'), intensity: l.night ? 5 : 12, dist: 10, flicker: 0 });
+      d.npcs.push({ id: 'scav', name: 'Scavenger', sprite: 'scav', x: 17.4, z: 7.8, face: 'W', lines: [
+        'Don’t touch the pack. Anything else in here, take it if you can find it.',
+        'Grilles are down on all of it. Except that one. I don’t go in that one.',
+      ] });
+      d.things.push(
+        { x: 12, z: 7.4, r: 2.2, label: 'Fountain', lines: ['A tiled fountain, dry. The bottom is green with old coins, more than anyone could count.'] },
+        { x: 16.7, z: 1.8, r: 1.6, label: 'Grille', lines: ['One grille stops a hand’s width off the floor. Beyond it, dark, and a smell like a closed room.'] },
+        { x: 7.3, z: 1.8, r: 1.6, label: 'Shop', lines: ['A steel grille pulled down to the floor and locked. Behind it, racks, and shapes on them.'] },
+      );
+    },
+  });
+}
+const fbmLike = (x: number, z: number): number => (Math.sin(x * 0.9 + Math.sin(z * 0.7) * 2) + Math.sin(z * 1.3 + x * 0.4)) * 0.25 + 0.5;

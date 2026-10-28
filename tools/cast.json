@@ -254,6 +254,41 @@
         "walk"
       ],
       "desc": "a Noonrider, a raider who rides the daylight for Halogen: a full-body cold-rig cooling suit of white quilted fabric and tubing, a mirrored sun visor over the face, a silver heat cape, a toll-mark tag on the chest, a long cattle prod, menacing and faceless"
+    },
+    "abel": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Pastor Abel, a tall gentle man in his fifties who keeps the church on the hill: short grey beard, a sun-faded blue work shirt buttoned to the collar, a small wooden cross on a cord, patched khaki trousers, a canvas bag of bread on one shoulder, kind tired face"
+    },
+    "marta": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Doña Marta, a broad cheerful woman in her sixties who serves at the church: white hair braided in a crown, an orange flowered dress under a white apron, sleeves rolled, a big ladle in one hand, laughing face"
+    },
+    "benny": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Benny, a young man in his twenties who hauls water for the church: curly hair under a green cap, a white undershirt, a rope sling with two plastic water jugs across his back, rolled jeans, sandals, earnest face"
+    },
+    "traveler": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "a traveler from the river side, a thin woman in her thirties: a dusty grey wrap over her head and shoulders, a faded red scarf, a bedroll tied on her back, worn boots, wary tired face"
+    },
+    "scav": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "a scavenger who camps in the dead mall, a wiry man in his forties: a welder's goggles pushed up on a shaved head, a patched orange safety vest over a bare chest, cargo shorts with bulging pockets, wrapped forearms, a crowbar through his belt, suspicious face"
     }
   }
 }

@@ -1,0 +1,42 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Benny, a young man in his twenties who hauls water for the church: curly hair under a green cap, a white undershirt, a rope sling with two plastic water jugs across his back, rolled jeans, sandals, earnest face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "ee7f1da2-0164-49e4-aa7c-939f869243e3",
+  "anims": {
+    "idle": {
+      "animation_group_id": "93602d5f-ee31-4558-9b79-fbcd32f3abfa",
+      "fps": 5,
+      "body": {
+        "character_id": "ee7f1da2-0164-49e4-aa7c-939f869243e3",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-28T21:40:28.291Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-28T21:54:54.210Z"
+  }
+}

@@ -8,29 +8,36 @@ import { sevenFlagsTown } from './seven-flags';
 import { ramp } from './ramp';
 import { lakeRoad } from './lake-road';
 import { whiteBowl } from './white-bowl';
-import { marHome, chapel, finaHouse, kidsHouse } from './rooms';
+import { marHome, chapel, finaHouse, kidsHouse, churchHall, mallCourt } from './rooms';
+import { abandonedMall } from './mall';
+import { trailNorth } from './trail';
+import { churchOnTheHill } from './church';
 
 /**
  * THE SPAN: the first region (methodology §2.3: "A town that stayed, and
  * can't keep everyone"). The town is Seven Flags, laid out from the owner's
  * map of the real streets of north Laredo (2026-10-27); around it, the road
- * out north, and the long road down to the dry lake. A web of maps on one
- * ground, walked between with no cut (option C), brush between them.
+ * out north, the long road down to the dry lake, the Old Trail north-east to
+ * the church on the rise, and the side street south-west to the dead mall
+ * (2026-10-28). A web of maps on one ground, walked between with no cut
+ * (option C), brush between them.
  *
- *   x:  0   40       128   192     288
- *   z:0     ┌────────┐
- *           │  RAMP  │ M (88×64)          north: the Thirty-Five (next region)
- *   z:64 ┌──┴─┬──────┴───────┐
- *        │    SEVEN FLAGS    │
- *        │   the town, 192×160│         east, past Memo's barricade on Del Mar:
- *   z:128│                   ├──────┐
- *        │                   │ LAKE │   east: the brush (not built)
- *   z:224└───────────────────┤ ROAD │
- *        west: the Dead River│96×132│
- *        south: McPherson    │      │
- *   z:260              ┌─────┴──────┤
- *                      │ WHITE BOWL │ 132×96, southeast of town
- *   z:356              └────────────┘
+ *   x: -40  0   40       128   192 208   288 328
+ *   z:-48                            ┌──────────┐
+ *                                    │  CHURCH  │ the Open Door, 120×96
+ *   z:0         ┌────────┐           │          │
+ *               │  RAMP  │           └──┬───────┘
+ *   z:48        │ 88×64  │           ┌──┴────┐
+ *   z:64     ┌──┴─┬──────┴───────┐───┤ TRAIL │ the Trail North, 88×72
+ *            │    SEVEN FLAGS    │   │       │
+ *            │   the town, 192×160   └───────┘
+ *   z:128    │                   ├──────┐
+ *            │                   │ LAKE │
+ *   z:224 ┌──┴──────┬────────────┤ ROAD │
+ *         │  MALL   │            │96×132│
+ *         │ 132×96  │      ┌─────┴──────┤
+ *   z:320 └─────────┘      │ WHITE BOWL │ 132×96
+ *   z:356                  └────────────┘
  *
  * Real names never show; the one Old Name is under the fallen sign on the Ramp.
  */
@@ -43,6 +50,9 @@ export const PLACE: Record<string, [number, number]> = {
   'seven-flags': [0, 64],
   'lake-road': [192, 128],
   'white-bowl': [156, 260],
+  trail: [192, 48],
+  church: [208, -48],
+  mall: [-40, 224],
 };
 /** Where a new game starts: the lot in front of Mar Farm, by the platform where Papá lies. */
 export const START: Spot = { x: 137, z: 64 + 122.5, face: 'N' };
@@ -65,6 +75,9 @@ export function spanRegion(mood: Mood, night: boolean, start: Spot = START): Reg
       { at: PLACE['seven-flags']!, spec: sevenFlagsTown(night) },
       { at: PLACE['lake-road']!, spec: lakeRoad(night) },
       { at: PLACE['white-bowl']!, spec: whiteBowl(night) },
+      { at: PLACE.trail!, spec: trailNorth(night) },
+      { at: PLACE.church!, spec: churchOnTheHill(night) },
+      { at: PLACE.mall!, spec: abandonedMall(night) },
     ],
     afterPiece(p) {
       // the Span's fading overhead props were registered in map space; move them into region space
@@ -94,6 +107,8 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
     chapel: chapel({ to: SPAN, spawn: 'seven-flags:chapel', night }),
     'fina-house': finaHouse({ to: SPAN, spawn: 'seven-flags:fina', night }),
     'kids-house': kidsHouse({ to: SPAN, spawn: 'seven-flags:kids', night }),
+    'church-hall': churchHall({ to: SPAN, spawn: 'church:door', night }),
+    'mall-court': mallCourt({ to: SPAN, spawn: 'mall:court', night }),
   };
 }
 
