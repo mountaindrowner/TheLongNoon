@@ -15,6 +15,37 @@
     "template_id": "mannequin"
   },
   "character_id": "d4483342-9b33-4844-9753-50ffb7fc1358",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "a88274b7-9032-4db1-8a65-3d64fa8766d4",
+      "fps": 5,
+      "body": {
+        "character_id": "d4483342-9b33-4844-9753-50ffb7fc1358",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "38318505-719f-4ae2-8f03-3835c03f17e3",
+      "fps": 11,
+      "body": {
+        "character_id": "d4483342-9b33-4844-9753-50ffb7fc1358",
+        "template_animation_id": "walking-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T22:27:07.161Z"
 }

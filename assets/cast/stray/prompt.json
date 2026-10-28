@@ -82,6 +82,23 @@
           "west"
         ]
       }
+    },
+    "spark": {
+      "animation_group_id": "a7916a02-d65e-4f47-b5e8-bdc868808bec",
+      "fps": 10,
+      "body": {
+        "character_id": "806f0b59-9ae1-4b33-974c-749791caac33",
+        "mode": "v3",
+        "action_description": "crackling with blue electric arcs all over its chassis, red eye flashing",
+        "frame_count": 8,
+        "animation_name": "spark",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
     }
   },
   "at": "2026-10-27T21:07:35.762Z"
