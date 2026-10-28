@@ -137,8 +137,8 @@ export class Hud {
     el('p', 'ts-foot', this.title, touch() ? 'Drag on the left to walk. Tap A to talk.' : 'WASD or arrows to walk · E to talk · B the staybook · M the map · Esc the menu');
     this.pauseMenu = new Menu(this.pause, 'pause-menu', sfx);
     el('div', 'pause-side', this.pause);
-    el('h2', '', this.card, 'Mission: Lamp');
-    el('p', '', this.card, 'First mission complete.');
+    el('h2', '', this.card, 'Night one');
+    el('p', '', this.card, 'Given to the Sun');
     this.cardMenu = new Menu(this.card, 'card-menu', sfx);
     this.menus.push(this.titleMenu, this.pauseMenu, this.cardMenu);
     this.show(false);
@@ -186,7 +186,7 @@ export class Hud {
   }
 
   objective(mission: string, text: string, flash: boolean): void {
-    this.obj.firstElementChild!.textContent = `Mission: ${mission}`;
+    this.obj.firstElementChild!.textContent = mission;
     this.objText.textContent = text;
     this.obj.classList.toggle('on', text !== '' && this.status.classList.contains('on'));
     if (flash) { this.obj.classList.remove('flash'); void this.obj.offsetWidth; this.obj.classList.add('flash'); }
@@ -297,7 +297,9 @@ export class Hud {
     return a;
   }
 
-  async endCard(): Promise<'read' | 'explore' | 'title'> {
+  async endCard(title: string, sub: string): Promise<'read' | 'explore' | 'title'> {
+    this.card.querySelector('h2')!.textContent = title;
+    this.card.querySelector('p')!.textContent = sub;
     this.card.classList.add('on');
     const a = await this.cardMenu.show([{ id: 'read', label: 'Read the last page' }, { id: 'explore', label: 'Keep exploring' }, { id: 'title', label: 'Title screen' }]);
     if (a !== 'read') this.card.classList.remove('on');

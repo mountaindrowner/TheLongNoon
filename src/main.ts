@@ -299,6 +299,7 @@ async function load(): Promise<void> {
     showObjective(false);
     if (STEP === 'burial') void burial();
     else if (HASH_FIGHT) void fightDemo();
+    else if (HASH_DRONE) void droneDay();
     else { ui.titleCard('SEVEN FLAGS', 'A town that stayed'); void bringCast(cur); }
   } else void titleScreen();
 }
@@ -516,7 +517,8 @@ let S: GameState;
 /** Playtests and screenshots skip the title: `?time=`/`?clock=` start in free roam, `?step=` at a mission step. */
 /** `#fight-<staging>` (the only part of an address a shared page passes on): straight into the drain fight, framed that way. */
 const HASH_FIGHT = /^#fight-([a-z]+)$/.exec(location.hash)?.[1] ?? null;
-const STEP = params.get('step') ?? (HASH_FIGHT ? 'pancha' : null);
+const HASH_DRONE = location.hash === '#drone';
+const STEP = params.get('step') ?? (HASH_FIGHT ? 'pancha' : HASH_DRONE ? 'free' : null);
 const TEST = held !== undefined || params.has('clock') || STEP !== null;
 const STEPS = QUESTS.steps as unknown as Record<string, { obj: string; marker: string | [number, number] | null }>;
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -1304,19 +1306,60 @@ function dropDrone(): void {
   drone = null; droneShadow = null; lookUp = 0; tilt = 0;
 }
 
-/** Home before Shutter: the doors sealed, the day, the drone, the last page, the end card. */
+/**
+ * Night one ends quietly (the Complete Story File, night one): Memo's bell, Kit says what Shutter is and runs home,
+ * Juno sits by Papá's empty chair while the light under the door goes white, and sleeps. No drone: it comes down at
+ * the end of the fifth night (the owner, 2026-10-28), when it changes what five nights have made ordinary.
+ */
 async function ending(): Promise<void> {
-  sound.creak();
+  mode = 'cine';
   sound.music('none');
-  await ui.fade(true, 800);
-  await stage.say('', 'Shutter. Doors sealed. The Span sleeps through the heat.');
+  sound.bell();
+  await run('shutterBell');
   ui.endTalk();
-  S.party.juno.hp = 42; S.party.kit.hp = 26;
+  // Kit and Pancha go off east at a run, home before the bell stops
+  await Promise.all([kitActor, panchaActor].map(async (a, i) => {
+    if (!a) return;
+    a.moving = true; a.running = true;
+    const sx = a.x, sz = a.z, tx = sx + 14, tz = sz + 2 + i;
+    await new Promise<void>((res) => {
+      const t0 = performance.now();
+      const f = (): void => { const k = Math.min(1, (performance.now() - t0) / 2600), x = sx + (tx - sx) * k, z = sz + (tz - sz) * k; a.face(1, 0.1); a.place(x, cur.area.ground(x, z), z); if (k < 1) requestAnimationFrame(f); else res(); };
+      f();
+    });
+    a.root.visible = false;
+  }));
+  await ui.fade(true, 700);
+  await go('mar-home', { x: 11.6, z: 5.0, face: 'E' });
+  hud.show(false);
+  minimap.hidden = true;
+  await ui.fade(false, 700);
+  await run('emptyChair');
+  ui.endTalk();
+  // she sleeps: the day goes by, and whatever the night did with it
+  await ui.fade(true, 1600, '#f4f0e6');
   S.day++;
+  sleepOff(S);
+  if (!S.pages.includes('last')) S.pages.push('last');
+  sound.music('intro');
+  for (;;) {
+    const a = await hud.endCard('Night one', 'Given to the Sun');
+    if (a === 'read') { await hud.openBook(PAGES as Record<string, Page>, S.pages, 'last', true); continue; }
+    if (kitActor) kitActor.root.visible = true;
+    if (panchaActor) panchaActor.root.visible = true;
+    await afterEnding();
+    if (a === 'title') await titleScreen();
+    return;
+  }
+}
+
+/** The fifth night's end (`#drone` shows it now): Kit wakes Juno in the white, everyone's on the roofs, and the drone goes over toward the lake. */
+async function droneDay(): Promise<void> {
+  sound.music('none');
+  await ui.fade(true, 0);
   await setTime(6 * 60 + 50);
   await go(SPAN, 'seven-flags:home');
   await bringCast(cur);
-  await ui.fade(true, 0);
   player.dir = 'N';
   if (kitActor) { kitActor.place(player.x + 1.4, cur.area.ground(player.x + 1.4, player.z + 0.5), player.z + 0.5); kitActor.dir = 'W'; }
   if (panchaActor) panchaActor.place(player.x + 4, cur.area.ground(player.x + 4, player.z + 1.6), player.z + 1.6);
@@ -1329,18 +1372,14 @@ async function ending(): Promise<void> {
   await ui.fade(false, 1100);
   await run('fall');
   await sleep(900);
-  if (!S.pages.includes('last')) S.pages.push('last');
   ui.endTalk();
   sound.music('intro');
-  for (;;) {
-    const a = await hud.endCard();
-    if (a === 'read') { await hud.openBook(PAGES as Record<string, Page>, S.pages, 'last', true); continue; }
-    await afterEnding();
-    if (a === 'title') await titleScreen();
-    return;
-  }
+  const a = await hud.endCard('Day five', 'Nothing ever comes down');
+  if (a === 'read') hud.hideCard();
+  await afterEnding();
+  if (a === 'title') await titleScreen();
 }
-/** First mission complete: the next Lamp, Kit and Pancha with you, the Span yours to walk. */
+/** After an ending: the next Lamp, Kit and Pancha with you, Seven Flags yours to walk. */
 async function afterEnding(): Promise<void> {
   dropDrone();
   camHold = null; camZoomTo = 1;

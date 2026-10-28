@@ -246,7 +246,7 @@ first version down beat by beat and rule by rule; this piece ports all of it.
   - the drain (the Stray and the coyote, page 5, the fight; Kit joins and
     Pancha follows);
   - home before Shutter: the doors seal, the drone crosses the white sky,
-    the last page, the end card;
+    the last page, the end card (since piece 7: a quiet ending; the drone waits for day five);
   - free roam.
 - **The first version's rules:**
   - daylight away from a roof costs a drop of water every 3.5 s;
@@ -294,6 +294,16 @@ edge is *"a physical barrier, or a person who talks to you and turns you back."*
     Juno walks back (NPC `guard`). The road north is where the caravan leaves, later.
   - **The check:** `__LN.edgeIssues()` walks out from Juno over every map and lists anywhere she can reach past a
     map's edge or onto a road to a map not built. It's empty, and the playtests assert it.
+- **Night one ends quietly** (the Complete Story File's night one):
+  - Memo's bell rings far off, Kit says what Shutter is and runs home with Pancha;
+  - inside, Juno sits by Papá's chair while the light under the door turns white;
+  - she sleeps, and the card reads *Night one: Given to the Sun*.
+- **The drone comes down on day five** (the owner, 2026-10-28: *"it's what changes the dynamic the first 5 nights
+  have established"*). The flyover is kept whole for the end of night five (`droneDay` in `main.ts`, `#drone` to
+  see it now). The story file had it at the end of night three, with NIM found on night four.
+  - **Open:** night three's search for Güero, where the drone passes over, and the White Bowl and the Choice
+    (nights four and five in the story file) move after it. How the nights are reshaped is for the owner.
+- On screen the town is **Seven Flags**: the objective reads *Seven Flags · Night one*.
 - **Saves are v2** (rule 8): `conds` and `sunTime`; a v1 save loads clean of both.
 - **Checks:**
   - Playtests: the edge check, the barriers east, and Chuy turning Juno back.

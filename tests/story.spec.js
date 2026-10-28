@@ -105,7 +105,7 @@ test('the drain: the Stray and the coyote, the fight, and Kit comes along', asyn
   expect(errors).toEqual([]);
 });
 
-test('home before Shutter: the doors seal, the drone crosses the white sky, and the Span is yours', async ({ page }, info) => {
+test('home before Shutter: Memo\'s bell, Kit runs home, the empty chair, and Seven Flags is yours', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
   test.setTimeout(900_000);
   const errors = watchErrors(page);
@@ -116,11 +116,27 @@ test('home before Shutter: the doors seal, the drone crosses the white sky, and 
   await until(page, () => window.__LN.talking);
   await readThrough(page, (s) => s.card);
   await expect(page.locator('.end-card.on .menu-item').first()).toHaveText('Read the last page');
+  await expect(page.locator('.end-card.on h2')).toHaveText('Night one');
+  expect(await page.evaluate(() => window.__LN.areaId)).toBe('mar-home');
   expect((await ln(page, 'state')).pages).toContain('last');
   await page.screenshot({ path: info.outputPath('end-card.png') });
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await until(page, () => window.__LN.mode === 'play' && window.__LN.step === 'free' && !window.__LN.busy, undefined, 300_000);
   await expect(page.locator('.objective.on')).toContainText('yours to explore');
+  expect(errors).toEqual([]);
+});
+
+test('the fifth day: Kit wakes Juno in the white and the drone goes over toward the lake (#drone)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await page.goto(`${GAME}#drone`);
+  await until(page, () => window.__LN && window.__LN.ready, undefined, 120_000);
+  await until(page, () => window.__LN.talking, undefined, 300_000);
+  await readThrough(page, (s) => s.card);
+  await until(page, () => !!document.querySelector('.end-card.on'), undefined, 120_000);
+  await expect(page.locator('.end-card.on h2')).toHaveText('Day five');
+  await page.screenshot({ path: info.outputPath('drone-card.png') });
   expect(errors).toEqual([]);
 });

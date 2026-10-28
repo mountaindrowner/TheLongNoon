@@ -285,6 +285,7 @@ export function marHome(l: RoomLinks): AreaBuilder {
         { x: 12.8, z: 4.2, r: 1.4, label: 'Counter', lines: ['The counter. A clean square in the dust, where a book sat for a long time.'] },
         { x: 5.0, z: 2.4, r: 1.6, label: 'Shelves', lines: ['Store shelves. Nothing on them but jars of seed, labeled by hand.'] },
         { x: 4.1, z: 8.6, r: 1.2, label: 'Cot', script: 'cot', lines: ['The blanket is folded. Nobody has slept here in a while.'] },
+        { x: 12.4, z: 4.9, r: 1.0, label: 'Papá’s chair', lines: ['Papá’s chair, still facing the door.', 'He slept in it at the end. Never in the bed.'] },
       );
       d.built.push({ update(t) { stove.emissiveIntensity = 2.5 * (0.85 + Math.sin(t * 6.1) * 0.1 + Math.sin(t * 13.3) * 0.05); } });
     },

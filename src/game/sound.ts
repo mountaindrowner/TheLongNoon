@@ -146,6 +146,8 @@ export class Sound {
     s.connect(f); f.connect(g); g.connect(o.dest ?? this.out(o.pan));
     s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
   }
+  /** Memo's bell at the east barricade: a few slow strokes, far off. */
+  bell(): void { for (let i = 0; i < 4; i++) setTimeout(() => this.metal(420, 0.035, 2.4), i * 1100); }
   private metal(base: number, vol: number, dur: number): void {
     [1, 2.27, 3.81, 5.24, 6.71].forEach((r, i) => this.tone('sine', base * r, base * r * 0.995, dur * (1 - i * 0.12), vol / (1 + i * 0.6)));
     this.noise(0.02, vol * 1.2, { type: 'highpass', f: 4000 });
