@@ -40,6 +40,14 @@ const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pan
 const ANIM = {
   idle: { template: 'breathing-idle', fps: 5 },
   walk: { template: 'walking-8-frames', fps: 11 },
+  run: { template: 'running-8-frames', fps: 14 },
+  // the fight (the main characters): a stance between turns, a blow, a hit taken, a fall, a drink of water
+  stance: { template: 'fight-stance-idle-8-frames', fps: 8 },
+  attack: { template: 'attack', fps: 12 },
+  throw: { template: 'throw-object', fps: 12 },
+  hurt: { template: 'taking-punch', fps: 10 },
+  down: { template: 'falling-back-death', fps: 10 },
+  drink: { template: 'drinking', fps: 8 },
 };
 const CUSTOM = {
   stray: { idle: 'idle: rocking slightly on its six wheels, the red eye pulsing', walk: 'rolling forward on its six wheels, chassis bobbing' },

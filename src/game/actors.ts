@@ -103,6 +103,14 @@ export class Actor {
   private dim = 1;
   /** Battle staging: a rotation picked for the battle camera (any of eight), or null in play. */
   private posed: string | null = null;
+  /** Moving fast (the run, where one is drawn). */
+  running = false;
+  /** In a fight: the stance between turns, where one is drawn. */
+  stance = false;
+  /** A move played once (a blow, a hit taken, a fall), with when it started and what to do at its end. */
+  private once: { name: string; t: number; hold: boolean; done: () => void } | null = null;
+  /** Wall-clock seconds, for moves played once. */
+  private lt = 0;
 
   private constructor(tex: THREE.Texture, private readonly W: number, private readonly H: number, private readonly src: Source, fw: number, fh: number, k: number, bottom: number, tint: THREE.Color, shadowR: number) {
     this.tex = tex;
@@ -159,14 +167,15 @@ export class Actor {
     const src = this.src;
     if (src.kind === 'cast') {
       const m = src.meta;
-      if (this.posed) { const [r, c] = m.still[this.posed] ?? m.still[this.posed.split('-')[0]!] ?? m.still.south!; this.cell(c * m.w, r * m.h, m.w, m.h); return; }
-      const anim = this.dim < 1 ? undefined : m.anims[this.moving ? 'walk' : 'idle'];
+      const name = this.animName();
+      const anim = name ? m.anims[name] : undefined;
       if (anim) {
-        const want = NAME[this.dir];
-        const row = anim.rows[want] ?? (this.dir === 'W' ? anim.rows.east : undefined);
+        // animations are drawn in four directions; a battle camera's diagonal plays the side it's nearest
+        const want = this.posed ? (this.posed.includes('east') ? 'east' : this.posed.includes('west') ? 'west' : this.posed) : NAME[this.dir];
+        const row = anim.rows[want] ?? (want === 'west' ? anim.rows.east : undefined);
         if (row !== undefined) { this.cell((col % anim.frames) * m.w, row * m.h, m.w, m.h, anim.rows[want] === undefined); return; }
       }
-      const [r, c] = m.still[NAME[this.dir]] ?? m.still.south!;
+      const [r, c] = m.still[this.posed ?? NAME[this.dir]] ?? m.still[(this.posed ?? '').split('-')[0]!] ?? m.still.south!;
       this.cell(c * m.w, r * m.h, m.w, m.h);
       return;
     }
@@ -207,18 +216,51 @@ export class Actor {
     this.root.position.set(x, y, z);
   }
 
+  /** Which drawn animation plays now, if any: a move played once, the run or walk, the fight stance, the idle. */
+  private animName(): string | null {
+    const src = this.src;
+    if (src.kind !== 'cast' || this.dim < 1) return null;
+    const a = src.meta.anims;
+    if (this.once) return this.once.name;
+    if (this.moving) return this.running && a.run ? 'run' : a.walk ? 'walk' : null;
+    if (this.stance && a.stance) return 'stance';
+    return a.idle ? 'idle' : null;
+  }
+
+  /** Whether this figure has a move drawn. */
+  has(name: string): boolean { return this.src.kind === 'cast' && !!this.src.meta.anims[name]; }
+
+  /** Play a drawn move once (a blow, a hit taken, a fall); `hold` keeps its last frame (a fall stays down). Resolves at its end. */
+  play(name: string, hold = false): Promise<void> {
+    if (!this.has(name)) return Promise.resolve();
+    this.once?.done();
+    return new Promise((done) => { this.once = { name, t: this.lt, hold, done }; this.frame(0); });
+  }
+  /** Back up from a held move. */
+  release(): void { const o = this.once; this.once = null; o?.done(); }
+
   animate(dt: number, speed = 1): void {
     this.t += dt * speed;
+    this.lt += dt;
     const src = this.src;
-    if (this.posed) { this.body.scale.y = 1 + Math.sin(this.t * 2.2) * 0.012; return; }
     if (src.kind === 'cast') {
-      const anim = src.meta.anims[this.moving ? 'walk' : 'idle'];
-      this.frame(anim ? Math.floor(this.t * anim.fps) : 0);
-      // no walk drawn: step with a small bob; no idle drawn: a slow breath (spec §13.4)
-      this.body.position.y = this.moving && !src.meta.anims.walk ? Math.abs(Math.sin(this.t * 9)) * 0.05 : 0;
+      const name = this.animName();
+      const anim = name ? src.meta.anims[name] : undefined;
+      let col = anim ? Math.floor(this.t * anim.fps) : 0;
+      if (this.once && anim) {
+        col = Math.floor((this.lt - this.once.t) * anim.fps);
+        if (col >= anim.frames) {
+          col = anim.frames - 1;
+          if (!this.once.hold) { const o = this.once; this.once = null; o.done(); col = 0; }
+        }
+      }
+      this.frame(col);
+      // nothing drawn: step with a small bob, or breathe slowly (spec §13.4)
+      this.body.position.y = this.moving && !anim ? Math.abs(Math.sin(this.t * 9)) * 0.05 : 0;
       this.body.scale.y = !this.moving && !anim && this.dim === 1 ? 1 + Math.sin(this.t * 2.2) * 0.012 : 1;
       return;
     }
+    if (this.posed) { this.body.scale.y = 1 + Math.sin(this.t * 2.2) * 0.012; return; }
     if (src.frames) {
       this.frame(this.moving ? Math.floor(this.t * 6) : 0);
       this.body.scale.y = 1;

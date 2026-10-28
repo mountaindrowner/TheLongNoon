@@ -22,7 +22,7 @@ SRC = os.path.join(ROOT, 'assets/cast')
 OUT = os.path.join(ROOT, 'src/assets/cast')
 CAST = json.load(open(os.path.join(ROOT, 'tools/cast.json')))['cast']
 STILL = ['south', 'east', 'north', 'west', 'south-east', 'north-east', 'north-west', 'south-west']
-FPS = {'idle': 5, 'walk': 11}
+FPS = {'idle': 5, 'walk': 11, 'run': 14, 'stance': 8, 'attack': 12, 'throw': 12, 'hurt': 10, 'down': 10, 'drink': 8}
 
 
 def frames_in(d):
@@ -31,17 +31,35 @@ def frames_in(d):
     return [os.path.join(d, f) for f in sorted(fs, key=lambda f: int(re.findall(r'\d+', f)[-1]) if re.findall(r'\d+', f) else 0)]
 
 
+def names_for(char):
+    """Our names for PixelLab's animation folders: PixelLab files an animation under its template (or its
+    text), not the name we asked for, so map them back through the request records in prompt.json."""
+    p = os.path.join(os.path.dirname(char), 'prompt.json')
+    anims = json.load(open(p)).get('anims', {}) if os.path.exists(p) else {}
+    out = {}
+    for name, info in anims.items():
+        body = info.get('body', {})
+        for key in (body.get('template_animation_id'), body.get('action_description'), name):
+            if key:
+                out[re.sub(r'[^a-z0-9]+', '-', key.lower()).strip('-')] = name
+    return out
+
+
 def animations(char):
-    """{name: {dir: [frame paths]}}: PixelLab names each animation's folder after the animation."""
+    """{name: {dir: [frame paths]}}, by our names (idle, walk, run, stance, attack, ...)."""
     out = {}
     root = os.path.join(char, 'animations')
     if not os.path.isdir(root):
         return out
+    known = names_for(char)
     for folder in sorted(os.listdir(root)):
         p = os.path.join(root, folder)
         if not os.path.isdir(p):
             continue
-        name = 'walk' if 'walk' in folder.lower() else 'idle' if ('idle' in folder.lower() or 'breath' in folder.lower()) else folder
+        slug = re.sub(r'[^a-z0-9]+', '-', folder.lower()).strip('-')
+        name = known.get(slug) or next((n for k, n in known.items() if k and (slug.startswith(k) or k.startswith(slug))), None)
+        if not name:
+            name = 'walk' if 'walk' in slug else 'idle' if ('idle' in slug or 'breath' in slug) else slug
         dirs = {d: frames_in(os.path.join(p, d)) for d in os.listdir(p) if os.path.isdir(os.path.join(p, d))}
         dirs = {d: f for d, f in dirs.items() if f}
         if dirs:

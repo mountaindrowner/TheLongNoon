@@ -9,7 +9,13 @@
       "kind": "person",
       "anims": [
         "idle",
-        "walk"
+        "walk",
+        "run",
+        "stance",
+        "attack",
+        "hurt",
+        "down",
+        "drink"
       ],
       "desc": "Juno, a teenage girl of about sixteen, the hero: long dark-brown hair in two low tails, rust-red work jacket with a white scarf at the neck, dark patched trousers, worn boots, a canvas satchel with a small battered notebook, a length of steel pipe at her belt, steady watchful face"
     },
@@ -17,7 +23,12 @@
       "kind": "person",
       "anims": [
         "idle",
-        "walk"
+        "walk",
+        "run",
+        "stance",
+        "throw",
+        "hurt",
+        "down"
       ],
       "desc": "Kit, a skinny boy of about twelve, Juno's friend: spiky black hair with teal goggles pushed up on his head, mustard-yellow shirt, tan trousers, a homemade sling in his back pocket, eager talkative grin"
     },

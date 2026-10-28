@@ -15,6 +15,22 @@
     "template_id": "mannequin"
   },
   "character_id": "01918729-36b5-4008-92c5-214a29af2012",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "6ed540f3-117d-48d6-9b5a-319f9b37c377",
+      "fps": 5,
+      "body": {
+        "character_id": "01918729-36b5-4008-92c5-214a29af2012",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-27T20:22:45.262Z"
 }

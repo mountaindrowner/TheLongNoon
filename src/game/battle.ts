@@ -44,6 +44,10 @@ export interface FightWorld {
   onAct?(who: Actor, target: Actor): void;
   /** A turn begins: the party's, or the enemy's (the stage can frame each side its own way). */
   onTurn?(side: 'party' | 'foe', who: Actor): void;
+  /** Someone takes a hit (and whether it put them down). */
+  onHurt?(who: Actor, down: boolean): void;
+  /** Someone drinks water. */
+  onDrink?(who: Actor): void;
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -270,6 +274,7 @@ export class Fight {
       if (c === 'brace') { u.brace = true; this.w.sound.brace(); this.renderParty(null); await this.say(`${u.name} braces.`, 700); return; }
       if (c === 'drink') {
         s.water--;
+        this.w.onDrink?.(u.actor);
         u.hp = Math.min(u.max, u.hp + 16);
         this.float(u.actor, '+16', 'good');
         this.w.sound.gulp(); setTimeout(() => this.w.sound.heal(), 300);
@@ -322,6 +327,7 @@ export class Fight {
       if (r === 'parry') d = Math.round(d * 0.2);
       if (t.brace) d = Math.round(d * 0.5);
       t.hp = Math.max(0, t.hp - d);
+      this.w.onHurt?.(t.actor, t.hp === 0);
       this.flash(t.actor); this.shake(t.actor);
       this.float(t.actor, String(d), r === 'parry' ? 'small' : '');
     }

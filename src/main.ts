@@ -398,6 +398,7 @@ function frame(): void {
       const px = area.blocked(nx, player.z, 0.28) ? player.x : nx;
       const pz = area.blocked(px, nz, 0.28) ? player.z : nz;
       player.face(m.x, m.z);
+      player.running = m.run;
       player.place(px, area.ground(px, pz), pz);
       trailPush();
       if ((stepAge += dt * (m.run ? 1.6 : 1)) > 0.29) { stepAge = 0; footstep(); }
@@ -840,6 +841,7 @@ function follow(dt: number): void {
     const [tx, tz] = trail[Math.max(0, trail.length - 1 - back)] ?? [player.x, player.z];
     const dx = tx - a.x, dz = tz - a.z, d = Math.hypot(dx, dz);
     a.moving = d > 0.04;
+    a.running = a.moving && (player.running || d > 1.2); // keeping up: runs when Juno runs, or when left behind
     if (a.moving) { const st = Math.min(d, RUN * 1.15 * dt), x = a.x + (dx / d) * st, z = a.z + (dz / d) * st; a.face(dx, dz); a.place(x, cur.area.ground(x, z), z); }
     a.animate(dt);
   };
@@ -858,7 +860,14 @@ const fight = new Fight(ui.root, {
   blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
   dead() { (cur.area as Region).dropLamps('stray'); },
   touch: touchUI(),
-  onAct: (who, target) => { if (who === player || who === kitActor) cutTo(who, target); },
+  onAct: (who, target) => {
+    if (who !== player && who !== kitActor) return;
+    cutTo(who, target);
+    // the blow itself: Juno swings the pipe, Kit lets the sling go
+    void who.play(who.has('throw') ? 'throw' : 'attack');
+  },
+  onHurt: (who, down) => { void who.play(down ? 'down' : 'hurt', down); },
+  onDrink: (who) => { void who.play('drink'); },
   onTurn: (side) => {
     if (!staged?.director) return;
     // being attacked: the hero shot, low behind the enemy, for the whole of its turn; back to the rotation after
@@ -977,7 +986,7 @@ function stageFight(st: Staging): void {
   Object.assign(direct, { rot: 0, next: performance.now() + DIRECTOR.every, hold: null, quick: 0 });
   const g = (x: number, z: number): number => cur.area.ground(x, z);
   const party = [player, kitActor].filter((a): a is Actor => !!a);
-  party.forEach((a, i) => { const [x, z] = stageAt(st.party[i]!); a.place(x, g(x, z), z); });
+  party.forEach((a, i) => { const [x, z] = stageAt(st.party[i]!); a.place(x, g(x, z), z); a.stance = true; a.moving = false; });
   foes.forEach((a, i) => { const [x, z] = stageAt(st.foes[i]!); a.place(x, g(x, z), z); });
   // the Stray's one red eye goes where the Stray is
   (cur.area as Region).dropLamps('stray');
@@ -988,7 +997,7 @@ function stageFight(st: Staging): void {
   (cur.area as Region).addLamp({ pos: new THREE.Vector3(CENTRE.x - 1, y + 4.6, CENTRE.z + 1.2), color: new THREE.Color('#b8c6ff'), intensity: 5, dist: 14, flicker: 0, tag: 'stage' });
 }
 function unstage(): void {
-  for (const a of [player, kitActor, ...foes]) a?.pose(null);
+  for (const a of [player, kitActor, ...foes]) { a?.pose(null); if (a) { a.stance = false; a.release(); } }
   staged = null; stageCut = null;
   ui.root.classList.remove('fighting');
   letterbox.classList.remove('on');
