@@ -30,6 +30,21 @@
           "west"
         ]
       }
+    },
+    "walk": {
+      "animation_group_id": "f45b31d2-2e1d-4ad8-a55a-4eed9a000e48",
+      "fps": 11,
+      "body": {
+        "character_id": "68d22ea1-a34d-4658-9fe1-fec02b6c8ad7",
+        "template_animation_id": "walk-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
     }
   },
   "at": "2026-10-27T21:23:01.907Z"

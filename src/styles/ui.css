@@ -37,10 +37,11 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
 .prompt.on { opacity: 1; }
 .prompt b { display: grid; place-items: center; width: 22px; height: 22px; background: var(--gold); color: var(--ink); font-size: 14px; }
 
-/* dialogue: the speaker's own sprite stands at the right, tucked behind the panel */
+/* dialogue: the speaker's bust portrait (or their own sprite) stands at the right, tucked behind the panel */
 .dlg { z-index: 11; position: absolute; left: 50%; bottom: 18px; width: min(860px, calc(100% - 32px)); transform: translate(-50%, 12px); opacity: 0; transition: opacity 0.18s, transform 0.18s; pointer-events: none; }
 .dlg.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 .dlg-portrait { position: absolute; right: 18px; bottom: 40px; height: 210px; image-rendering: pixelated; z-index: 0; filter: drop-shadow(0 6px 0 rgba(0,0,0,0.35)); }
+.dlg-portrait.bust { height: 256px; bottom: 30px; right: 4px; }
 .dlg-panel { position: relative; z-index: 1; min-height: 112px; padding: 16px 200px 18px 22px; }
 .dlg.narr .dlg-panel { padding-right: 22px; }
 .dlg-name { font-family: 'Cormorant SC', serif; font-weight: 700; font-size: 22px; letter-spacing: 0.05em; color: var(--lamp); margin-bottom: 4px; }
@@ -259,6 +260,7 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
   .dlg { bottom: 8px; width: calc(100% - 140px); left: calc(50% - 50px); }
   .dlg-panel { min-height: 76px; padding: 9px 120px 11px 14px; }
   .dlg-portrait { height: 120px; bottom: 24px; right: 8px; }
+  .dlg-portrait.bust { height: 128px; bottom: 30px; right: 0; }
   .dlg-name { font-size: 17px; } .dlg-text { font-size: 16px; }
   .tc-title { font-size: 40px; } .tc-sub { font-size: 15px; } .title-card { top: 14%; }
   .hint { top: 52px; font-size: 14px; }

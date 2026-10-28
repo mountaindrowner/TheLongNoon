@@ -40,8 +40,8 @@ export interface FightWorld {
   /** A machine gone still (its eye's light out). */
   dead(f: Actor): void;
   touch: boolean;
-  /** Someone acts on someone: the stage can cut the camera to it. */
-  onAct?(who: Actor, target: Actor): void;
+  /** Someone acts on someone (a blow, a shot, a spark): the stage can cut the camera to it and play the move. */
+  onAct?(who: Actor, target: Actor, move?: 'spark'): void;
   /** A turn begins: the party's, or the enemy's (the stage can frame each side its own way). */
   onTurn?(side: 'party' | 'foe', who: Actor): void;
   /** Someone takes a hit (and whether it put them down). */
@@ -299,6 +299,7 @@ export class Fight {
     const dmg = Math.max(1, Math.round((u.atk + ri(0, 2)) * mult));
     part.hp = Math.max(0, part.hp - dmg);
     this.flash(f.actor); this.shake(f.actor);
+    this.w.onHurt?.(f.actor, false);
     if (part.armor && !brk) this.w.sound.clang(); else this.w.sound.thud();
     this.float(f.actor, String(dmg), brk ? 'brk' : '');
     this.renderParty(null);
@@ -320,7 +321,7 @@ export class Fight {
 
   private async hit(f: Foe, targets: Unit[], base: number, kind: 'spark' | 'lunge' | 'ram'): Promise<void> {
     const r = await this.qte(targets[0]!.actor);
-    if (kind === 'spark') { this.w.sound.zap(); for (let i = 0; i < 3; i++) { for (const t of targets) this.flash(t.actor); await sleep(90); } }
+    if (kind === 'spark') { this.w.onAct?.(f.actor, targets[0]!.actor, 'spark'); this.w.sound.zap(); for (let i = 0; i < 3; i++) { for (const t of targets) this.flash(t.actor); await sleep(90); } }
     else await this.lunge(f.actor, targets[0]!.actor, 0.6);
     for (const t of targets) {
       let d = base;

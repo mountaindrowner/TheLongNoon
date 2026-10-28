@@ -42,7 +42,8 @@
     "rows": {
      "south": 1,
      "east": 2,
-     "north": 3
+     "north": 3,
+     "west": 4
     },
     "frames": 4
    }
@@ -430,7 +431,27 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 4,
+     "east": 5,
+     "north": 6,
+     "west": 7
+    },
+    "frames": 8
+   }
+  }
  },
  "goat2": {
   "w": 64,
@@ -469,7 +490,27 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 4,
+     "east": 5,
+     "north": 6,
+     "west": 7
+    },
+    "frames": 8
+   }
+  }
  },
  "goat3": {
   "w": 64,
@@ -508,7 +549,28 @@
     7
    ]
   },
-  "anims": {}
+  "anims": {
+   "idle": {
+    "fps": 5,
+    "rows": {
+     "south": 1,
+     "east": 2,
+     "north": 3,
+     "west": 4
+    },
+    "frames": 8
+   },
+   "walk": {
+    "fps": 11,
+    "rows": {
+     "south": 5,
+     "east": 6,
+     "north": 7,
+     "west": 8
+    },
+    "frames": 8
+   }
+  }
  },
  "hauler": {
   "w": 64,
@@ -961,7 +1023,8 @@
     "rows": {
      "south": 1,
      "east": 2,
-     "north": 3
+     "north": 3,
+     "west": 4
     },
     "frames": 4
    }
@@ -1366,7 +1429,8 @@
     "rows": {
      "south": 1,
      "east": 2,
-     "north": 3
+     "north": 3,
+     "west": 4
     },
     "frames": 4
    }
@@ -1415,7 +1479,8 @@
     "rows": {
      "south": 1,
      "east": 2,
-     "north": 3
+     "north": 3,
+     "west": 4
     },
     "frames": 4
    }

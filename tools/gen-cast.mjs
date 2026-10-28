@@ -5,6 +5,7 @@
  *   PIXELLAB_API_KEY=… node tools/gen-cast.mjs juno            # the anchor first: look at her before going on
  *   PIXELLAB_API_KEY=… node tools/gen-cast.mjs                 # everyone not made yet
  *   PIXELLAB_API_KEY=… node tools/gen-cast.mjs kit --anims     # then their idles and walks
+ *   PIXELLAB_API_KEY=… node tools/gen-cast.mjs --portraits     # bust portraits for the dialogue box (the speakers)
  *   node tools/gen-cast.mjs --plan                             # what it would make and roughly what it costs
  *
  * Who's who and how they're described: tools/cast.json (reviewed in docs/design/cast.md).
@@ -32,7 +33,7 @@ const want = ids.length ? ids : Object.keys(C.cast);
 for (const id of want) if (!C.cast[id]) throw new Error(`no ${id} in tools/cast.json`);
 
 // rough generation costs (§13.2: about 10 per 8-direction figure; template animations 1 per direction)
-const COST = { figure: 15, template: 4, custom: 4 };
+const COST = { figure: 15, template: 4, custom: 4, portrait: 17 };
 // animations in four directions (the owner, 2026-10-27): front, back and both sides
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
@@ -189,7 +190,42 @@ async function animate(id) {
   return `${id}: animated (${C.cast[id].anims.join(', ')})`;
 }
 
+/** A bust portrait for the dialogue box, drawn by PixelLab from the figure's front still (character_to_portrait).
+ *  Raw output in assets/cast/<id>/portrait.png; the game's copy in src/assets/cast/portraits/<id>.png. */
+const SPEAKERS = ['juno', 'kit', 'lupe', 'chayo', 'beto', 'ruben', 'tavo', 'nacho', 'fina', 'memo', 'nina', 'tona', 'elias', 'rosa', 'kidjuno'];
+async function portrait(id) {
+  const front = join(OUT, id, 'character/rotations/south.png');
+  const start = await api('/portrait-character-pro', {
+    direction: 'character_to_portrait', view: 'low top-down', result_size: 128,
+    image: { base64: `data:image/png;base64,${readFileSync(front).toString('base64')}` },
+  });
+  const done = await job(start.background_job_id ?? start.job_id ?? start.id);
+  const img = JSON.stringify(done).match(/data:image\/png;base64,([A-Za-z0-9+/=]+)|"base64":"([A-Za-z0-9+/=]+)"/);
+  if (!img) throw new Error(`${id}: no image in ${JSON.stringify(done).slice(0, 300)}`);
+  const png = Buffer.from(img[1] ?? img[2], 'base64');
+  writeFileSync(join(OUT, id, 'portrait.png'), png);
+  mkdirSync(join(ROOT, 'src/assets/cast/portraits'), { recursive: true });
+  writeFileSync(join(ROOT, 'src/assets/cast/portraits', `${id}.png`), png);
+  const rec = made(id);
+  rec.portrait = { endpoint: 'v2/portrait-character-pro', direction: 'character_to_portrait', result_size: 128, at: new Date().toISOString() };
+  writeFileSync(join(OUT, id, 'prompt.json'), JSON.stringify(rec, null, 2));
+  return `${id}: portrait`;
+}
+
 // ------------------------------------------------------------------ the plan, or the work
+if (flag('--portraits')) {
+  const who = (ids.length ? ids : SPEAKERS).filter((id) => made(id) && (flag('--force') || !existsSync(join(OUT, id, 'portrait.png'))));
+  console.log(`portraits: ${who.join(', ') || 'nothing'}`);
+  if (flag('--plan') || !who.length) process.exit(0);
+  if (!KEY) throw new Error('set PIXELLAB_API_KEY (the environment\'s secrets, not the chat)');
+  const before = await balance();
+  if (before - who.length * COST.portrait < FLOOR) throw new Error(`would go under the floor of ${FLOOR}`);
+  for (let i = 0; i < who.length; i += 3) {
+    for (const r of await Promise.allSettled(who.slice(i, i + 3).map(portrait))) console.log(r.status === 'fulfilled' ? r.value : `FAILED ${r.reason.message ?? r.reason}`);
+  }
+  console.log(`used ${before - (await balance())}`);
+  process.exit(0);
+}
 // the look is locked on the anchor (docs/design/cast.md): she's never remade by accident
 if (flag('--force') && want.includes(C.anchor) && !flag('--remake-anchor')) throw new Error(`${C.anchor} is the style anchor for the whole cast; remaking her needs the owner, and --remake-anchor`);
 const todo = want.filter((id) => flag('--anims') ? made(id) : flag('--force') || !made(id));

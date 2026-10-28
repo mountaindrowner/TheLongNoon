@@ -45,6 +45,8 @@ export class UI {
     this.prompt = el('div', 'prompt', this.root);
     this.box = el('div', 'dlg', this.root);
     this.portrait = el('img', 'dlg-portrait', this.box);
+    // a drawn bust portrait (square, 128 or 160 px) is shown at whole-pixel scale; a figure card at its own size
+    this.portrait.onload = () => { const i = this.portrait; this.portrait.classList.toggle('bust', i.naturalWidth === i.naturalHeight && i.naturalWidth <= 160); };
     const panel = el('div', 'dlg-panel', this.box);
     this.plate = el('div', 'dlg-name', panel);
     this.text = el('div', 'dlg-text', panel);

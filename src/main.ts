@@ -860,8 +860,9 @@ const fight = new Fight(ui.root, {
   blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
   dead() { (cur.area as Region).dropLamps('stray'); },
   touch: touchUI(),
-  onAct: (who, target) => {
-    if (who !== player && who !== kitActor) return;
+  onAct: (who, target, move) => {
+    // a foe's move: the Stray's spark, or a ram or a bite
+    if (who !== player && who !== kitActor) { void who.play(move && who.has(move) ? move : 'attack'); return; }
     cutTo(who, target);
     // the blow itself: Juno swings the pipe, Kit lets the sling go
     void who.play(who.has('throw') ? 'throw' : 'attack');
