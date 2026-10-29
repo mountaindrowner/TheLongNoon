@@ -1,0 +1,30 @@
+{
+  "_": "Side stories (the owner, 2026-10-28: quests that lead to the new areas, and quests found there). Each runs on flags; the first stage whose `when` holds is shown under the night's objective, and its marker is used when the night has none. `marker` is a person (npc:id) or a scripted thing (i:id); `at` is where to point when that isn't built yet (region coordinates).",
+  "flour": {
+    "title": "Mesquite Flour",
+    "stages": [
+      { "when": "q_flour&!flour_given", "obj": "Take Chayo's sack up the Old Trail to Doña Marta at the church", "marker": "npc:marta", "at": [274, 4.6] },
+      { "when": "flour_given&!q_flour_done", "obj": "Tell Doña Chayo the sack got there", "marker": "npc:chayo", "at": [81.9, 207.9] }
+    ]
+  },
+  "bell": {
+    "title": "The Bell",
+    "stages": [
+      { "when": "q_bell&!bell_got", "obj": "Find the church's bell at the mall, south-west of town", "marker": "npc:scav", "at": [24, 284] },
+      { "when": "bell_got&!bell_hung", "obj": "Bring the bell up the hill to Benny", "marker": "npc:benny", "at": [267.6, -16.2] }
+    ]
+  },
+  "neto": {
+    "title": "Gray",
+    "stages": [
+      { "when": "q_neto&!neto_met", "obj": "Take Rubén's jug of water to his brother at the mall", "marker": "npc:scav", "at": [24, 284] },
+      { "when": "neto_met&!q_neto_done", "obj": "Tell Rubén what you found", "marker": "npc:ruben", "at": [96.5, 203.4] }
+    ]
+  },
+  "shop": {
+    "title": "Open for Business",
+    "stages": [
+      { "when": "q_shop&!shop_done", "obj": "See what's behind the one grille that's up", "marker": "i:grille", "at": [24, 284] }
+    ]
+  }
+}

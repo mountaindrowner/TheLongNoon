@@ -140,3 +140,68 @@ test('the fifth day: Kit wakes Juno in the white and the drone goes over toward 
   await page.screenshot({ path: info.outputPath('drone-card.png') });
   expect(errors).toEqual([]);
 });
+
+/** Stand at (x, z) facing (fx, fz), wait for the prompt to name `who`, and hear it out (first choice each time). */
+async function talkAt(page, x, z, fx, fz, who) {
+  await page.evaluate(async ([x, z, fx, fz]) => { await window.__LN.tp(x, z); window.__LN.face(fx, fz); }, [x, z, fx, fz]);
+  // (a press left over from the last talk can start this one by itself)
+  await until(page, (w) => document.querySelector('.prompt.on')?.textContent.includes(w) || window.__LN.talking, who);
+  if (!(await ln(page, 'talking'))) await page.keyboard.press('KeyE');
+  await until(page, () => window.__LN.talking || window.__LN.scripting);
+  await readThrough(page);
+}
+async function inRoom(page, to, spawn) {
+  await page.evaluate(([to, spawn]) => window.__LN.go(to, spawn), [to, spawn]);
+  await until(page, (id) => window.__LN.areaId === id && window.__LN.mode === 'play' && !window.__LN.busy, to);
+}
+
+test('side stories: the flour to the church, Neto and the bell at the mall, and the shop behind the grille', async ({ page }, info) => {
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=free&time=night');
+  const flags = async () => (await ln(page, 'state')).flags;
+
+  // Chayo sends the flour up the Old Trail; the side story shows under the night's line
+  await talkAt(page, 81.9, 209.1, 0, -1, 'Doña Chayo');
+  expect((await flags()).q_flour).toBe(true);
+  expect((await ln(page, 'state')).items.flour).toBe(1);
+  await expect(page.locator('.obj-side')).toContainText('Doña Marta');
+  // Rubén gives his jug for his brother
+  await talkAt(page, 96.5, 204.6, 0, -1, 'Rubén');
+  expect((await flags()).q_neto).toBe(true);
+
+  // up the hill: Marta takes the sack; Benny tells of the bell
+  await talkAt(page, 274, 5.8, 0, -1, 'Doña Marta');
+  expect((await flags()).flour_given).toBe(true);
+  await talkAt(page, 267.6, -15, 0, -1, 'Benny');
+  expect((await flags()).q_bell).toBe(true);
+  await page.screenshot({ path: info.outputPath('church.png') });
+
+  // the mall: Neto first (the jug), then the bell for two tins of white
+  await page.evaluate(() => { window.__LN.state.white = 4; });
+  await inRoom(page, 'mall-court', 'door');
+  await talkAt(page, 16.2, 7.8, 1, 0, 'Scavenger');
+  expect((await flags()).neto_met).toBe(true);
+  await talkAt(page, 16.2, 7.8, 1, 0, 'Scavenger');
+  const s = await ln(page, 'state');
+  expect([s.flags.bell_got, s.items.bell, s.white]).toEqual([true, 1, 2]);
+  // the one grille that's up: under it, the toy store with the lights on
+  await talkAt(page, 16.7, 2.9, 0, -1, 'Grille');
+  await until(page, () => window.__LN.areaId === 'mall-shop' && window.__LN.mode === 'play' && !window.__LN.busy);
+  await talkAt(page, 10.6, 5.4, 0, -1, 'Keeper');
+  const s2 = await ln(page, 'state');
+  expect([s2.flags.shop_done, s2.items.cloud, s2.pages.includes('jcloud_a')]).toEqual([true, 1, true]);
+  await page.screenshot({ path: info.outputPath('shop.png') });
+
+  // home with the news: Rubén, then the bell to Benny, and it hangs in the arch
+  await inRoom(page, 'span', 'mall:court');
+  await talkAt(page, 96.5, 204.6, 0, -1, 'Rubén');
+  expect((await flags()).q_neto_done).toBe(true);
+  await talkAt(page, 81.9, 209.1, 0, -1, 'Doña Chayo');
+  expect((await flags()).q_flour_done).toBe(true);
+  await talkAt(page, 267.6, -15, 0, -1, 'Benny');
+  expect((await flags()).bell_hung).toBe(true);
+  expect(await page.evaluate(() => window.__LN.bellUp)).toBe(true);
+  await expect(page.locator('.obj-side')).toHaveText('');
+  expect(errors).toEqual([]);
+});

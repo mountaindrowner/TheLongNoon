@@ -187,6 +187,8 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
 .book .page::before { content: ''; position: absolute; left: 46px; top: 0; bottom: 0; width: 2px; background: rgba(170, 60, 50, 0.35); }
 .book .hand { white-space: pre-wrap; font-size: 34px; line-height: 34px; min-height: 160px; }
 .book .hand.dad { font-family: 'Permanent Marker', 'Marker Felt', cursive; font-size: 27px; letter-spacing: 0.02em; }
+.book .hand.juno { font-family: 'Caveat', 'Bradley Hand', cursive; color: #3a3632; font-size: 34px; font-weight: 400; }
+.obj-side { margin-top: 3px; font-size: 13px; color: var(--muted); } .obj-side:empty { display: none; }
 .book .hand.mom { font-family: 'Caveat', 'Bradley Hand', cursive; color: #253a66; font-size: 38px; font-weight: 500; }
 .book .teach { margin: 18px 0 0; font-size: 18px; color: #5a4e3c; border-top: 2px dashed rgba(90, 78, 60, 0.4); padding-top: 8px; }
 .book .pnum { position: absolute; right: 22px; top: 10px; font-family: 'Caveat', cursive; color: #6a5e4c; font-size: 24px; }
@@ -297,7 +299,7 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
   .st-hp { margin-top: 3px; } .st-hp .bar { width: 84px; height: 5px; } .st-hp span { font-size: 11px; } .cond { font-size: 10px; padding: 0 5px; }
   .drop { width: 7px; height: 7px; } .st-meter { margin-top: 3px; gap: 10px; } .st-white { font-size: 14px; }
   .objective { left: 10px; top: 56px; padding: 3px 10px 4px; max-width: 38vw; }
-  .obj-mission { font-size: 11px; } .obj-text { font-size: 13px; }
+  .obj-mission { font-size: 11px; } .obj-text { font-size: 13px; } .obj-side { font-size: 11px; }
   .toasts { top: 44px; } .toast { font-size: 14px; padding: 3px 12px 4px; }
   .warn { bottom: 96px; font-size: 14px; }
   .story-buttons { right: 96px; bottom: 18px; flex-direction: row; }

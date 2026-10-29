@@ -26,3 +26,5 @@ then health, people go in at Shutter, and a night ends when Juno sleeps.
 - **Night three's search for Güero.** In the story file, finding him in time ends with the drone gliding over
   them both. With the drone on day five, that search needs another ending.
 - **The side stories** stay open from night two until Juno leaves, as the story file has it.
+  Four are built (current-state piece 9): Mesquite Flour and Gray lead out to the church and the mall; The Bell
+  and Open for Business are found there. For now they open once night one's mission is done.

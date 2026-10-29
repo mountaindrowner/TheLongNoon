@@ -12,7 +12,7 @@ import type { Area, NPC, Spot, Thing } from './engine/area';
 import { Actor, variant } from './game/actors';
 import { Clock, fmtTime, parseClock } from './game/clock';
 import { Director, type Cmd, type Dialogue, type Script, type Stage } from './game/script';
-import { Hud, type Page } from './game/hud';
+import { Hud, PAGE_ORDER, type Page } from './game/hud';
 import { Tale } from './game/tale';
 import { campfire } from './game/fire';
 import { Sound } from './game/sound';
@@ -24,6 +24,7 @@ import { shadedFromSun, last as shadeLast } from './engine/shade';
 import DIALOGUE from './game/data/dialogue.json';
 import QUESTS from './game/data/quests.json';
 import PAGES from './game/data/pages.json';
+import STORIES from './game/data/stories.json';
 import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
 import { SPAN, START, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
@@ -154,7 +155,7 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
     for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
     region.onChange = (added, removed) => {
       if (removed) unpopulate(w, removed.id);
-      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); remember(added.things, added.npcs); }
+      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); remember(added.things, added.npcs); if (added.id === 'church') showBell(); }
     };
     for (const b of region.pieces) remember(b.things, b.npcs);
     void minimap.setRegion(region, at ?? region.spawns.start!);
@@ -274,6 +275,7 @@ async function go(to: string, spawn: string | Spot): Promise<void> {
   busy = false;
 }
 
+let lastPhase = '';
 let lastPiece = '';
 let shownMinute = -1;
 function showClock(): void {
@@ -468,6 +470,11 @@ function frame(): void {
 
   for (const p of cur.people) p.actor.animate(dt);
   if (cur.id === SPAN && time.phase === 'Shutter' && !fight.active) goingIn(dt);
+  // once the bell is home, Benny rings it at Lamp: heard on the hill and down the trail
+  if (time.phase !== lastPhase) {
+    if (lastPhase && time.phase === 'Lamp' && S.flags.bell_hung && cur.id === SPAN && ['church', 'trail'].includes(lastPiece)) sound.bell();
+    lastPhase = time.phase;
+  }
   follow(dt);
   if ((ambAge += dt) > 0.38) { ambAge = 0; ambience(); }
   for (const r of cur.roamers) {
@@ -532,6 +539,7 @@ const free = (): boolean => loaded && mode === 'play' && !busy && !ui.talking &&
 const PORTRAIT: Record<string, string> = {
   'Papá': 'elias', 'Mamá': 'rosa', 'Little Juno': 'kidjuno', 'Juno': 'juno', 'Kit': 'kit', 'Hermana Lupe': 'lupe', 'Doña Chayo': 'chayo', 'Don Beto': 'beto',
   'Rubén': 'ruben', 'Tavo': 'tavo', 'Abuelo Nacho': 'nacho', 'Doña Fina': 'fina', 'Memo': 'memo', 'Nina': 'nina', 'Abuela Toña': 'tona',
+  'Doña Marta': 'marta', 'Benny': 'benny', 'Pastor Abel': 'abel', 'Traveler': 'traveler', 'Scavenger': 'scav', 'Neto': 'scav', 'Chuy': 'chuy', 'Keeper': 'keeper',
 };
 let aborting = false;
 const stage: Stage = {
@@ -554,7 +562,7 @@ async function command(c: Cmd): Promise<void> {
       hud.toast(n > 1 ? `${ITEM_NAMES[id]} ×${n}` : `Got ${(ITEM_NAMES[id] ?? id).toLowerCase()}`, true);
       break;
     }
-    case 'take': S.items[c.id as string] = Math.max(0, (S.items[c.id as string] ?? 0) - (c.n as number)); break;
+    case 'take': S.items[c.id as string] = Math.max(0, (S.items[c.id as string] ?? 0) - (c.n as number)); hud.toast(`Gave ${(ITEM_NAMES[c.id as string] ?? String(c.id)).toLowerCase()}`); break;
     case 'white': sound.coin(); S.white += c.add as number; hud.toast(`+${c.add as number} tins of white`, true); break;
     case 'water':
       sound.pour();
@@ -563,7 +571,7 @@ async function command(c: Cmd): Promise<void> {
       break;
     case 'page': await unlockPage(String(c.n)); break;
     case 'step': setStep(c.to as string); break;
-    case 'flag': S.flags[c.f as string] = true; break;
+    case 'flag': S.flags[c.f as string] = true; showObjective(false); break;
     case 'checkHome': if (S.flags.fed && S.flags.tank) await run('homeDone'); break;
     case 'hint': hud.toast(touchUI() ? 'Drag on the left to walk. Tap A to talk.' : 'Walk with WASD or the arrows. E or Space to talk. B opens the staybook.', false, 6000); break;
     case 'rest': await rest(); break;
@@ -585,6 +593,30 @@ async function command(c: Cmd): Promise<void> {
       while (lookUp > 0 && lookUp - droneGone < 7) await sleep(100);
       break;
     }
+    case 'story': {
+      // a side story begins (data/stories.json): its flag, a toast, and its line under the night's objective
+      const id = c.id as string, st = (STORIES as unknown as Record<string, Story>)[id];
+      if (!st || S.flags[`q_${id}`]) break;
+      S.flags[`q_${id}`] = true;
+      sound.chime();
+      hud.toast(`New story: ${st.title}`, true, 3600);
+      showObjective(true);
+      break;
+    }
+    case 'buy': {
+      // trade tins of white for something; short of white, nothing changes hands
+      const n = c.white as number;
+      if (S.white < n) { hud.toast(`Not enough white: ${n} tins`, false); break; }
+      S.white -= n;
+      S.items[c.item as string] = (S.items[c.item as string] ?? 0) + 1;
+      if (c.flag) S.flags[c.flag as string] = true;
+      sound.coin();
+      hud.toast(`−${n} tins of white · ${ITEM_NAMES[c.item as string] ?? String(c.item)}`, true);
+      break;
+    }
+    case 'run': await run(c.id as string); break;
+    case 'go': ui.endTalk(); await go(c.to as string, c.spawn as string); break;
+    case 'bell': sound.bell(); showBell(); break;
     default: console.warn('[script] unknown command:', c.do);
   }
 }
@@ -609,7 +641,26 @@ function setStep(to: string): void {
   void bringCast(cur);
   if (to !== 'burial') saveGame(true);
 }
-function showObjective(flash: boolean): void { hud.objective(QUESTS.mission, STEPS[S.step]?.obj ?? '', flash); }
+function showObjective(flash: boolean): void {
+  hud.objective(QUESTS.mission, STEPS[S.step]?.obj ?? '', flash);
+  const st = storyStage();
+  hud.side(st ? `${st.title}: ${st.obj}` : '');
+}
+
+// ---------------------------------------------------------------- side stories (data/stories.json)
+interface StoryStage { when: string; obj: string; marker?: string; at?: [number, number] }
+interface Story { title: string; stages: StoryStage[] }
+/** The side story being followed: the most recently started one with a stage that holds now. */
+function storyStage(): (StoryStage & { title: string }) | null {
+  const all = Object.entries(STORIES as unknown as Record<string, Story | string>).filter(([k]) => k !== '_') as Array<[string, Story]>;
+  for (const [, st] of all.reverse()) for (const g of st.stages) if (director.cond(g.when)) return { ...g, title: st.title };
+  return null;
+}
+/** Put the bell back in the church's belfry once it's been brought home (church.ts names it). */
+function showBell(): void {
+  const b = (worlds.get(SPAN)?.scene)?.getObjectByName('church-bell');
+  if (b) b.visible = !!S.flags.bell_hung;
+}
 
 async function unlockPage(key: string): Promise<void> {
   if (!S.pages.includes(key)) S.pages.push(key);
@@ -619,7 +670,7 @@ async function unlockPage(key: string): Promise<void> {
 async function openBook(): Promise<void> {
   if (!S.pages.length) { hud.toast('The staybook is empty.'); return; }
   sound.page();
-  const have = ['1', '2', '3', '5', 'last'].filter((k) => S.pages.includes(k));
+  const have = PAGE_ORDER.filter((k) => S.pages.includes(k));
   await hud.openBook(PAGES as Record<string, Page>, S.pages, have[have.length - 1]!, false);
 }
 
@@ -632,11 +683,22 @@ function remember(things: Thing[], npcs: NPC[]): void {
 }
 function goalPoint(): [number, number] | null {
   const m = STEPS[S.step]?.marker;
-  if (!m) return null;
+  if (!m) return storyPoint();
   if (Array.isArray(m)) return m;
   if (m === 'homeTasks') return S.flags.fed && S.flags.tank ? null : known.get(S.flags.fed ? 'i:tank' : 'i:pen') ?? null;
   if (m.startsWith('npc:')) { const p = cur.people.find((q) => q.npc.id === m.slice(4)); return p ? [p.actor.x, p.actor.z] : known.get(m) ?? null; }
   return known.get(m) ?? null;
+}
+/** Where the followed side story points: its person or thing if it's here, else its place in the region. */
+function storyPoint(): [number, number] | null {
+  const st = storyStage();
+  if (!st?.marker) return null;
+  const m = st.marker;
+  if (m.startsWith('npc:')) { const p = cur.people.find((q) => q.npc.id === m.slice(4)); if (p) return [p.actor.x, p.actor.z]; }
+  else if (cur.id !== SPAN) { const t = cur.area.things.find((q) => q.script === m.slice(2)); if (t) return [t.x, t.z]; }
+  // out in the region it points at the place; inside a room that isn't the place, nowhere
+  if (cur.id !== SPAN) return null;
+  return known.get(m) ?? st.at ?? null;
 }
 function markGoal(): void {
   const g = mode === 'play' && cur.id === SPAN && free() ? goalPoint() : null;
@@ -1497,6 +1559,7 @@ load().then(() => {
     shadeAt: (x: number, z: number) => shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + 1.72, z)),
     get shaded() { return shaded; },
     get people() { return cur.people.map((p) => p.npc.id); },
+    get bellUp() { return !!(worlds.get(SPAN)?.scene)?.getObjectByName('church-bell')?.visible; },
     shadeDebug(x: number, z: number, y: number) { const r = shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + y, z)); return [r, ...shadeLast]; },
     /**
      * Walk out from Juno over the whole region (every map built) and report anywhere she can reach that she

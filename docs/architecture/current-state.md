@@ -354,6 +354,34 @@ shape of Mall del Norte."* The owner sent a map and a photo of the church.
     water tower). Lowering the camera or framing Juno lower on screen is the owner's call.
   - **The real roads are compressed** (method §3): the mall is reached without crossing the Thirty-Five.
 
+## Piece 9 (done): side stories that lead out to the new places, and ones found there
+
+The owner, 2026-10-28: *"quests in that area that either lead us to that area, and then quests that we discover in
+that area."* Four side stories, each run on flags (`data/stories.json`), with no new systems: the trades are in
+water and tins of white, the rewards are pages in the staybook in Juno's own hand.
+
+| Story | Starts | Goes | Ends |
+|---|---|---|---|
+| **Mesquite Flour** (leads out) | Doña Chayo, in town, gives Juno a sack and says nothing more | up the Old Trail to Doña Marta at the church | back to Chayo: tell her Marta said thank you, or keep it to yourself (two pages) |
+| **Gray** (leads out) | Rubén gives Juno a jug for the brother he hasn't seen in three months | south-west to the mall: the scavenger is Neto, who sold chalk-cut white | back to Rubén: tell him where Neto sleeps, or keep Neto's secret (two pages) |
+| **The Bell** (found there) | Benny at the church: the belfry arch has been empty since before he was born | the mall: the scavenger sells it for two tins of white | Benny hangs it. It shows in the arch from then on, and rings at Lamp when Juno is on the hill or the trail |
+| **Open for Business** (found there) | the scavenger, or the one grille that's up a hand's width | under the grille: a toy store with the lights still on and every toy in a perfect row, and its Keeper still saying welcome (`mallShop`, rooms.ts) | take the stuffed cloud it holds out, or put it back (two pages) |
+
+- **How they show:** a toast ("New story: …"), then a smaller line under the night's objective. The marker points at
+  the followed story's person or place when the night's mission has none.
+- **What was added to make them run:** script commands `story`, `buy` (white for an item, which fails without
+  enough), `run`, `go` and `bell`; Juno's pages in the staybook; the bell mesh in the belfry; the toy store room.
+  The stories start once night one's mission is done (`free`), the only post-mission state there is so far. The
+  story file opens them from night two.
+- **Checked:** `tests/story.spec.js` plays all four stories end to end at 1080p and on a phone in landscape. Door
+  promises and `edgeIssues` are clean with the new room.
+- **Fixed in passing:** the mall court's shop fronts sat inside the back wall's cell and couldn't be seen. They
+  stand in front of it now.
+- **Open:**
+  - The bell hangs high on the church front, above what the camera shows at ground level (piece 8's framing
+    question). You hear it at Lamp more than you see it.
+  - Which night each story opens on, once nights two to five are built.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

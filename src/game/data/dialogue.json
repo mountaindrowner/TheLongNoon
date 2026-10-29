@@ -231,6 +231,119 @@
     "to": "kit"
    }
   ],
+  "flour_given&!q_flour_done": [
+   [
+    "Doña Chayo",
+    "Well? They took it?"
+   ],
+   {
+    "do": "choice",
+    "q": "Marta said thank you.",
+    "opts": [
+     [
+      "Tell her",
+      [
+       [
+        "Juno",
+        "Marta said to say thank you."
+       ],
+       [
+        "Doña Chayo",
+        "I told them not to—"
+       ],
+       [
+        "Doña Chayo",
+        "..."
+       ],
+       [
+        "Doña Chayo",
+        "Hm. Same sack next week. Don't make a face about it."
+       ],
+       {
+        "do": "flag",
+        "f": "flour_thanked"
+       },
+       {
+        "do": "page",
+        "n": "jflour_a"
+       }
+      ]
+     ],
+     [
+      "Keep it to yourself",
+      [
+       [
+        "Juno",
+        "They took it."
+       ],
+       [
+        "Doña Chayo",
+        "Good. Now don't stand there. You're blocking my light."
+       ],
+       {
+        "do": "flag",
+        "f": "flour_quiet"
+       },
+       {
+        "do": "page",
+        "n": "jflour_b"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "do": "flag",
+    "f": "q_flour_done"
+   }
+  ],
+  "q_flour&!flour_given": [
+   [
+    "Doña Chayo",
+    "Up the Old Trail. Follow the lanterns. Marta. Go."
+   ]
+  ],
+  "free&!q_flour": [
+   [
+    "Doña Chayo",
+    "Juno. You're walking around anyway. Walk somewhere useful."
+   ],
+   [
+    "Doña Chayo",
+    "Up the Old Trail, past the last yards, there's a church on the hill. Lanterns all the way."
+   ],
+   [
+    "Doña Chayo",
+    "Take this up to Marta. Don't open it, don't sell it, and don't tell anybody where you're going."
+   ],
+   [
+    "Juno",
+    "What is it?"
+   ],
+   [
+    "Doña Chayo",
+    "Flour. Mesquite. It's heavy. Go."
+   ],
+   {
+    "do": "item",
+    "id": "flour",
+    "n": 1
+   },
+   {
+    "do": "story",
+    "id": "flour"
+   }
+  ],
+  "flour_thanked": [
+   [
+    "Doña Chayo",
+    "Eleven years nobody said a word to me about it. Then you."
+   ],
+   [
+    "Doña Chayo",
+    "...Go on. Your face is still going to burn, white or no white."
+   ]
+  ],
   "*": [
    [
     "Doña Chayo",
@@ -306,16 +419,145 @@
    ]
   ]
  },
- "ruben": [
-  [
-   "Rubén",
-   "Seven flags. Seven nations owned this ground once, they say."
+ "ruben": {
+  "neto_met&!q_neto_done": [
+   [
+    "Rubén",
+    "You went. Is he—"
+   ],
+   [
+    "Juno",
+    "He's alive. He drank the water."
+   ],
+   {
+    "do": "choice",
+    "q": "Neto asked you not to say where he sleeps.",
+    "opts": [
+     [
+      "Tell Rubén",
+      [
+       [
+        "Juno",
+        "He's at the long roof. In the middle, where the fountain is."
+       ],
+       [
+        "Rubén",
+        "The long roof."
+       ],
+       [
+        "Rubén",
+        "...Then I know where to leave water. He'll know the knots on the jug."
+       ],
+       {
+        "do": "flag",
+        "f": "neto_told"
+       },
+       {
+        "do": "page",
+        "n": "jneto_a"
+       }
+      ]
+     ],
+     [
+      "Keep his secret",
+      [
+       [
+        "Juno",
+        "He's alive. That's all he'd let me say."
+       ],
+       [
+        "Rubén",
+        "Alive."
+       ],
+       [
+        "Rubén",
+        "That's more than I had this morning."
+       ],
+       {
+        "do": "flag",
+        "f": "neto_kept"
+       },
+       {
+        "do": "page",
+        "n": "jneto_b"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "do": "flag",
+    "f": "q_neto_done"
+   }
   ],
-  [
-   "Rubén",
-   "Can't name a single one of them. Doesn't matter. They're gone, and we're still here."
+  "q_neto&!neto_met": [
+   [
+    "Rubén",
+    "South-west. The long roof. He'll be where the roof's still on."
+   ]
+  ],
+  "free&!q_neto": [
+   [
+    "Rubén",
+    "You're going out past the edges now. I've seen you."
+   ],
+   [
+    "Rubén",
+    "My brother, Neto. He went south-west, to the long roof. Three months ago. He doesn't come back."
+   ],
+   [
+    "Juno",
+    "Why did he go?"
+   ],
+   [
+    "Rubén",
+    "He sold white that wasn't. Cut with chalk. They were going to send him to noon."
+   ],
+   [
+    "Rubén",
+    "Take him this. Tell him... no. Just take it."
+   ],
+   {
+    "do": "item",
+    "id": "jug",
+    "n": 1
+   },
+   {
+    "do": "story",
+    "id": "neto"
+   }
+  ],
+  "neto_told": [
+   [
+    "Rubén",
+    "I leave a jug by the broken doors every week. It's gone in the morning."
+   ],
+   [
+    "Rubén",
+    "He never leaves a note. He never could write."
+   ]
+  ],
+  "neto_kept": [
+   [
+    "Rubén",
+    "Seven flags. Seven nations owned this ground once, they say."
+   ],
+   [
+    "Rubén",
+    "He's alive. I keep saying it to myself. It's a good sentence."
+   ]
+  ],
+  "*": [
+   [
+    "Rubén",
+    "Seven flags. Seven nations owned this ground once, they say."
+   ],
+   [
+    "Rubén",
+    "Can't name a single one of them. Doesn't matter. They're gone, and we're still here."
+   ]
   ]
- ],
+ },
  "beto": [
   [
    "Don Beto",
@@ -807,5 +1049,452 @@
    "",
    "Under the door, the light turns white."
   ]
- ]
+ ],
+ "marta": {
+  "q_flour&!flour_given": [
+   [
+    "Doña Marta",
+    "Is that Chayo's sack? Ay, gracias, mija. Set it down here, before your arms fall off."
+   ],
+   {
+    "do": "take",
+    "id": "flour",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "flour_given"
+   },
+   [
+    "Doña Marta",
+    "Every week for eleven years. She has never once walked up here herself."
+   ],
+   [
+    "Juno",
+    "She said not to tell anybody."
+   ],
+   [
+    "Doña Marta",
+    "She told us if we ever thanked her in town, she'd stop. So we don't. We thank God for her instead. She can't make Him stop."
+   ],
+   [
+    "Doña Marta",
+    "The bread on the table inside is hers. Go eat some. Sitting down."
+   ]
+  ],
+  "flour_given": [
+   [
+    "Doña Marta",
+    "Chayo's bread is on the table inside. Don't tell her it's good. She knows."
+   ],
+   [
+    "Doña Marta",
+    "Water's free. Sit down before you drink it."
+   ]
+  ],
+  "*": [
+   [
+    "Doña Marta",
+    "Water's free, mija. Sit down before you drink it."
+   ],
+   [
+    "Doña Marta",
+    "Nobody drinks standing up here. That's the only rule I make."
+   ]
+  ]
+ },
+ "benny": {
+  "bell_got&!bell_hung": [
+   [
+    "Juno",
+    "Benny. Look."
+   ],
+   [
+    "Benny",
+    "That's it. That's the bell. That's our bell."
+   ],
+   {
+    "do": "take",
+    "id": "bell",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "bell_hung"
+   },
+   {
+    "do": "bell"
+   },
+   [
+    "Benny",
+    "I'll get it up in the arch before Lamp. Pastor's going to pretend he isn't crying."
+   ],
+   {
+    "do": "page",
+    "n": "jbell"
+   }
+  ],
+  "q_bell&!bell_got": [
+   [
+    "Benny",
+    "The long roof. South-west of town, down the side street past the last yards. Scavengers sleep in there."
+   ]
+  ],
+  "bell_hung": [
+   [
+    "Benny",
+    "It rings at Lamp now. Every Lamp. I pull the rope, and everybody on the hill stops for a second."
+   ],
+   [
+    "Benny",
+    "Pastor says that's the whole point."
+   ]
+  ],
+  "*": [
+   [
+    "Benny",
+    "The windmill down the trail fills the tank. I fill the jugs. Marta fills the cups."
+   ],
+   [
+    "Benny",
+    "See the arch up on top of the front? There was a bell in it once."
+   ],
+   [
+    "Benny",
+    "They rang it for every baby born and every one given to the sun. Somebody took it down for the brass, before I was born."
+   ],
+   [
+    "Benny",
+    "Scavengers say there's a bell down at the long roof, south-west of town. If it's ours... I can't go. Somebody has to carry the water."
+   ],
+   {
+    "do": "story",
+    "id": "bell"
+   }
+  ]
+ },
+ "abel": {
+  "bell_hung": [
+   [
+    "Pastor Abel",
+    "Benny rang it at Lamp. Marta cried, and says she didn't."
+   ],
+   [
+    "Pastor Abel",
+    "I don't know who hung it the first time. I know who they rang it for. Same as us."
+   ]
+  ],
+  "*": [
+   [
+    "Pastor Abel",
+    "Come in out of it. Nobody here is going to ask you for anything."
+   ],
+   [
+    "Pastor Abel",
+    "We don't know much about the people who built this place. We know they fed whoever came up the road, and we know who they did it for."
+   ],
+   [
+    "Pastor Abel",
+    "So we keep doing it. That's most of what I preach."
+   ]
+  ]
+ },
+ "scav": {
+  "q_neto&!neto_met": [
+   [
+    "Scavenger",
+    "Don't touch the pack."
+   ],
+   [
+    "Juno",
+    "Rubén sent you this."
+   ],
+   {
+    "do": "take",
+    "id": "jug",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "neto_met"
+   },
+   [
+    "Neto",
+    "..."
+   ],
+   [
+    "Neto",
+    "He ties the cap the same way. Since we were kids."
+   ],
+   [
+    "Neto",
+    "It was one batch. Kids were burning. Real white cost three tins. I made it cost one."
+   ],
+   [
+    "Neto",
+    "Half chalk still beats nothing on your face. Mostly."
+   ],
+   [
+    "Neto",
+    "Don't tell him where I sleep. If he knows, he'll come. If he comes, somebody follows him."
+   ]
+  ],
+  "q_bell&!bell_got": [
+   [
+    "Juno",
+    "There's a bell. Brass. It belongs to the church on the hill."
+   ],
+   [
+    "Scavenger",
+    "The bell. Yeah. Pawn shop, behind a grille somebody already broke. Heavy."
+   ],
+   [
+    "Scavenger",
+    "Brass is worth something. Two tins of white and it's yours."
+   ],
+   {
+    "do": "choice",
+    "q": "Two tins of white for the bell?",
+    "opts": [
+     [
+      "Pay two tins",
+      [
+       {
+        "do": "buy",
+        "white": 2,
+        "item": "bell",
+        "flag": "bell_got"
+       },
+       {
+        "do": "run",
+        "id": "scavBell"
+       }
+      ]
+     ],
+     [
+      "It's the church's",
+      [
+       [
+        "Juno",
+        "It's theirs. They'd ring it."
+       ],
+       [
+        "Scavenger",
+        "Everything in here was somebody's. Two tins."
+       ]
+      ]
+     ],
+     [
+      "Not now",
+      []
+     ]
+    ]
+   }
+  ],
+  "neto_told": [
+   [
+    "Neto",
+    "Somebody leaves a jug by the doors every week. No note."
+   ],
+   [
+    "Neto",
+    "I know the knots."
+   ]
+  ],
+  "neto_kept": [
+   [
+    "Neto",
+    "You didn't tell him."
+   ],
+   [
+    "Neto",
+    "Good. Tell nobody anything. You're good at it."
+   ]
+  ],
+  "neto_met": [
+   [
+    "Neto",
+    "Go tell him I'm alive. Just that. Nothing about where."
+   ]
+  ],
+  "shop_done": [
+   [
+    "Scavenger",
+    "You went in there."
+   ],
+   [
+    "Scavenger",
+    "Did it say welcome? It says welcome to me through the grille. Every night."
+   ]
+  ],
+  "*": [
+   [
+    "Scavenger",
+    "Don't touch the pack. Anything else in here, take it if you can find it."
+   ],
+   [
+    "Scavenger",
+    "Grilles are down on all of it. Except that one. I don't go in that one."
+   ],
+   {
+    "do": "story",
+    "id": "shop"
+   }
+  ]
+ },
+ "scavBell": {
+  "bell_got": [
+   [
+    "Scavenger",
+    "Careful with it. It rings if you look at it wrong."
+   ]
+  ],
+  "*": [
+   [
+    "Scavenger",
+    "Two tins. The bell's not going anywhere. Neither am I."
+   ]
+  ]
+ },
+ "grille": {
+  "shop_done": [
+   [
+    "",
+    "The grille, up a hand's width off the floor. Light under it."
+   ],
+   {
+    "do": "choice",
+    "q": "Crawl under?",
+    "opts": [
+     [
+      "Crawl under",
+      [
+       {
+        "do": "go",
+        "to": "mall-shop",
+        "spawn": "door"
+       }
+      ]
+     ],
+     [
+      "Leave it",
+      []
+     ]
+    ]
+   }
+  ],
+  "*": [
+   [
+    "",
+    "One grille stops a hand's width off the floor. Beyond it, light. Somebody kept the lights on."
+   ],
+   {
+    "do": "story",
+    "id": "shop"
+   },
+   {
+    "do": "choice",
+    "q": "Crawl under?",
+    "opts": [
+     [
+      "Crawl under",
+      [
+       [
+        "",
+        "Juno lies flat and pulls herself through on her elbows."
+       ],
+       {
+        "do": "go",
+        "to": "mall-shop",
+        "spawn": "door"
+       }
+      ]
+     ],
+     [
+      "Leave it",
+      []
+     ]
+    ]
+   }
+  ]
+ },
+ "keeper": {
+  "shop_done": [
+   [
+    "Keeper",
+    "Welcome! Let me know if you need help finding anything."
+   ]
+  ],
+  "*": [
+   [
+    "",
+    "Shelves of toys, every one set out in a perfect row. Dust on everything but the toys."
+   ],
+   [
+    "Keeper",
+    "Welcome! Let me know if you need help finding anything."
+   ],
+   [
+    "Keeper",
+    "We have a special today. For the little ones."
+   ],
+   [
+    "Juno",
+    "There aren't any little ones."
+   ],
+   [
+    "Keeper",
+    "Welcome! Let me know if you need help finding anything."
+   ],
+   [
+    "",
+    "It lifts something off the nearest shelf and holds it out. A small stuffed cloud, gray, with three blue felt drops sewn underneath. The tag says ages 3 and up."
+   ],
+   {
+    "do": "choice",
+    "q": "The machine holds out the cloud.",
+    "opts": [
+     [
+      "Take it",
+      [
+       {
+        "do": "item",
+        "id": "cloud",
+        "n": 1
+       },
+       [
+        "Keeper",
+        "Thank you for shopping with us! Come back soon!"
+       ],
+       {
+        "do": "page",
+        "n": "jcloud_a"
+       }
+      ]
+     ],
+     [
+      "Put it back",
+      [
+       [
+        "",
+        "Juno sets the cloud back on the shelf. The machine moves it a finger's width, so the row is straight again."
+       ],
+       [
+        "Keeper",
+        "Welcome! Let me know if you need help finding anything."
+       ],
+       {
+        "do": "page",
+        "n": "jcloud_b"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "do": "flag",
+    "f": "shop_done"
+   }
+  ]
+ }
 }

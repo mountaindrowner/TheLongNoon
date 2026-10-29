@@ -466,12 +466,12 @@ export function mallCourt(l: RoomLinks): AreaBuilder {
       const grille = colMat('#5a5c5e', { metalness: 0.5, roughness: 0.5 });
       for (let i = 0; i < 5; i++) {
         const x = 2.6 + i * 4.7;
-        g.add(box(4.2, 0.5, 0.2, colMat('#2a2826', { roughness: 1 }), x, 2.6, 0.7)); // the dark sign band, letters long gone
+        g.add(box(4.2, 0.5, 0.2, colMat('#2a2826', { roughness: 1 }), x, 2.6, 1.1)); // the dark sign band, letters long gone
         const up = i === 3 ? 0.35 : 0;
-        for (let b = 0; b < 18; b++) g.add(box(0.04, 2.5 - up, 0.04, grille, x - 2 + b * 0.235, up, 0.95));
-        g.add(box(4.2, 0.08, 0.1, grille, x, 2.5, 0.95));
+        for (let b = 0; b < 18; b++) g.add(box(0.04, 2.5 - up, 0.04, grille, x - 2 + b * 0.235, up, 1.3));
+        g.add(box(4.2, 0.08, 0.1, grille, x, 2.5, 1.3));
       }
-      addSolid(0.4, 0.4, COLS - 0.4, 1.2);
+      addSolid(0.4, 0.4, COLS - 0.4, 1.5);
       // the fountain: a ring of tile, dry, a century of coins gone green in the bottom
       g.add(cyl(1.8, 1.9, 0.5, colMat('#8aa4a8', { roughness: 0.6 }), 12, 0, 5.4, 18), cyl(1.55, 1.55, 0.06, colMat('#4a6a5a', { roughness: 1 }), 12, 0.46, 5.4, 18));
       g.add(cyl(0.2, 0.26, 1.4, colMat('#8aa4a8', { roughness: 0.6 }), 12, 0.5, 5.4, 10));
@@ -488,8 +488,76 @@ export function mallCourt(l: RoomLinks): AreaBuilder {
       ] });
       d.things.push(
         { x: 12, z: 7.4, r: 2.2, label: 'Fountain', lines: ['A tiled fountain, dry. The bottom is green with old coins, more than anyone could count.'] },
-        { x: 16.7, z: 1.8, r: 1.6, label: 'Grille', lines: ['One grille stops a hand’s width off the floor. Beyond it, dark, and a smell like a closed room.'] },
-        { x: 7.3, z: 1.8, r: 1.6, label: 'Shop', lines: ['A steel grille pulled down to the floor and locked. Behind it, racks, and shapes on them.'] },
+        { x: 16.7, z: 2.2, r: 1.6, label: 'Grille', script: 'grille' },
+        { x: 7.3, z: 2.2, r: 1.6, label: 'Shop', lines: ['A steel grille pulled down to the floor and locked. Behind it, racks, and shapes on them.'] },
+      );
+      d.spawns.grille = { x: 16.7, z: 2.9, face: 'S' };
+      // the light under the one grille that's up: somebody kept the lights on in there
+      const under = new THREE.Mesh(planeGeo(4, 0.5), new THREE.MeshBasicMaterial({ color: '#fff0c8', transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false }));
+      under.rotation.x = -Math.PI / 2;
+      under.position.set(16.7, 0.02, 1.62);
+      g.add(under);
+    },
+  });
+}
+
+/**
+ * Behind the one grille that's up (mallCourt): a toy store with the lights still on. Every toy on every shelf set
+ * out in a perfect row, faced forward, dusted, and a shop machine behind the counter that still says welcome.
+ * Nobody has bought anything in a hundred years; it keeps the shelves as if somebody might. (A Shrine: the
+ * methodology's word for a place the old world left running.)
+ */
+export function mallShop(l: RoomLinks): AreaBuilder {
+  const COLS = 14, ROWS = 10, DOOR = 7;
+  return interior({
+    id: 'mall-shop', title: 'The Mall', sub: 'The toy store', kind: 'town', cols: COLS, rows: ROWS, seed: 507, wall: 'concrete',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) { carve(g, DOOR, 3.4); },
+    // the store's floor, clean: the machine sweeps it, in squares
+    floor: (_g, x, z, f) => ((Math.floor(x) + Math.floor(z)) % 2 === 0 ? [(214 + f * 10) | 0, (206 + f * 8) | 0, (192 + f * 8) | 0] : [(150 + f * 8) | 0, (176 + f * 8) | 0, (190 + f * 8) | 0]),
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night, 3.4);
+      // the grille, a hand's width up, seen from inside
+      const grille = colMat('#5a5c5e', { metalness: 0.5, roughness: 0.5 });
+      for (let b = 0; b < 15; b++) g.add(box(0.04, 2.15, 0.04, grille, DOOR - 1.7 + b * 0.24, 0.35, ROWS - 0.2));
+      // shelves: every toy in a perfect row, the same distance apart, faced forward
+      const TOY = ['#d84a3a', '#3a7ad8', '#e8c03a', '#5aa85a', '#e88ac0', '#f0ece0'];
+      const rack = (x: number, z: number, w: number, rot: number, k: number): void => {
+        const s = new THREE.Group();
+        for (const sx of [-1, 1]) s.add(box(0.06, 1.8, 0.5, colMat('#e8e4dc', { roughness: 0.6 }), sx * w / 2, 0, 0));
+        for (const [j, y] of [0.3, 0.85, 1.4].entries()) {
+          s.add(box(w, 0.05, 0.5, colMat('#e8e4dc', { roughness: 0.6 }), 0, y, 0));
+          const col = colMat(TOY[(k + j) % TOY.length]!, { roughness: 0.8 });
+          for (let i = 0; i < Math.floor(w / 0.34); i++) {
+            const tx = -w / 2 + 0.22 + i * 0.34;
+            // blocks, balls and boxed dolls, alternating by shelf, never out of line
+            if (j === 0) s.add(box(0.2, 0.2, 0.2, col, tx, y + 0.03, 0));
+            else if (j === 1) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), col); b.position.set(tx, y + 0.13, 0); s.add(b); }
+            else s.add(box(0.18, 0.32, 0.1, col, tx, y + 0.03, 0.08), box(0.1, 0.12, 0.02, colMat('#f4d8c0', { roughness: 1 }), tx, y + 0.16, 0.14));
+          }
+        }
+        s.position.set(x, 0, z);
+        s.rotation.y = rot;
+        g.add(shade(s));
+      };
+      rack(4.2, 1.6, 5.2, 0, 0); rack(10.4, 1.6, 4.6, 0, 2);
+      addSolid(1, 1.3, COLS - 1, 1.9);
+      rack(1.6, 5.2, 3.6, Math.PI / 2, 4); solid(1.6, 5.2, 0.26, 1.8);
+      rack(5.4, 5.2, 3.0, 0, 1); solid(5.4, 5.2, 1.55, 0.3);
+      // the counter, and the machine behind it, a register on top
+      g.add(box(3.2, 1.0, 0.8, colMat('#c8443a', { roughness: 0.7 }), 10.6, 0, 4.6), box(3.3, 0.06, 0.9, colMat('#f0ece0', { roughness: 0.5 }), 10.6, 1.0, 4.6));
+      g.add(box(0.5, 0.3, 0.4, colMat('#3a3c40', { metalness: 0.4, roughness: 0.5 }), 11.6, 1.06, 4.6));
+      solid(10.6, 4.6, 1.65, 0.45);
+      // the store's sign band on the back wall, its letters long gone, still blue
+      g.add(box(4.0, 0.4, 0.06, colMat('#3a7ad8', { roughness: 0.6 }), 10.4, 2.3, 1.04));
+      // the lights on: every one still burning
+      for (const x of [4.2, 10.4]) pendant(g, d.pool, x, 3.2, false, 2.6);
+      d.pool.add({ pos: new THREE.Vector3(7, 2.4, 6.4), color: new THREE.Color('#e8f4ff'), intensity: 6, dist: 8, flicker: 0 });
+      d.npcs.push({ id: 'keeper', name: 'Keeper', sprite: 'keeper', x: 10.6, z: 3.9, face: 'S', lines: ['Welcome! Let me know if you need help finding anything.'] });
+      d.things.push(
+        { x: 4.2, z: 2.6, r: 1.6, label: 'Shelves', lines: ['Toys in rows, every one the same distance from the next, every one faced forward. No dust on any of them.'] },
+        { x: 5.4, z: 6.0, r: 1.4, label: 'Price tags', lines: ['Price tags in a money nobody uses. The numbers are small.'] },
       );
     },
   });

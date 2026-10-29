@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import type { Grid, SectionSpec } from '../../engine/section';
 import { boardSign, rock } from '../../engine/props';
 import { deadTree } from '../../engine/foliage';
-import { box, colMat, prism } from '../../engine/geo';
-import { building, windowAt } from '../../engine/buildings';
+import { box, cyl, colMat, prism } from '../../engine/geo';
+import { building, windowAt, M } from '../../engine/buildings';
 import { addSolid, heightAt } from '../../engine/world';
 import { fbm } from '../../engine/noise';
 import { STRAW, palm, nopal, lanternPost, carHulk, shadeSail, jugs, drum } from './props';
@@ -113,6 +113,14 @@ export function churchOnTheHill(night: boolean): SectionSpec {
       arch.position.set(0, peak + 1.1, HALL.d / 2 - 0.2);
       hall.add(arch);
       hall.add(box(1.6, 0.2, 0.5, stucco, 0, peak - 0.25, HALL.d / 2 - 0.2));
+      // the bell, hung in the arch once someone brings it home (the bell story): hidden until then
+      const bell = new THREE.Group();
+      bell.name = 'church-bell';
+      const brass = colMat('#b08a3a', { metalness: 0.7, roughness: 0.35 });
+      bell.add(box(0.06, 0.3, 0.06, M.steel(), 0, 0.5, 0), cyl(0.12, 0.34, 0.5, brass, 0, 0, 0, 12), cyl(0.36, 0.36, 0.06, brass, 0, -0.02, 0, 12));
+      bell.position.set(0, peak + 0.5, HALL.d / 2 - 0.2);
+      bell.visible = false;
+      hall.add(bell);
       const crossMat = colMat('#f2ead8', { roughness: 0.8 });
       hall.add(box(0.14, 1.0, 0.14, crossMat, 0, peak + 1.7, HALL.d / 2 - 0.2), box(0.6, 0.14, 0.14, crossMat, 0, peak + 2.2, HALL.d / 2 - 0.2));
       // over the door: an arch, and above it a round window, lit when the hall is

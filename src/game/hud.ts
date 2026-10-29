@@ -15,7 +15,8 @@ import { ITEM_NAMES } from './state';
  */
 
 export interface Page { who: 'dad' | 'mom'; text: string; teach: string }
-export const PAGE_ORDER = ['1', '2', '3', '5', 'last'];
+/** The staybook in order: her parents' pages, then Juno's own (side stories). */
+export const PAGE_ORDER = ['1', '2', '3', '5', 'last', 'jflour_a', 'jflour_b', 'jbell', 'jneto_a', 'jneto_b', 'jcloud_a', 'jcloud_b'];
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -75,6 +76,7 @@ export class Hud {
   private readonly conds: HTMLDivElement;
   private readonly glare: HTMLDivElement;
   private condKey = '';
+  private readonly objSide: HTMLDivElement;
   private objTop = 0;
   private readonly tins: HTMLElement;
   private readonly obj: HTMLDivElement;
@@ -118,6 +120,7 @@ export class Hud {
     this.obj = el('div', 'objective', this.root);
     el('div', 'obj-mission', this.obj);
     this.objText = el('div', 'obj-text', this.obj);
+    this.objSide = el('div', 'obj-side', this.obj);
     this.warn = el('div', 'warn', this.root);
     this.toasts = el('div', 'toasts', this.root);
     this.marker = el('div', 'marker', this.root);
@@ -192,6 +195,12 @@ export class Hud {
     if (flash) { this.obj.classList.remove('flash'); void this.obj.offsetWidth; this.obj.classList.add('flash'); }
   }
 
+  /** The side story being followed, under the night's objective (empty hides it). */
+  side(text: string): void {
+    if (this.objSide.textContent !== text) this.objSide.textContent = text;
+    this.obj.classList.toggle('on', (this.objText.textContent !== '' || text !== '') && this.status.classList.contains('on'));
+  }
+
   warning(text: string | null): void {
     this.warn.classList.toggle('on', !!text);
     if (text && this.warn.textContent !== text) this.warn.textContent = text;
@@ -243,7 +252,7 @@ export class Hud {
       hand.className = `hand ${p.who}`;
       hand.textContent = p.text;
       teach.textContent = p.teach;
-      num.textContent = k === 'last' ? 'last page' : `page ${k}`;
+      num.textContent = k === 'last' ? 'last page' : k.startsWith('j') ? 'Juno' : `page ${k}`;
       prev.hidden = next.hidden = isNew || list.length < 2;
     };
     draw();

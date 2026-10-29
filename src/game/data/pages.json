@@ -23,5 +23,40 @@
     "who": "mom",
     "text": "Juno. If you're reading this by yourself, then",
     "teach": "The page stops there."
+  },
+  "jflour_a": {
+    "who": "juno",
+    "text": "Chayo sends flour up the hill every week and makes them swear not to say.\nI said it anyway. She didn't stop. I think she wanted somebody to.",
+    "teach": "Juno's own page."
+  },
+  "jflour_b": {
+    "who": "juno",
+    "text": "I kept Chayo's secret.\nUp the hill they thank God for her instead. She can't make Him stop.",
+    "teach": "Juno's own page."
+  },
+  "jbell": {
+    "who": "juno",
+    "text": "Two tins of white for a bell.\nBenny held it the way you hold a baby. He says he'll ring it every Lamp. It was worth two tins.",
+    "teach": "Juno's own page."
+  },
+  "jneto_a": {
+    "who": "juno",
+    "text": "I told Rubén where his brother sleeps.\nNow there's water by the doors every week, and Neto pretends he doesn't know who.",
+    "teach": "Juno's own page."
+  },
+  "jneto_b": {
+    "who": "juno",
+    "text": "Neto cut white with chalk so kids could have some.\nI didn't say where he sleeps. Rubén only asked if he's alive. He is.",
+    "teach": "Juno's own page."
+  },
+  "jcloud_a": {
+    "who": "juno",
+    "text": "A machine in the dark gave me a cloud made of cloth. It said welcome the whole time.\nI'll give it to Kit. He'll ask what rain feels like, and I still won't know.",
+    "teach": "Juno's own page."
+  },
+  "jcloud_b": {
+    "who": "juno",
+    "text": "I put the cloud back.\nThe machine straightened the row so nobody could tell. Somebody's coming back for it. That's what it thinks.",
+    "teach": "Juno's own page."
   }
 }
