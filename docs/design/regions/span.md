@@ -37,6 +37,12 @@ The region from straight above, as built (regenerate with
 
 ![The Span from above](overview/span-day.webp)
 
+The same region with how it joins up drawn on: each map's outline, the numbered seams where you walk from one map
+into the next, the lit doors with rooms behind them, the ways on that are closed for now, and who starts or ends
+each side story (2026-10-29: seven maps, with the trail, the church and the mall):
+
+![The Span, how the maps connect](overview/region-map.png)
+
 ## Seven Flags (192 × 160)
 
 North Laredo, disguised, laid out from the owner's map. North is up.
