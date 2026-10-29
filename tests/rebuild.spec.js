@@ -28,7 +28,7 @@ test.skip(({ viewport }) => viewport.height > viewport.width, 'portrait: the reb
 
 for (const time of ['lamp', 'night', 'white']) {
   test(`the Span builds at ${time} with every door promise kept, rooms included`, async ({ page }, info) => {
-    test.setTimeout(240_000);
+    test.setTimeout(720_000); // every region (the town, the hill, the mall) and every room
     const errors = watchErrors(page);
     await boot(page, time);
     expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
