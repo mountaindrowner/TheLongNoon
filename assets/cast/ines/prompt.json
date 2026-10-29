@@ -1,0 +1,42 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Doña Inés, a thin young mother who lives in the Cellars under the old houses: black hair in a long braid, a faded mustard-yellow blouse with rolled sleeves, a long brown skirt, a dish towel over one shoulder, worried tired face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "b715abea-0aea-4980-b95a-4b6e8b0ebce2",
+  "anims": {
+    "idle": {
+      "animation_group_id": "279e2606-a681-41f4-87a5-c0093be12647",
+      "fps": 5,
+      "body": {
+        "character_id": "b715abea-0aea-4980-b95a-4b6e8b0ebce2",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-29T15:18:09.707Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-29T15:53:09.720Z"
+  }
+}

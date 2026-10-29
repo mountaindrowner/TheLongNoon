@@ -286,7 +286,18 @@ export function marHome(l: RoomLinks): AreaBuilder {
         { x: 5.0, z: 2.4, r: 1.6, label: 'Shelves', lines: ['Store shelves. Nothing on them but jars of seed, labeled by hand.'] },
         { x: 4.1, z: 8.6, r: 1.2, label: 'Cot', script: 'cot', lines: ['The blanket is folded. Nobody has slept here in a while.'] },
         { x: 12.4, z: 4.9, r: 1.0, label: 'Papá’s chair', lines: ['Papá’s chair, still facing the door.', 'He slept in it at the end. Never in the bed.'] },
+        { x: 11.2, z: 5.4, r: 0.9, label: 'Shoes', script: 'shoes' },
+        { x: 9.6, z: 8.4, r: 1.3, label: 'Workbench', script: 'workbench' },
       );
+      // his shoes by the chair, until they go to Toña's shrine (night four)
+      const shoes = new THREE.Group();
+      for (const sx of [-0.12, 0.12]) shoes.add(box(0.14, 0.12, 0.34, colMat('#4a3424', { roughness: 1 }), sx, 0, 0));
+      shoes.position.set(11.4, 0, 5.3);
+      shoes.userData.when = '!shoes_given';
+      g.add(shoes);
+      // his workbench under the window: a vise, a coil of wire, a lamp
+      g.add(box(2.2, 0.9, 0.7, M.wood(), 9.6, 0, 9.3), box(0.3, 0.2, 0.3, M.steel(), 8.9, 0.9, 9.3));
+      addSolid(8.5, 8.95, 10.7, 9.65);
       d.built.push({ update(t) { stove.emissiveIntensity = 2.5 * (0.85 + Math.sin(t * 6.1) * 0.1 + Math.sin(t * 13.3) * 0.05); } });
     },
   });
@@ -319,6 +330,13 @@ export function chapel(l: RoomLinks): AreaBuilder {
       pendant(g, d.pool, 6.5, 8.6, true);
       // Abuela Toña sits outside now, at the elders' table (the owner's map, 2026-10-27)
       d.things.push({ x: 10.6, z: 4.4, r: 1.4, label: 'Candles', lines: ['Rows of candles in jars. Three of them are new tonight.'] });
+      // the elders' table (night two): Lupe, Memo, Chayo and Beto, at the front pews
+      d.npcs.push(
+        { id: 'lupe', name: 'Hermana Lupe', sprite: 'lupe', x: 6.5, z: 3.6, face: 'S', when: 'n2_table' },
+        { id: 'memo', name: 'Memo', sprite: 'memo', x: 4.4, z: 4.3, face: 'E', when: 'n2_table' },
+        { id: 'chayo', name: 'Doña Chayo', sprite: 'chayo', x: 8.8, z: 4.3, face: 'W', when: 'n2_table' },
+        { id: 'beto', name: 'Don Beto', sprite: 'beto', x: 3.2, z: 5.0, face: 'E', when: 'n2_table' },
+      );
       d.built.push({ update(t) { altar.emissiveIntensity = 3.2 * (0.9 + Math.sin(t * 7.3) * 0.07); rack.emissiveIntensity = 3.2 * (0.88 + Math.sin(t * 9.1 + 1) * 0.09); } });
     },
   });
@@ -563,3 +581,126 @@ export function mallShop(l: RoomLinks): AreaBuilder {
   });
 }
 const fbmLike = (x: number, z: number): number => (Math.sin(x * 0.9 + Math.sin(z * 0.7) * 2) + Math.sin(z * 1.3 + x * 0.4)) * 0.25 + 0.5;
+
+/**
+ * The Cellars (night two, the water shift): Doña Inés's home, dug under an old house behind the Plaza. Steps down
+ * from the hatch, a room cut into the caliche, cool all day. Inés and Güero live here (night three's search ends
+ * here). Lit low: a lantern and a candle.
+ */
+export function cellar(l: RoomLinks): AreaBuilder {
+  const COLS = 12, ROWS = 9, DOOR = 6;
+  return interior({
+    id: 'cellar', title: 'The Cellars', sub: 'Doña Inés’s', kind: 'home', cols: COLS, rows: ROWS, seed: 508, wall: 'block',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) { carve(g, DOOR); },
+    floor: (_g, x, z, f) => earth(x, z, f),
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night);
+      // the steps down from the hatch, cut into the caliche
+      for (let i = 0; i < 3; i++) g.add(box(1.4, 0.12 * (3 - i), 0.5, colMat('#b8a27a', { roughness: 1 }), DOOR, 0, ROWS - 1.6 - i * 0.5));
+      cot(g, 2.0, 3.0, '#d8b23a', Math.PI / 2);
+      cot(g, 2.0, 5.6, '#8a3a2a', Math.PI / 2, false);
+      table(g, 8.6, 3.0, 1.8, 1.0);
+      chair(g, 8.0, 4.0, Math.PI); chair(g, 9.4, 3.9, Math.PI + 0.2);
+      tableLantern(d, 8.8, 0.8, 2.9);
+      // a shrine niche cut in the wall: a candle, a toy truck, a picture
+      const shrine = candles(g, 10.6, 0.8, 1.2, 3, 21, 0.4);
+      g.add(box(1.2, 0.06, 0.4, colMat('#8a7656', { roughness: 1 }), 10.6, 0.76, 1.2));
+      for (let i = 0; i < 3; i++) g.add(cyl(0.16, 0.16, 0.42, colMat('#4f86b0', { roughness: 0.25, transparent: true, opacity: 0.88 }), 4.2 + i * 0.38, 0, 7.4, 10));
+      d.npcs.push(
+        { id: 'ines', name: 'Doña Inés', sprite: 'ines', x: 7.4, z: 5.4, face: 'S', lines: ['Mind your head on the way down. Everybody hits it once.'] },
+        // Güero's out east, after the machines, while Juno searches; never home again if she doesn't find him
+        { id: 'guero', name: 'Güero', sprite: 'guero', x: 3.6, z: 4.4, face: 'E', when: '!guero_lost&!n3_search', lines: ['Kit says you killed a Stray with your face.'] },
+      );
+      d.things.push(
+        { x: 10.6, z: 2.0, r: 1.3, label: 'Niche', lines: ['A niche cut in the wall: a candle, a toy truck with no wheels, a picture of a man in a cap.'] },
+        { x: 4.6, z: 6.8, r: 1.2, label: 'Jugs', lines: ['Water jugs, lined up by the steps where the floor is coolest.'] },
+      );
+      d.built.push({ update(t) { shrine.emissiveIntensity = 3 * (0.9 + Math.sin(t * 7.7) * 0.08); } });
+    },
+  });
+}
+
+/**
+ * The Big Store (Papá's salvage route, nights two and five): a supermarket the size of a field, its roof fallen
+ * in at the back, the light coming down through the hole. Aisles of steel shelving, most of it stripped; Papá's
+ * chalk on the end of one, and two shelves he never cleared. Feral dogs den in the back on night two.
+ */
+export function bigStore(l: RoomLinks): AreaBuilder {
+  const COLS = 26, ROWS = 16, DOOR = 13;
+  return interior({
+    id: 'big-store', title: 'The Big Store', sub: 'Papá’s route', kind: 'town', cols: COLS, rows: ROWS, seed: 509, wall: 'concrete',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) {
+      carve(g, DOOR, 2.4);
+      // the back of the store, where the roof came down: rubble, not floor
+      for (let x = 18; x < 25; x++) for (let z = 1; z < 4; z++) if ((x * 7 + z * 3) % 5 < 2) g.set(x, z, 'r');
+    },
+    floor: (_g, x, z, f) => storeTile(x, z, f),
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night, 2.4);
+      // the aisles: long runs of shelving, most of it stripped bare, one run fallen against the next
+      for (const [x, z, w] of [[5.0, 3.6, 7], [5.0, 7.2, 7], [5.0, 10.8, 7], [15.0, 7.2, 6], [15.0, 10.8, 6]] as Array<[number, number, number]>) shelf(g, x, z, w, Math.round(x * 3 + z), 'empty');
+      const fallen = new THREE.Group();
+      fallen.add(box(6, 0.1, 1.9, M.steel(), 0, 0, 0));
+      fallen.position.set(15.0, 0.8, 3.8); fallen.rotation.x = 0.5;
+      g.add(shade(fallen));
+      addSolid(12, 3.0, 18, 4.6);
+      // the high end-cap where Papá chalked his route: E.H., and a tick on every shelf but two
+      g.add(box(0.5, 2.6, 1.4, M.steel(), 9.0, 0, 7.2));
+      g.add(box(0.02, 0.4, 0.9, colMat('#e8e4dc', { roughness: 1 }), 9.26, 1.8, 7.2));
+      // the hole in the roof: the night (or the white) coming straight down on the rubble
+      d.pool.add({ pos: new THREE.Vector3(21, 4, 2.4), color: new THREE.Color(l.night ? '#8aa0d0' : '#fff2d8'), intensity: l.night ? 6 : 14, dist: 9, flicker: 0 });
+      pendant(g, d.pool, 6, 13, true);
+      d.things.push(
+        { x: 9.8, z: 7.2, r: 1.4, label: 'Chalk', script: 'ehshelf', lines: ['Papá’s chalk: E.H., and a tick on every shelf.'] },
+        { x: 5.0, z: 12.0, r: 1.6, label: 'Shelves', lines: ['Steel shelving, picked clean. Somebody left the price tags.'] },
+        { x: 21, z: 4.6, r: 2.0, label: 'Rubble', lines: ['Where the roof came down. Something has been sleeping in the rubble. More than one something.'] },
+      );
+      // the back half of the store: on night two, the dogs come out of the dark here
+      d.triggers.push({ x0: 11, x1: 24, z0: 4.8, z1: 9.5, script: 'dogs', when: 'n2_store&!dogs_done' });
+    },
+  });
+}
+
+/**
+ * Inside the drone (night six): a corridor tilted where the hull came down, dead maintenance drones in their
+ * racks, screens still flickering words Juno can't read, a picture of clouds somebody kept. The cradle with the
+ * canister at the far end. It hums.
+ */
+export function fuselage(l: RoomLinks): AreaBuilder {
+  const COLS = 22, ROWS = 8, DOOR = 18;
+  return interior({
+    id: 'fuselage', title: 'The Wreck', sub: 'Inside', kind: 'town', cols: COLS, rows: ROWS, seed: 510, wall: 'tin',
+    start: { x: DOOR, z: ROWS - 1.4, face: 'N' },
+    ground(g) { carve(g, DOOR, 1.6); },
+    floor: (_g, x, z, f) => ((Math.floor(x * 2) + Math.floor(z * 2)) % 2 === 0 ? [(96 + f * 8) | 0, (100 + f * 8) | 0, (104 + f * 8) | 0] : [(84 + f * 8) | 0, (88 + f * 8) | 0, (92 + f * 8) | 0]),
+    dress(d) {
+      const g = d.root;
+      roomExit(d, DOOR, l.to, l.spawn, l.night, 1.6);
+      // the ribs of the hull, leaning where it came down
+      for (let i = 0; i < 9; i++) { const r = box(0.16, 3.0, 0.16, colMat('#5a5e64', { metalness: 0.6, roughness: 0.4 }), 2 + i * 2.3, 0, 1.1); r.rotation.z = 0.18; g.add(r); }
+      // dead maintenance drones in their racks, and screens still on
+      const screen = colMat('#0a1a14', { emissive: new THREE.Color('#3aff9a'), emissiveIntensity: 1.6 });
+      for (let i = 0; i < 4; i++) {
+        g.add(box(0.9, 0.5, 0.7, colMat('#8a8e94', { metalness: 0.5, roughness: 0.5 }), 5 + i * 3.4, 0, 2.0));
+        g.add(box(0.8, 0.5, 0.06, screen, 6.4 + i * 3.4, 1.2, 1.24));
+      }
+      addSolid(4, 1.4, 17, 2.6);
+      // the cradle at the far end: cold metal arms round an empty place, frost on them
+      g.add(box(1.6, 0.8, 1.2, colMat('#c8d0d8', { metalness: 0.7, roughness: 0.3 }), 2.2, 0, 4.6));
+      const frost = colMat('#e8f6ff', { emissive: new THREE.Color('#9ad8ff'), emissiveIntensity: 0.8 });
+      g.add(box(0.5, 0.6, 0.5, frost, 2.2, 0.8, 4.6));
+      addSolid(1.3, 3.9, 3.1, 5.3);
+      d.pool.add({ pos: new THREE.Vector3(2.4, 1.6, 4.8), color: new THREE.Color('#9ad8ff'), intensity: 6, dist: 6, flicker: 0.05 });
+      pendant(g, d.pool, 12, 5, false, 2.4);
+      d.things.push(
+        { x: 3.6, z: 4.6, r: 1.6, label: 'Cradle', script: 'cradle' },
+        { x: 9.8, z: 3.0, r: 1.4, label: 'Screens', lines: ['Screens, still lit. Words go by on them, too fast and too many. Juno can’t read them.'] },
+        { x: 14.6, z: 3.0, r: 1.4, label: 'Picture', lines: ['A picture taped to a rack: a sky full of grey clouds, heavy and low. Somebody kept it here.'] },
+      );
+    },
+  });
+}

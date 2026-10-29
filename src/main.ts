@@ -25,6 +25,7 @@ import DIALOGUE from './game/data/dialogue.json';
 import QUESTS from './game/data/quests.json';
 import PAGES from './game/data/pages.json';
 import STORIES from './game/data/stories.json';
+import { cond as condOf, objective, tasksDone, nightOf, walk, lint, type Quests, type Catalog, type Paper } from './game/progress';
 import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
 import { SPAN, HILL, START, REGIONS, GATES, regionOf, regionAt, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
@@ -160,7 +161,7 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
     for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
     region.onChange = (added, removed) => {
       if (removed) unpopulate(w, removed.id);
-      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); remember(added.things, added.npcs); if (added.id === 'church') showBell(); }
+      if (added) { void populate(w, added.npcs, added.roamers, added.id); minimap.addPiece(added); remember(added.things, added.npcs); showWhen(added.group); if (added.id === 'church') showBell(); }
     };
     for (const b of region.pieces) remember(b.things, b.npcs);
     void minimap.setRegion(region, at ?? region.spawns.start!);
@@ -171,6 +172,10 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
 
 async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamers']>, tag: string): Promise<void> {
   for (const npc of npcs) {
+    // some people are only there for a beat of the story (NPC `when`)
+    if (npc.when && (!S || !director.cond(npc.when))) continue;
+    if (w.people.some((q) => q.npc === npc) || adding.has(npc)) continue;
+    adding.add(npc);
     if (npc.id === 'kit' && S && (S.flags.drainStarted || S.joined.includes('kit'))) continue;
     // by day the town is shut: outdoors, only the lookouts stay out
     if (isOut(w) && !night && !npc.allDay) continue;
@@ -179,6 +184,7 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     a.dir = npc.face ?? 'S';
     w.scene.add(a.root);
     w.people.push({ npc, actor: a, tag });
+    adding.delete(npc);
   }
   // the animals are under the shade-cloth by day too (the bible: "let out only at night"); the machines own the day
   for (const r of isOut(w) && !night ? roamers.filter((q) => q.sprite === 'stray') : roamers) {
@@ -187,6 +193,21 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     w.scene.add(a.root);
     w.roamers.push({ actor: a, kind: r.sprite, area: r.area, speed: r.speed, tx: null, tz: 0, wait: Math.random() * 3, tag });
   }
+}
+const adding = new Set<NPC>();
+/** The story moved on: people it needs now come out, people it doesn't go, props it names show or hide. */
+function refreshPeople(): void {
+  const w = cur;
+  if (!w || !S) return;
+  for (const p of [...w.people]) if (p.npc.when && !director.cond(p.npc.when)) { w.scene.remove(p.actor.root); w.people.splice(w.people.indexOf(p), 1); }
+  const add = (npcs: NPC[], tag: string): void => { const want = npcs.filter((n) => n.when && director.cond(n.when)); if (want.length) void populate(w, want, [], tag); };
+  if (isOut(w)) for (const b of (w.area as Region).pieces) add(b.npcs, b.id);
+  else add(w.area.npcs, w.id);
+  showWhen(w.scene);
+}
+/** Props a map builds for a beat of the story carry `userData.when`: shown only while it holds. */
+function showWhen(scene: THREE.Object3D): void {
+  scene.traverse((o) => { if (typeof o.userData.when === 'string') o.visible = !!S && director.cond(o.userData.when); });
 }
 function unpopulate(w: World, tag: string): void {
   for (const p of w.people.filter((q) => q.tag === tag)) w.scene.remove(p.actor.root);
@@ -279,15 +300,23 @@ async function go(to: string, spawn: string | Spot): Promise<void> {
   if (to in REGIONS) await (typeof spawn === 'string' ? (w.area as Region).prepare(spawn) : (w.area as Region).settle(spawn.x, spawn.z));
   const from = cur;
   enter(w, spawn);
+  refreshPeople();
   if (crossing && from !== w) dispose(from);
   if (staleRoom && staleRoom !== w) { dispose(staleRoom); staleRoom = null; }
   lastPiece = '';
   await ui.dissolve(false);
-  if (!(to in REGIONS)) ui.nameTag(w.area.title, w.area.sub);
+  if (!(to in REGIONS)) { ui.nameTag(w.area.title, w.area.sub); arrived(to); }
   else if (crossing) { const p = (w.area as Region).pieceAt(player.x, player.z); if (p) { ui.nameTag(p.title, p.sub); lastPiece = p.id; } }
   busy = false;
 }
 
+/** Reaching a map or a room the step is waiting for (`arrive` in data/quests.json). */
+function arrived(at: string): void {
+  const a = STEPS[S?.step]?.arrive;
+  if (!a || a.at !== at || mode !== 'play') return;
+  if (a.then) setStep(a.then);
+  if (a.script) void run(a.script);
+}
 let lastPhase = '';
 let lastPiece = '';
 let shownMinute = -1;
@@ -305,10 +334,12 @@ async function load(): Promise<void> {
   lastPiece = (cur.area as Region).pieceAt(player.x, player.z)?.id ?? '';
   loaded = true;
   S = newState(where());
+  refreshPeople();
   if (TEST) {
     // straight into the town, for playtests and screenshots: free roam, or the mission step asked for
     S.step = STEP ?? 'free';
     if (STEP) catchUp(STEP);
+    refreshPeople();
     mode = 'play';
     hud.show(true);
     showObjective(false);
@@ -330,10 +361,17 @@ type Target = { kind: 'npc'; p: World['people'][number] } | { kind: 'thing'; t: 
 function nearest(): Target | null {
   let best: Target | null = null, bd = Infinity;
   for (const p of cur.people) { const d = Math.hypot(p.actor.x - player.x, p.actor.z - player.z); if (d < 1.7 && d < bd) { bd = d; best = { kind: 'npc', p }; } }
-  for (const t of cur.area.things) { const d = Math.hypot(t.x - player.x, t.z - player.z); if (d < (t.r ?? 1.6) && d < bd) { bd = d; best = { kind: 'thing', t }; } }
+  for (const t of cur.area.things) {
+    if (t.when && !director.cond(t.when)) continue;
+    const d = Math.hypot(t.x - player.x, t.z - player.z); if (d < (t.r ?? 1.6) && d < bd) { bd = d; best = { kind: 'thing', t };
+    }
+  }
+  // Kit walks with Juno once he's joined, and can still be talked to
+  if (kitActor && S.joined.includes('kit') && kitActor.root.parent === cur.scene) { const d = Math.hypot(kitActor.x - player.x, kitActor.z - player.z); if (d < 1.7 && d < bd) best = { kind: 'npc', p: { npc: KIT, actor: kitActor, tag: 'party' } }; }
   return best;
 }
 
+const KIT: NPC = { id: 'kit', name: 'Kit', sprite: 'kit', x: 0, z: 0 };
 async function interact(tg: Target): Promise<void> {
   if (tg.kind === 'npc') {
     const { npc, actor } = tg.p;
@@ -355,7 +393,7 @@ async function interact(tg: Target): Promise<void> {
 
 // ------------------------------------------------------------ exits
 /** Someone holding a line across a way out (NPC `guard`), if (x, z) is on it. */
-const onGuard = (n: NPC, x: number, z: number): boolean => !!n.guard && x >= n.guard.x0 && x <= n.guard.x1 && z >= n.guard.z0 && z <= n.guard.z1;
+const onGuard = (n: NPC, x: number, z: number): boolean => !!n.guard && !(n.guard.unless && director.cond(n.guard.unless)) && x >= n.guard.x0 && x <= n.guard.x1 && z >= n.guard.z0 && z <= n.guard.z1;
 function guardAt(x: number, z: number): boolean {
   const region = outRegion();
   return !!region && region.npcs.some((n) => onGuard(n, x, z));
@@ -392,11 +430,18 @@ async function checkTriggers(): Promise<void> {
   const held = cur.people.find((p) => onGuard(p.npc, player.x, player.z));
   if (held) { await turnBack(held); return; }
   for (const tr of cur.area.triggers) {
-    if (!tr.go || player.x < tr.x0 || player.x > tr.x1 || player.z < tr.z0 || player.z > tr.z1) continue;
+    if (player.x < tr.x0 || player.x > tr.x1 || player.z < tr.z0 || player.z > tr.z1) continue;
+    if (tr.when && !director.cond(tr.when)) continue;
+    // a spot that starts a beat of the story (the dogs in the Big Store)
+    if (tr.script && !tr.go) { player.moving = false; await run(tr.script); return; }
+    if (!tr.go) continue;
     if (tr.go.to in REGIONS || ROOMS[tr.go.to]) { await go(tr.go.to, tr.go.spawn); return; }
     // a road on to a map of another region: the transition (the hill, the mall)
     const other = regionOf(tr.go.to);
     if (other) { await go(other, `${tr.go.to}:${tr.go.spawn}`); return; }
+    // a road the story takes tonight (up the Thirty-Five, at the end)
+    const leave = STEPS[S.step]?.exit?.[tr.go.to];
+    if (leave) { player.moving = false; await run(leave); return; }
     // a road on to a piece not built yet: turn back at the edge rather than promise what isn't there
     busy = true;
     await ui.dissolve(true);
@@ -481,7 +526,7 @@ function frame(): void {
   // crossing from one section of the region into the next: just the name tag, no cut
   if (isOut(cur)) {
     const p = (area as Region).pieceAt(player.x, player.z);
-    if (p && p.id !== lastPiece) { if (lastPiece) ui.nameTag(p.title, p.sub); lastPiece = p.id; }
+    if (p && p.id !== lastPiece) { if (lastPiece) ui.nameTag(p.title, p.sub); lastPiece = p.id; arrived(p.id); }
   }
 
   for (const p of cur.people) p.actor.animate(dt);
@@ -543,7 +588,10 @@ const HASH_FIGHT = /^#fight-([a-z]+)$/.exec(location.hash)?.[1] ?? null;
 const HASH_DRONE = location.hash === '#drone';
 const STEP = params.get('step') ?? (HASH_FIGHT ? 'pancha' : HASH_DRONE ? 'free' : null);
 const TEST = held !== undefined || params.has('clock') || STEP !== null;
-const STEPS = QUESTS.steps as unknown as Record<string, { obj: string; marker: string | [number, number] | null }>;
+/** The prologue's nights and steps (data/quests.json; game/progress.ts reads them). */
+const Q = QUESTS as unknown as Quests;
+const STEPS = Q.steps;
+const hhmm = (t: string): number => { const [h, m] = t.split(':').map(Number); return h! * 60 + m!; };
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 const touchUI = (): boolean => matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 let camHold: THREE.Vector3 | null = null;
@@ -556,6 +604,7 @@ const PORTRAIT: Record<string, string> = {
   'Papá': 'elias', 'Mamá': 'rosa', 'Little Juno': 'kidjuno', 'Juno': 'juno', 'Kit': 'kit', 'Hermana Lupe': 'lupe', 'Doña Chayo': 'chayo', 'Don Beto': 'beto',
   'Rubén': 'ruben', 'Tavo': 'tavo', 'Abuelo Nacho': 'nacho', 'Doña Fina': 'fina', 'Memo': 'memo', 'Nina': 'nina', 'Abuela Toña': 'tona',
   'Doña Marta': 'marta', 'Benny': 'benny', 'Pastor Abel': 'abel', 'Traveler': 'traveler', 'Scavenger': 'scav', 'Neto': 'scav', 'Chuy': 'chuy', 'Keeper': 'keeper',
+  'Doña Inés': 'ines', 'Güero': 'guero', 'Noonrider': 'noonrider',
 };
 let aborting = false;
 const stage: Stage = {
@@ -565,7 +614,7 @@ const stage: Stage = {
   aborted: () => aborting,
   command: (c) => command(c),
 };
-const director = new Director(DIALOGUE as unknown as Dialogue, STEPS, () => S, stage);
+const director = new Director(DIALOGUE as unknown as Dialogue, (k) => condOf(Q, S, k), stage);
 const run = (id: string): Promise<void> => director.run(director.resolve(id));
 
 async function command(c: Cmd): Promise<void> {
@@ -588,6 +637,12 @@ async function command(c: Cmd): Promise<void> {
     case 'page': await unlockPage(String(c.n)); break;
     case 'step': setStep(c.to as string); break;
     case 'flag': S.flags[c.f as string] = true; showObjective(false); break;
+    case 'nightEnd': await nightEnd(); break;
+    case 'clock': await setTime(hhmm(String(c.at))); break;
+    case 'fight': { ui.endTalk(); const r = await fightHere(String(c.id)); if (r === 'win' && c.win) await run(String(c.win)); break; }
+    case 'strays': ui.endTalk(); await strayLine(); break;
+    case 'noonBell': sound.bell(); break;
+    case 'prologueEnd': await prologueEnd(); break;
     case 'checkHome': if (S.flags.fed && S.flags.tank) await run('homeDone'); break;
     case 'hint': hud.toast(touchUI() ? 'Drag on the left to walk. Tap A to talk.' : 'Walk with WASD or the arrows. E or Space to talk. B opens the staybook.', false, 6000); break;
     case 'rest': await rest(); break;
@@ -635,30 +690,38 @@ async function command(c: Cmd): Promise<void> {
     case 'bell': sound.bell(); showBell(); break;
     default: console.warn('[script] unknown command:', c.do);
   }
+  // a step whose tasks are all done hands on; whoever the story needs now comes out (and whoever it doesn't, goes)
+  const then = tasksDone(Q, S);
+  if (then) setStep(then);
+  else if (['flag', 'item', 'take', 'white', 'buy', 'story'].includes(c.do)) refreshPeople();
 }
 
-/** Start at a later step with what the steps before it would have given (playtests: `?step=`). */
+/** Start at a later step with what the steps before it would have given (playtests: `?step=`): the prologue,
+ *  walked on paper up to it (game/progress.ts), the same walk the prologue checker makes. */
 function catchUp(step: string): void {
-  const order = Object.keys(STEPS), at = order.indexOf(step), past = (k: string): boolean => at > order.indexOf(k);
-  if (past('burial')) { S.items.staybook = 1; S.pages.push('1'); }
-  if (past('home')) { Object.assign(S.flags, { fed: true, tank: true }); S.water = 10; S.items.milk = 2; S.pages.push('3'); }
-  if (past('market')) { S.white = 2; S.items.milk = 0; S.pages.push('2'); }
-  if (past('pancha')) {
-    Object.assign(S.flags, { drainStarted: true, drainDone: true });
-    S.joined.push('kit'); S.pages.push('5');
-    Object.assign(S.items, { scrap: 4, cell: 1, bearings: 6 });
-  }
+  S.step = 'burial';
+  const p: Paper = { s: S, log: [], problems: [], went: [] };
+  walk(Q, DIALOGUE as unknown as Dialogue, CATALOG, p, { until: step });
+  for (const m of p.problems) console.warn('[catch up]', m);
+  S.step = step;
 }
+/** What the paper walk needs to know is there. */
+const CATALOG: Catalog = {
+  items: ITEM_NAMES, pages: PAGES as Record<string, unknown>, stories: STORIES as Record<string, unknown>, fights: BATTLES as Record<string, unknown>,
+  worlds: Object.fromEntries([...Object.keys(REGIONS), ...Object.keys(ROOMS)].map((k) => [k, []])),
+};
 
 function setStep(to: string): void {
   S.step = to;
   showObjective(true);
   if (to !== 'burial') sound.chime();
+  refreshPeople();
   void bringCast(cur);
   if (to !== 'burial') saveGame(true);
 }
 function showObjective(flash: boolean): void {
-  hud.objective(QUESTS.mission, STEPS[S.step]?.obj ?? '', flash);
+  const n = nightOf(Q, S.step), N = Q.nights[String(n)];
+  hud.objective(N ? `${Q.mission} · ${N.title}` : Q.mission, objective(Q, S), flash);
   const st = storyStage();
   hud.side(st ? `${st.title}: ${st.obj}` : '');
 }
@@ -697,8 +760,17 @@ function remember(things: Thing[], npcs: NPC[]): void {
   for (const t of things) if (t.script) known.set(`i:${t.script}`, [t.x, t.z]);
   for (const n of npcs) known.set(`npc:${n.id}`, [n.x, n.z]);
 }
+/** A step's marker: a person, a thing, a place, or one of those chosen by condition (like a dialogue entry). */
+type Marker = string | [number, number] | null;
+function markerNow(spec: unknown): Marker {
+  if (spec && typeof spec === 'object' && !Array.isArray(spec)) {
+    for (const [k, v] of Object.entries(spec as Record<string, Marker>)) if (k === '*' || director.cond(k)) return v;
+    return null;
+  }
+  return (spec ?? null) as Marker;
+}
 function goalPoint(): [number, number] | null {
-  const m = STEPS[S.step]?.marker;
+  const m = markerNow(STEPS[S.step]?.marker);
   if (!m) return storyPoint();
   if (Array.isArray(m)) return m;
   if (m === 'homeTasks') return S.flags.fed && S.flags.tank ? null : known.get(S.flags.fed ? 'i:tank' : 'i:pen') ?? null;
@@ -783,7 +855,8 @@ function weather(dt: number): void {
   const sheltered = !isOut(cur) || (!!door && Math.hypot(player.x - door[0], player.z - door[1]) < 3.4);
   if (ph === 'Shutter' && S.flags.shutterWarn !== S.day) { S.flags.shutterWarn = S.day; hud.toast('Shutter. Get under a roof before the white.', true, 4200); }
   if (ph === 'Day' && !sheltered) {
-    const shade = inShade(dt), k = shade ? 1 / SUN.shadeSlows : 1;
+    // shade slows the white, and so do wraps (Rubén's, or Papá's mirror cloth)
+    const shade = inShade(dt), k = (shade ? 1 / SUN.shadeSlows : 1) * (S.items.wraps || S.items.mirrorwraps ? SUN.wrapsSlow : 1);
     S.sunTime += dt * k;
     if (S.sunTime > SUN.burnAfter) condition('burn');
     if (S.sunTime > SUN.blindAfter) condition('blind');
@@ -808,6 +881,18 @@ async function faint(): Promise<void> {
   fainting = true;
   hud.warning(null);
   await ui.fade(true, 900, '#f4f0e6');
+  // in some beats the white decides the story (Güero, night three): its script, then the next night
+  const f = STEPS[S.step]?.faint;
+  if (f) {
+    S.flags[f.flag] = true;
+    await run(f.script);
+    ui.endTalk();
+    S.water = 3; S.white = Math.max(0, S.white - 1);
+    S.party.juno.hp = Math.round(maxHp(S) * SUN.faintHp);
+    fainting = false;
+    await beginNight(f.night);
+    return;
+  }
   await run('faint');
   S.day++; S.water = 3; S.white = Math.max(0, S.white - 1);
   S.party.juno.hp = Math.round(maxHp(S) * SUN.faintHp);
@@ -1055,8 +1140,8 @@ const fight = new Fight(ui.root, {
   toScreen(x, y, z) { v2.set(x, y, z).project(camera); return v2.z > 1 ? null : { x: (v2.x * 0.5 + 0.5) * innerWidth, y: (-v2.y * 0.5 + 0.5) * innerHeight }; },
   ground: (x, z) => cur.area.ground(x, z),
   get tint() { return cur.tint; },
-  blind(a) { const i = foes.indexOf(a); if (i >= 0) void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Region).dropLamps('stray'); },
-  dead() { (cur.area as Region).dropLamps('stray'); },
+  blind(a) { const i = foes.indexOf(a); if (i >= 0 && fightId === 'drain') void Actor.critter('strayBroken', cur.tint, 1.15).then((b) => { b.place(a.x, a.root.position.y, a.z); cur.scene.remove(a.root); cur.scene.add(b.root); foes[i] = b; }); (cur.area as Partial<Region>).dropLamps?.('stray'); },
+  dead() { (cur.area as Partial<Region>).dropLamps?.('stray'); },
   touch: touchUI(),
   onAct: (who, target, move) => {
     // a foe's move: the Stray's spark, or a ram or a bite
@@ -1166,6 +1251,10 @@ const STAGINGS: Record<string, Staging> = {
 const BATTLE = [params.get('battle'), HASH_FIGHT].find((b) => b && STAGINGS[b]) ?? 'director';
 /** The fight's centre at the drain, and the staging in use (null outside a fight). */
 const CENTRE = { x: 115.2, z: 209.4 };
+/** Where the fight in progress is centred (the drain's centre, or wherever the story started it). */
+let centre = { ...CENTRE };
+/** Which fight (data/battles.json). */
+let fightId = 'drain';
 let staged: Staging | null = null;
 let stageCut: { pos: THREE.Vector3; look: THREE.Vector3; fov: number; until: number } | null = null;
 /** The first frame of a staging cuts straight to its mark (the fight opens on a flash). */
@@ -1174,7 +1263,9 @@ const letterbox = document.createElement('div');
 letterbox.className = 'letterbox';
 ui.root.appendChild(letterbox);
 
-const stageAt = (o: [number, number]): [number, number] => [CENTRE.x + o[0], CENTRE.z + o[1]];
+const stageAt = (o: [number, number]): [number, number] => [centre.x + o[0], centre.z + o[1]];
+/** A staging's mark for the i-th foe; a third foe and on stand beyond the second. */
+const foeMark = (st: Staging, i: number): [number, number] => st.foes[i] ?? [st.foes[1]![0] + 1.8 * (i - 1), st.foes[1]![1] - 1.0 * (i - 1)];
 /** Put everyone where the staging says and frame it. */
 function stageFight(st: Staging): void {
   staged = st;
@@ -1187,14 +1278,15 @@ function stageFight(st: Staging): void {
   const g = (x: number, z: number): number => cur.area.ground(x, z);
   const party = [player, kitActor].filter((a): a is Actor => !!a);
   party.forEach((a, i) => { const [x, z] = stageAt(st.party[i]!); a.place(x, g(x, z), z); a.stance = true; a.moving = false; });
-  foes.forEach((a, i) => { const [x, z] = stageAt(st.foes[i]!); a.place(x, g(x, z), z); });
-  // the Stray's one red eye goes where the Stray is
-  (cur.area as Region).dropLamps('stray');
-  if (foes[0]) (cur.area as Region).addLamp({ pos: new THREE.Vector3(foes[0].x, foes[0].root.position.y + 0.9, foes[0].z + 0.3), color: new THREE.Color('#ff4a2a'), intensity: 2.2, dist: 5, flicker: 0.1, tag: 'stray' });
+  foes.forEach((a, i) => { const [x, z] = stageAt(foeMark(st, i)); a.place(x, g(x, z), z); });
+  // the Stray's one red eye goes where the Stray is (a room has its own lamps, and no pool to add to)
+  const lamps = cur.area as Partial<Region>;
+  lamps.dropLamps?.('stray');
+  if (foes[0] && fightId === 'drain') lamps.addLamp?.({ pos: new THREE.Vector3(foes[0].x, foes[0].root.position.y + 0.9, foes[0].z + 0.3), color: new THREE.Color('#ff4a2a'), intensity: 2.2, dist: 5, flicker: 0.1, tag: 'stray' });
   // and a cool key light over the fight, so faces read from any side at night
-  (cur.area as Region).dropLamps('stage');
-  const y = g(CENTRE.x, CENTRE.z);
-  (cur.area as Region).addLamp({ pos: new THREE.Vector3(CENTRE.x - 1, y + 4.6, CENTRE.z + 1.2), color: new THREE.Color('#b8c6ff'), intensity: 5, dist: 14, flicker: 0, tag: 'stage' });
+  lamps.dropLamps?.('stage');
+  const y = g(centre.x, centre.z);
+  lamps.addLamp?.({ pos: new THREE.Vector3(centre.x - 1, y + 4.6, centre.z + 1.2), color: new THREE.Color('#b8c6ff'), intensity: 5, dist: 14, flicker: 0, tag: 'stage' });
 }
 function unstage(): void {
   for (const a of [player, kitActor, ...foes]) { a?.pose(null); if (a) { a.stance = false; a.release(); } }
@@ -1219,7 +1311,7 @@ const camGoal = new THREE.Vector3(), lookGoal = new THREE.Vector3(), lookNow = n
 /** Each frame of a staged fight: the camera, and every figure turned to it. */
 function stageFrame(dt: number, t: number): void {
   const st = staged!;
-  const y = cur.area.ground(CENTRE.x, CENTRE.z);
+  const y = cur.area.ground(centre.x, centre.z);
   const sw = st.sway ? Math.sin(t * 0.25) * st.sway : 0;
   const now = performance.now();
   if (stageCut && now > stageCut.until) stageCut = null;
@@ -1235,8 +1327,8 @@ function stageFrame(dt: number, t: number): void {
   }
   if (stageCut) { camGoal.copy(stageCut.pos); lookGoal.copy(stageCut.look); }
   else {
-    camGoal.set(CENTRE.x + cam.pos[0] + sw + drift[0]!, y + cam.pos[1] + drift[1]!, CENTRE.z + cam.pos[2] - sw * 0.5 + drift[2]!);
-    lookGoal.set(CENTRE.x + cam.look[0], y + cam.look[1], CENTRE.z + cam.look[2]);
+    camGoal.set(centre.x + cam.pos[0] + sw + drift[0]!, y + cam.pos[1] + drift[1]!, centre.z + cam.pos[2] - sw * 0.5 + drift[2]!);
+    lookGoal.set(centre.x + cam.look[0], y + cam.look[1], centre.z + cam.look[2]);
   }
   // glides are gentle; a swing to the hero shot or a cut is quick
   const rate = stageCut ? 7 : now < direct.quick ? 4.5 : st.director ? 1.7 : 3;
@@ -1304,21 +1396,22 @@ async function spawnEnemies(): Promise<void> {
   stageFight(st);
 }
 
-async function battle(): Promise<'win' | 'load'> {
+async function battle(id = 'drain'): Promise<'win' | 'load'> {
   if (!staged) stageFight(STAGINGS[BATTLE]!);
-  const B = BATTLES as unknown as { drain: FightDef; units: Record<string, UnitDef> };
+  const B = BATTLES as unknown as Record<string, FightDef> & { units: Record<string, UnitDef> };
   sound.battleStart();
   sound.music('combat');
   minimap.hidden = true;
   for (let retry = false; ; retry = true) {
     // what the white did to Juno follows her into the fight (game/sun.ts)
     const j = B.units.juno!, units = { ...B.units, juno: { ...j, hp: maxHp(S), spd: has(S, 'heat') ? j.spd * 0.75 : j.spd } };
-    const r = await fight.fight(B.drain, units, { juno: player, kit: kitActor! }, foes, retry);
+    const r = await fight.fight(B[id]!, units, { juno: player, kit: kitActor! }, foes, retry);
     if (r === 'win') break;
     if (r === 'load') { unstage(); clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
     for (const a of foes) a.root.visible = true;
   }
-  S.flags.drainDone = true;
+  if (id === 'drain') S.flags.drainDone = true;
+  fightId = 'drain'; centre = { ...CENTRE };
   minimap.hidden = false;
   await ui.fade(true, 450);
   unstage();
@@ -1330,6 +1423,45 @@ async function battle(): Promise<'win' | 'load'> {
   await ui.fade(false, 600);
   camHold = null;
   return 'win';
+}
+/** A fight the story starts where Juno stands (the dogs, the Warden): its foes come in, everyone takes their
+ *  marks, and it's fought there. Indoors it's framed from the overworld camera (walls close in on the others). */
+async function fightHere(id: string): Promise<'win' | 'load'> {
+  const def = (BATTLES as unknown as Record<string, { enemies: Array<{ sprite?: string; height?: number }> }>)[id];
+  if (!def) { console.warn('[fight] no fight', id); return 'win'; }
+  fightId = id;
+  centre = { x: player.x, z: player.z - 2.4 };
+  await bringCast(cur);
+  for (const e of def.enemies) {
+    const a = await Actor.critter(e.sprite ?? 'stray', cur.tint, e.height ?? 1);
+    a.place(centre.x, cur.area.ground(centre.x, centre.z - 5), centre.z - 5);
+    cur.scene.add(a.root);
+    foes.push(a);
+  }
+  sound.growl();
+  stageFight(isOut(cur) ? STAGINGS[BATTLE]! : STAGINGS.topdown!);
+  return battle(id);
+}
+/** Night three's Lamp: the Strays roll east down Del Mar in a line, past Juno and Kit. */
+async function strayLine(): Promise<void> {
+  const z = player.z + 6.5, x0 = player.x - 12, g = (x: number): number => cur.area.ground(x, z);
+  const line = await Promise.all([0, 1, 2, 3, 4].map(() => Actor.critter('stray', cur.tint, 1.0)));
+  line.forEach((a, i) => { a.place(x0 - i * 2.4, g(x0 - i * 2.4), z); a.face(1, 0); a.moving = true; cur.scene.add(a.root); });
+  sound.servo();
+  camHold = new THREE.Vector3(player.x, 0.8, player.z + 3);
+  const t0 = performance.now();
+  await new Promise<void>((res) => {
+    let last = t0;
+    const f = (now: number): void => {
+      const k = Math.min(1, (now - t0) / 7000), dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      line.forEach((a, i) => { const x = x0 - i * 2.4 + k * 30; a.place(x, g(x), z); a.animate(dt); });
+      if (k < 1) requestAnimationFrame(f); else res();
+    };
+    requestAnimationFrame(f);
+  });
+  for (const a of line) cur.scene.remove(a.root);
+  camHold = null;
 }
 function clearFoes(): void {
   for (const a of foes) a.root.parent?.remove(a.root);
@@ -1430,14 +1562,75 @@ async function ending(): Promise<void> {
     if (a === 'read') { await hud.openBook(PAGES as Record<string, Page>, S.pages, 'last', true); continue; }
     if (kitActor) kitActor.root.visible = true;
     if (panchaActor) panchaActor.root.visible = true;
-    await afterEnding();
+    hud.hideCard();
+    await ui.fade(true, 500);
+    await beginNight(2);
     if (a === 'title') await titleScreen();
     return;
   }
 }
 
+/** Juno sleeps on her cot and the night ends (the cot's scripts): the night's card, then the next night. Night
+ *  five's dawn is the drone's day. */
+async function nightEnd(): Promise<void> {
+  const n = nightOf(Q, S.step), N = Q.nights[String(n)];
+  mode = 'cine';
+  ui.endTalk();
+  await ui.fade(true, 1400, '#f4f0e6');
+  sleepOff(S);
+  exposure = 0;
+  if (N?.dawn === 'drone') { S.flags.drone_down = true; await droneDay(n + 1); return; }
+  hud.show(false);
+  minimap.hidden = true;
+  sound.music('intro');
+  const a = await hud.endCard(N?.title ?? '', N?.name ?? '');
+  if (a === 'read') { const last = PAGE_ORDER.filter((k) => S.pages.includes(k)).pop(); if (last) await hud.openBook(PAGES as Record<string, Page>, S.pages, last, true); }
+  hud.hideCard();
+  await beginNight(n + 1);
+  if (a === 'title') await titleScreen();
+}
+/** Where Juno wakes: her cot in Mar Farm. */
+const COT: Spot = { x: 4.1, z: 9.6, face: 'N' };
+/** A night begins: Lamp (or the hour the night says), at home, its first step, and its wake script. */
+async function beginNight(n: number): Promise<void> {
+  const N = Q.nights[String(n)];
+  if (!N) return;
+  S.day++;
+  S.flags.night = n;
+  S.step = N.first;
+  dropDrone();
+  camHold = null; camZoomTo = 1;
+  await setTime(N.at ? hhmm(N.at) : 19 * 60 + 30);
+  await go('mar-home', COT);
+  mode = 'play';
+  hud.show(true);
+  minimap.hidden = false;
+  showObjective(true);
+  refreshPeople();
+  await bringCast(cur);
+  saveGame(true);
+  sound.music('explore');
+  await ui.fade(false, 700);
+  ui.nameTag(N.title, N.name);
+  if (N.wake) await run(N.wake);
+}
+/** Up the Thirty-Five at Lamp: the prologue ends, and Act I would begin at the Gate. */
+async function prologueEnd(): Promise<void> {
+  mode = 'cine';
+  ui.endTalk();
+  await ui.fade(true, 1600);
+  hud.show(false);
+  minimap.hidden = true;
+  sound.music('intro');
+  S.step = 'free';
+  const a = await hud.endCard('Seven Flags', 'The prologue ends. Act I begins at the Gate.');
+  hud.hideCard();
+  await afterEnding();
+  if (a === 'title') await titleScreen();
+}
+
 /** The fifth night's end (`#drone` shows it now): Kit wakes Juno in the white, everyone's on the roofs, and the drone goes over toward the lake. */
-async function droneDay(): Promise<void> {
+async function droneDay(next?: number): Promise<void> {
   sound.music('none');
   await ui.fade(true, 0);
   await setTime(6 * 60 + 50);
@@ -1458,8 +1651,8 @@ async function droneDay(): Promise<void> {
   ui.endTalk();
   sound.music('intro');
   const a = await hud.endCard('Day five', 'Nothing ever comes down');
-  if (a === 'read') hud.hideCard();
-  await afterEnding();
+  hud.hideCard();
+  if (next) { await ui.fade(true, 500); await beginNight(next); } else await afterEnding();
   if (a === 'title') await titleScreen();
 }
 /** After an ending: the next Lamp, Kit and Pancha with you, Seven Flags yours to walk. */
@@ -1586,6 +1779,8 @@ load().then(() => {
     shadeAt: (x: number, z: number) => shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + 1.72, z)),
     get shaded() { return shaded; },
     get people() { return cur.people.map((p) => p.npc.id); },
+    /** Props shown for a beat of the story (`userData.when`): what each waits on, and whether it shows now. */
+    whenProps() { const o: Array<[string, boolean, number, number]> = []; cur.scene.traverse((q) => { if (typeof q.userData.when === 'string') { const v = new THREE.Vector3(); q.getWorldPosition(v); o.push([q.userData.when, q.visible, +v.x.toFixed(1), +v.z.toFixed(1)]); } }); return o; },
     get bellUp() { return !!outWorld()?.scene.getObjectByName('church-bell')?.visible; },
     shadeDebug(x: number, z: number, y: number) { const r = shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + y, z)); return [r, ...shadeLast]; },
     /**
@@ -1594,6 +1789,156 @@ load().then(() => {
      * edge she can get to is a physical barrier or a person who turns her back.
      */
     regions: Object.keys(REGIONS),
+    /**
+     * The prologue checker (the owner, 2026-10-29: "make sure that those paths exist, that the conversation and
+     * dialogue exist, that the progression is possible"). Builds every region and room, finds where Juno can walk
+     * in each, then walks the prologue on paper (game/progress.ts) down each branch, asking at every step whether
+     * the person, thing, spot or road it needs is there at that point in the story, and reachable on foot. Also:
+     * every script's targets exist, every marker points at something, every door leads somewhere that leads back.
+     */
+    async prologueCheck() {
+      const problems: string[] = [], notes: string[] = [];
+      interface Place { id: string; out: boolean; npcs: NPC[]; things: Thing[]; triggers: Area['triggers']; spawns: Record<string, Spot>; reach: Map<number, number>; pieceAt: (x: number, z: number) => string | null }
+      const places = new Map<string, Place>();
+      const STEP = 0.5, key = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096);
+      /** Where Juno can walk from `from`, and how far (units, along the grid). */
+      const flood = (area: Area, from: Spot, inside: (x: number, z: number) => boolean): Map<number, number> => {
+        const d = new Map<number, number>(), q: Array<[number, number]> = [[Math.round(from.x / STEP), Math.round(from.z / STEP)]];
+        d.set(key(q[0]![0], q[0]![1]), 0);
+        for (let h = 0; h < q.length; h++) {
+          const [i, j] = q[h]!, here = d.get(key(i, j))!;
+          for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+            const k = key(i + di, j + dj), x = (i + di) * STEP, z = (j + dj) * STEP;
+            if (d.has(k) || !inside(x, z) || area.blocked(x, z, 0.28)) continue;
+            d.set(k, here + STEP); q.push([i + di, j + dj]);
+          }
+        }
+        return d;
+      };
+      /** The walk from the nearest reachable spot within `r` of (x, z), or null. */
+      const near = (P: Place, x: number, z: number, r: number): number | null => {
+        let best: number | null = null;
+        for (let i = Math.floor((x - r) / STEP); i <= Math.ceil((x + r) / STEP); i++) for (let j = Math.floor((z - r) / STEP); j <= Math.ceil((z + r) / STEP); j++) {
+          if (Math.hypot(i * STEP - x, j * STEP - z) > r) continue;
+          const v = P.reach.get(key(i, j));
+          if (v !== undefined && (best === null || v < best)) best = v;
+        }
+        return best;
+      };
+      const back: [string, Spot] = [cur.id, { x: player.x, z: player.z }];
+      for (const id of Object.keys(REGIONS)) {
+        if (cur.id !== id) await go(id, REGIONS[id]!.start);
+        const region = cur.area as Region;
+        region.hold = true;
+        await region.buildAll();
+        const start = REGIONS[id]!.start;
+        places.set(id, { id, out: true, npcs: [...region.npcs], things: [...region.things], triggers: [...region.triggers], spawns: { ...region.spawns }, reach: flood(region, start, (x, z) => !!region.pieceAt(x, z)), pieceAt: (x, z) => region.pieceAt(x, z)?.id ?? null });
+        region.hold = false;
+      }
+      for (const id of Object.keys(ROOMS)) {
+        const w = worlds.get(id) ?? await buildWorld(id);
+        const a = w.area, from = a.spawns.door ?? a.spawns.start!;
+        places.set(id, { id, out: false, npcs: [...a.npcs], things: [...a.things], triggers: [...a.triggers], spawns: { ...a.spawns }, reach: flood(a, from, () => true), pieceAt: () => null });
+      }
+      await go(...back);
+
+      // every door leads somewhere, and the way back out lands on a spawn that exists
+      for (const P of places.values()) {
+        for (const t of P.things) if (t.go) {
+          const T = places.get(t.go.to) ?? places.get(regionOf(t.go.to) ?? '');
+          if (!T) { problems.push(`${P.id}: "${t.label}" leads to ${t.go.to}, which isn't built`); continue; }
+          if (!T.spawns[t.go.spawn] && !T.spawns[`${t.go.to}:${t.go.spawn}`]) problems.push(`${P.id}: "${t.label}" lands on ${t.go.to}:${t.go.spawn}, which isn't a spawn`);
+          if (near(P, t.x, t.z, t.r ?? 1.6) === null) problems.push(`${P.id}: "${t.label}" (to ${t.go.to}) can't be reached on foot`);
+        }
+        if (!P.out) for (const tr of P.triggers) if (tr.go) {
+          const T = places.get(tr.go.to);
+          if (!T) problems.push(`${P.id}: its way out leads to ${tr.go.to}, which isn't built`);
+          else if (!T.spawns[tr.go.spawn]) problems.push(`${P.id}: its way out lands on ${tr.go.to}:${tr.go.spawn}, which isn't a spawn`);
+        }
+      }
+      // every marker points at someone or something that's there, or a place inside a map
+      const named = (m: unknown): void => {
+        if (m === null || m === undefined) return;
+        if (Array.isArray(m)) { if (!regionAt(m[0] as number, m[1] as number)) problems.push(`marker [${m.join(', ')}] is outside every map`); return; }
+        if (typeof m === 'object') { for (const v of Object.values(m as Record<string, unknown>)) named(v); return; }
+        const id = String(m), all = [...places.values()];
+        if (id.startsWith('npc:') && !all.some((P) => P.npcs.some((n) => n.id === id.slice(4))) && id !== 'npc:kit') problems.push(`marker ${id}: nobody by that name anywhere`);
+        if (id.startsWith('i:') && !all.some((P) => P.things.some((t) => t.script === id.slice(2)))) problems.push(`marker ${id}: nothing with that script anywhere`);
+      };
+      for (const st of Object.values(STEPS)) named(st.marker);
+
+      /** Is what this part of the step needs there, at this point in the story, and can Juno get to it? */
+      const place = (v: import('./game/progress').Via, s: GameState): string | null => {
+        const ok = (when?: string): boolean => !when || condOf(Q, s, when);
+        const where = [...places.values()].filter((P) => (v.room ? P.id === v.room : v.piece ? P.out && [...P.reach.keys()].length > 0 && Object.keys(P.spawns).some((k) => k.startsWith(`${v.piece}:`)) : P.out));
+        if (!where.length) return `nowhere is ${v.room ?? v.piece}`;
+        if (v.npc) {
+          if (v.npc === 'kit' && s.joined.includes('kit')) return null; // walking with her
+          for (const P of where) for (const n of P.npcs) {
+            if (n.id !== v.npc || !ok(n.when) || (v.day && P.out && !n.allDay)) continue;
+            const d = near(P, n.x, n.z, 1.6);
+            if (d !== null) { if (v.day) notes.push(`${s.step}: ${n.name} is ${Math.round(d)} units' walk from ${P.id}'s start`); return null; }
+            return `${n.name} is in ${P.id} at (${n.x.toFixed(1)}, ${n.z.toFixed(1)}) but can't be reached on foot`;
+          }
+          return `nobody called ${v.npc} is in ${v.room ?? 'the open'} now${v.day ? ' by day' : ''}`;
+        }
+        if (v.thing) {
+          for (const P of where) for (const t of P.things) {
+            if (t.script !== v.thing || !ok(t.when)) continue;
+            return near(P, t.x, t.z, t.r ?? 1.6) !== null ? null : `"${t.label}" in ${P.id} can't be reached on foot`;
+          }
+          return `no ${v.thing} in ${v.room ?? 'the open'} now`;
+        }
+        if (v.zone) {
+          for (const P of where) for (const tr of P.triggers) {
+            if (tr.script !== v.zone || !ok(tr.when)) continue;
+            for (let x = tr.x0; x <= tr.x1; x += STEP) for (let z = tr.z0; z <= tr.z1; z += STEP) if (near(P, x, z, STEP) !== null) return null;
+            return `the ${v.zone} spot in ${P.id} can't be walked into`;
+          }
+          return `no ${v.zone} spot in ${v.room ?? 'the open'} now`;
+        }
+        if (v.exit) {
+          for (const P of where) for (const tr of P.triggers) {
+            if (tr.go?.to !== v.exit) continue;
+            const cx = (tr.x0 + tr.x1) / 2, cz = (tr.z0 + tr.z1) / 2;
+            const held = P.npcs.find((n) => n.guard && Math.hypot((n.guard.x0 + n.guard.x1) / 2 - cx, (n.guard.z0 + n.guard.z1) / 2 - cz) < 10 && !(n.guard.unless && condOf(Q, s, n.guard.unless)));
+            if (held) return `${held.name} still holds the line across the road to ${v.exit}`;
+            for (let x = tr.x0; x <= tr.x1; x += STEP) for (let z = Math.max(tr.z0, -1); z <= tr.z1; z += STEP) if (near(P, x, z, 1.0) !== null) return null;
+            return `the road to ${v.exit} can't be walked onto`;
+          }
+          return `no road to ${v.exit}`;
+        }
+        if (v.code === 'arrive' && v.room && !places.has(v.room)) return `no room ${v.room}`;
+        return null;
+      };
+      const walks: Array<[string, string[]]> = [['Güero found', []], ['Güero lost (the white takes Juno searching)', ['n3_search']], ['Güero found, Juno faints on the way home', ['n3_home']]];
+      const logs: Record<string, string[]> = {};
+      for (const [name, faintAt] of walks) {
+        const p: Paper = { s: newState({ world: SPAN, ...START, face: 'N' }), log: [], problems: [], went: [] };
+        walk(Q, DIALOGUE as unknown as Dialogue, CATALOG, p, { faintAt, place });
+        if (p.s.step !== 'free') p.problems.push(`stops at ${p.s.step} and never reaches the end`);
+        for (const m of p.problems) problems.push(`${name}: ${m}`);
+        for (const w of p.went) if (!places.has(w)) problems.push(`${name}: a script goes to ${w}, which isn't built`);
+        logs[name] = p.log;
+      }
+      problems.push(...lint(Q, DIALOGUE as unknown as Dialogue, CATALOG, ['drainStarted', 'drainDone', 'night', 'drone_down']));
+      // the white, night three: there and back from Mar Farm in the open, against what water and health can take
+      const span = places.get(SPAN)!, hatchAt = span.spawns['seven-flags:hatch'];
+      const g = span.npcs.find((n) => n.id === 'guero');
+      if (g && hatchAt) {
+        // walks measured from the lot in front of Mar Farm (the region's start), while every map was built
+        const out = near(span, g.x, g.z, 1.6), hatchFromHome = near(span, hatchAt.x, hatchAt.z, 1.0);
+        if (out === null || hatchFromHome === null) problems.push('night three: Güero or the hatch can\'t be walked to from Mar Farm');
+        else {
+          // the walk back is no longer than out and on to the hatch
+          const trip = out * 2 + hatchFromHome, secs = trip / RUN;
+          const per = SUN.dropEvery / SUN.wrapsSlow, budget = 10 * per + Math.ceil(42 / SUN.hurt) * (SUN.hurtEvery / SUN.wrapsSlow);
+          notes.push(`night three in the white: at most ${Math.round(trip)} units in the open (${Math.round(secs)} s running, wraps on); full water and health last ${Math.round(budget)} s before she faints`);
+          if (secs > budget) problems.push(`night three: the search can't be done running in full sun with full water (${Math.round(secs)} s against ${Math.round(budget)} s)`);
+        }
+      }
+      return { problems, notes, logs };
+    },
     async edgeIssues(step = 0.5) {
       const region = outRegion();
       if (!region) return ['no region'];

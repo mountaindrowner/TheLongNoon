@@ -12,6 +12,8 @@ module.exports = defineConfig({
   testMatch: '**/*.spec.js',
   timeout: 120_000,
   workers: 1,
+  // every test boots its own page, so CI can split them across jobs one by one (`--shard`)
+  fullyParallel: true,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: { launchOptions: { args: gl } },
   projects: [

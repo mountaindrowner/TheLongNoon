@@ -6,11 +6,16 @@ on:
   pull_request:
 jobs:
   playtest:
-    # one job per screen size, side by side: together they no longer fit in one job's time (2026-10-29)
+    # one job per screen size, side by side, and 1080p (the long scenes) split in two: together they no longer fit
+    # in one job's time (2026-10-29)
     strategy:
       fail-fast: false
       matrix:
-        project: [desktop-1080p, phone-landscape, phone-portrait]
+        include:
+          - { name: desktop-1080p-1, project: desktop-1080p, shard: 1/2 }
+          - { name: desktop-1080p-2, project: desktop-1080p, shard: 2/2 }
+          - { name: phone-landscape, project: phone-landscape, shard: 1/1 }
+          - { name: phone-portrait, project: phone-portrait, shard: 1/1 }
     # pinned: the pinned Playwright (1.56) can't install browsers on ubuntu-latest (26.04)
     runs-on: ubuntu-24.04
     timeout-minutes: 90  # software WebGL: the region playtests walk at a frame or two a second; the story plays scenes through
@@ -23,11 +28,11 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck && npm run build && npm run build:legacy
-      - run: npx playwright test --project=${{ matrix.project }}
+      - run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playtest-screenshots-${{ matrix.project }}
+          name: playtest-screenshots-${{ matrix.name }}
           path: |
             test-results/
             playwright-report/

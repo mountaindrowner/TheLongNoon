@@ -289,6 +289,42 @@
         "idle"
       ],
       "desc": "a scavenger who camps in the dead mall, a wiry man in his forties: a welder's goggles pushed up on a shaved head, a patched orange safety vest over a bare chest, cargo shorts with bulging pockets, wrapped forearms, a crowbar through his belt, suspicious face"
+    },
+    "ines": {
+      "kind": "person",
+      "anims": [
+        "idle"
+      ],
+      "desc": "Doña Inés, a thin young mother who lives in the Cellars under the old houses: black hair in a long braid, a faded mustard-yellow blouse with rolled sleeves, a long brown skirt, a dish towel over one shoulder, worried tired face"
+    },
+    "guero": {
+      "kind": "person",
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "Güero, a small boy of about seven: pale sun-bleached blond hair, a too-big faded red t-shirt, dusty shorts, bare scabbed knees, a toy truck in one hand, bright curious face"
+    },
+    "dog": {
+      "kind": "creature",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk",
+        "run",
+        "attack",
+        "hurt"
+      ],
+      "desc": "a feral dog, thin and scarred, patchy brown-and-black coat, a torn ear, a rotted leather collar still on its neck, teeth bared, low and hungry"
+    },
+    "warden": {
+      "kind": "creature",
+      "enemy": true,
+      "anims": [
+        "idle",
+        "walk"
+      ],
+      "desc": "a Warden, a huge old-world guardian machine three times a Stray's size, walking on four heavy jointed legs: a domed grey armoured body scorched by the sun, one big white searchlight eye in the middle, a ring of antennas and dishes on its back that hum, cables trailing, menacing and slow"
     }
   }
 }

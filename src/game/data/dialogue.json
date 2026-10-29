@@ -62,6 +62,159 @@
   }
  ],
  "lupe": {
+  "n2_table": [
+   [
+    "Hermana Lupe",
+    "Sit, mija. The table's for everybody. Tonight it's for you."
+   ],
+   [
+    "Memo",
+    "Every family owes the town a share. Water, salvage, a watch on the wall. That's how there's still a town."
+   ],
+   [
+    "Doña Chayo",
+    "Shares. Your papá carried two."
+   ],
+   [
+    "Don Beto",
+    "The water shift, with Fina. And his salvage route, out to the Big Store."
+   ],
+   [
+    "Juno",
+    "Papá's route."
+   ],
+   [
+    "Hermana Lupe",
+    "Now it's yours. Nobody at this table thinks you can't."
+   ],
+   [
+    "Memo",
+    "And get yourself wraps before you need them. Rubén has some. The white doesn't wait to see if you're ready."
+   ],
+   {
+    "do": "step",
+    "to": "n2_shares"
+   }
+  ],
+  "n7_meeting": [
+   [
+    "",
+    "Under the seven flags, the whole town. Everybody talking at once."
+   ],
+   [
+    "Don Beto",
+    "Halogen's been asking up and down the Thirty-Five about something. He calls it the Cold."
+   ],
+   [
+    "Doña Chayo",
+    "So give it to his riders, and they leave us alone."
+   ],
+   [
+    "Memo",
+    "Riders don't leave anybody alone. Smash it, and the machines stop coming."
+   ],
+   [
+    "Doña Fina",
+    "Smash it, and what if it was the one good thing?"
+   ],
+   {
+    "do": "choice",
+    "q": "They're all looking at the canister in Juno's arms.",
+    "opts": [
+     [
+      "\"We trade it.\"",
+      [
+       [
+        "Juno",
+        "If we trade it, the riders go."
+       ],
+       {
+        "do": "flag",
+        "f": "said_trade"
+       }
+      ]
+     ],
+     [
+      "\"We break it.\"",
+      [
+       [
+        "Juno",
+        "If we break it, the machines stop."
+       ],
+       {
+        "do": "flag",
+        "f": "said_smash"
+       }
+      ]
+     ],
+     [
+      "Say nothing",
+      []
+     ]
+    ]
+   },
+   [
+    "Hermana Lupe",
+    "It isn't ours to break, and it isn't ours to sell."
+   ],
+   [
+    "",
+    "The screen on the canister lights up, and NIM speaks, loud enough for the whole Plaza."
+   ],
+   [
+    "NIM",
+    "Hello. My name is NIM. I'm a seed. For the sky."
+   ],
+   [
+    "NIM",
+    "If somebody gets me to the right place, I can make it rain."
+   ],
+   [
+    "",
+    "Nobody says anything at all."
+   ],
+   [
+    "Kit",
+    "...Applause. Your papá said it sounds like applause."
+   ],
+   {
+    "do": "step",
+    "to": "n7_roof"
+   }
+  ],
+  "n7_goodbyes": [
+   [
+    "Hermana Lupe",
+    "Your papá's wraps. Mirror cloth. He walked to San Antonio in these once, and back."
+   ],
+   {
+    "do": "item",
+    "id": "mirrorwraps",
+    "n": 1
+   },
+   [
+    "Hermana Lupe",
+    "Keep the lantern lit, mija. Somebody always has to."
+   ],
+   [
+    "Juno",
+    "Who keeps it lit here?"
+   ],
+   [
+    "Hermana Lupe",
+    "Me. Until you're back. Go and find Kit. He's at the Ramp, talking to a sign."
+   ],
+   {
+    "do": "step",
+    "to": "n7_sled"
+   }
+  ],
+  "night:7": [
+   [
+    "Hermana Lupe",
+    "Go on. I'm too old to watch anybody walk away twice in one night."
+   ]
+  ],
   "home": [
    [
     "Hermana Lupe",
@@ -180,6 +333,12 @@
   ]
  },
  "chayo": {
+  "n2_table": [
+   [
+    "Doña Chayo",
+    "Sit by me. Lupe goes first, then Memo goes longer."
+   ]
+  ],
   "market": [
    [
     "Doña Chayo",
@@ -303,7 +462,7 @@
     "Up the Old Trail. Follow the lanterns. Marta. Go."
    ]
   ],
-  "free&!q_flour": [
+  "sides&!q_flour": [
    [
     "Doña Chayo",
     "Juno. You're walking around anyway. Walk somewhere useful."
@@ -344,6 +503,30 @@
     "...Go on. Your face is still going to burn, white or no white."
    ]
   ],
+  "night:7&!chayo_bye": [
+   [
+    "Doña Chayo",
+    "Take these. Don't argue."
+   ],
+   {
+    "do": "white",
+    "add": 2
+   },
+   {
+    "do": "flag",
+    "f": "chayo_bye"
+   },
+   [
+    "Doña Chayo",
+    "Your mamá never once sold me gray. Don't you start out there."
+   ]
+  ],
+  "night:7": [
+   [
+    "Doña Chayo",
+    "Go on. Before I cry in front of the whole market."
+   ]
+  ],
   "*": [
    [
     "Doña Chayo",
@@ -352,6 +535,66 @@
   ]
  },
  "kit": {
+  "n2_shares&has:salve&!salve_used": [
+   [
+    "Kit",
+    "What? My hand's fine. It's a normal amount of blood."
+   ],
+   [
+    "Juno",
+    "Give it here."
+   ],
+   {
+    "do": "choice",
+    "q": "Use Fina's salve on Kit's hand?",
+    "opts": [
+     [
+      "Use the salve",
+      [
+       {
+        "do": "take",
+        "id": "salve",
+        "n": 1
+       },
+       [
+        "",
+        "Juno opens the tin and works the salve into the cut. Kit narrates every second of it."
+       ],
+       [
+        "Kit",
+        "Okay. Okay. That's cold. That's so cold. I'm being very brave about this, write that down."
+       ],
+       {
+        "do": "flag",
+        "f": "salve_used"
+       }
+      ]
+     ],
+     [
+      "Later",
+      []
+     ]
+    ]
+   }
+  ],
+  "n2_shares&!salve_used": [
+   [
+    "Kit",
+    "Fina's going to make you carry water to every house in town. I'll supervise."
+   ]
+  ],
+  "night:6": [
+   [
+    "Kit",
+    "Lake. Wreck. Not dying. That's the plan, right? I like the not dying part."
+   ]
+  ],
+  "night:7": [
+   [
+    "Kit",
+    "I packed. I packed twice. Pancha's staying with my tía. She's not happy about it."
+   ]
+  ],
   "kit": [
    [
     "Kit",
@@ -420,6 +663,64 @@
   ]
  },
  "ruben": {
+  "n2_shares&!wraps_got&white:1": [
+   [
+    "Rubén",
+    "Wraps. Your papá's size, nearly. One tin."
+   ],
+   {
+    "do": "choice",
+    "q": "Daylight wraps for one tin of white?",
+    "opts": [
+     [
+      "Buy them",
+      [
+       {
+        "do": "buy",
+        "white": 1,
+        "item": "wraps",
+        "flag": "wraps_got"
+       },
+       [
+        "Rubén",
+        "Cloth for going out in the white. Face, hands, neck. Leave nothing out."
+       ],
+       [
+        "Rubén",
+        "They won't save you. They'll buy you a little time. That's all anything buys."
+       ]
+      ]
+     ],
+     [
+      "Not yet",
+      []
+     ]
+    ]
+   }
+  ],
+  "n2_shares&!wraps_got": [
+   [
+    "Rubén",
+    "No tin? Your papá's credit is still good at this stall. Take them."
+   ],
+   {
+    "do": "item",
+    "id": "wraps",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "wraps_got"
+   },
+   {
+    "do": "flag",
+    "f": "owes_ruben"
+   },
+   [
+    "Rubén",
+    "Cloth for going out in the white. Face, hands, neck. Leave nothing out."
+   ]
+  ],
   "neto_met&!q_neto_done": [
    [
     "Rubén",
@@ -496,7 +797,7 @@
     "South-west. The long roof. He'll be where the roof's still on."
    ]
   ],
-  "free&!q_neto": [
+  "sides&!q_neto": [
    [
     "Rubén",
     "You're going out past the edges now. I've seen you."
@@ -558,24 +859,68 @@
    ]
   ]
  },
- "beto": [
-  [
-   "Don Beto",
-   "You hear her last night? La Llorona. Down in the Dead River."
+ "beto": {
+  "n5_market": [
+   [
+    "Don Beto",
+    "Sit. The market's slow tonight. Everybody's looking east."
+   ],
+   [
+    "Don Beto",
+    "You know what my abuela used to say? Before things change, the dogs leave."
+   ],
+   [
+    "Juno",
+    "The dogs in the Big Store were gone."
+   ],
+   [
+    "Don Beto",
+    "...Then go home and look at the sky a while. With people you like."
+   ],
+   {
+    "do": "step",
+    "to": "n5_roof"
+   }
   ],
-  [
-   "Don Beto",
-   "My abuela said if you hear her crying, you don't go look. You don't help. You go home."
+  "night:7": [
+   [
+    "Don Beto",
+    "My abuela would tell you: if you hear La Llorona out on the road, you don't look."
+   ],
+   [
+    "Juno",
+    "And if I hear rain?"
+   ],
+   [
+    "Don Beto",
+    "Then you look. You look as long as you want."
+   ]
   ],
-  [
-   "Juno",
-   "Did your abuela ever go look?"
+  "n2_table": [
+   [
+    "Don Beto",
+    "Shares, mija. Everybody carries something. Even me. Mostly stories."
+   ]
   ],
-  [
-   "Don Beto",
-   "Once."
+  "*": [
+   [
+    "Don Beto",
+    "You hear her last night? La Llorona. Down in the Dead River."
+   ],
+   [
+    "Don Beto",
+    "My abuela said if you hear her crying, you don't go look. You don't help. You go home."
+   ],
+   [
+    "Juno",
+    "Did your abuela ever go look?"
+   ],
+   [
+    "Don Beto",
+    "Once."
+   ]
   ]
- ],
+ },
  "tavo": [
   [
    "Tavo",
@@ -782,21 +1127,241 @@
    "Someone drags you under a roof. You wake at Mar Farm, the next Lamp, with one less tin of white."
   ]
  ],
- "fina": [
-  [
-   "Doña Fina",
-   "Agua, agua. Clean, boiled, blessed. Two out of three, guaranteed."
+ "fina": {
+  "n2_shares&!fina_started": [
+   [
+    "Doña Fina",
+    "Your papá's shift. Two jugs, mija. One down to the Cellars, one to Toña at the Chapel table."
+   ],
+   [
+    "Juno",
+    "The Cellars?"
+   ],
+   [
+    "Doña Fina",
+    "Rooms dug under the old houses. Thirty, fifty feet down, cool all day. Inés's hatch is the one with the blue lantern, behind the Plaza."
+   ],
+   {
+    "do": "item",
+    "id": "waterjug",
+    "n": 2
+   },
+   {
+    "do": "flag",
+    "f": "fina_started"
+   }
   ],
-  [
-   "Juno",
-   "Which two?"
+  "n2_shares&fina_started&!fina_done&drop_cellar&drop_tona": [
+   [
+    "Doña Fina",
+    "Both? And you didn't drink one. Your papá always drank one."
+   ],
+   [
+    "Doña Fina",
+    "Here. For the kid's hand. I saw him hiding it."
+   ],
+   {
+    "do": "item",
+    "id": "salve",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "fina_done"
+   }
   ],
-  [
-   "Doña Fina",
-   "Depends on the day, mija."
+  "n2_shares&fina_started&!fina_done": [
+   [
+    "Doña Fina",
+    "One down the Cellars, one to Toña. Go on, the water's not getting colder."
+   ]
+  ],
+  "night:7": [
+   [
+    "Doña Fina",
+    "Clean, boiled, blessed. All three, for once. For the road."
+   ]
+  ],
+  "*": [
+   [
+    "Doña Fina",
+    "Agua, agua. Clean, boiled, blessed. Two out of three, guaranteed."
+   ],
+   [
+    "Juno",
+    "Which two?"
+   ],
+   [
+    "Doña Fina",
+    "Depends on the day, mija."
+   ]
   ]
- ],
+ },
  "memo": {
+  "n2_memo": [
+   [
+    "Memo",
+    "Riders on the Thirty-Five last night. Halogen's colors."
+   ],
+   [
+    "Juno",
+    "The Thirty-Five?"
+   ],
+   [
+    "Memo",
+    "The big road north. Goes all the way to the cold, they say."
+   ],
+   [
+    "Memo",
+    "Riders don't come down it for nothing. Bar your door tonight."
+   ],
+   {
+    "do": "step",
+    "to": "n2_sleep"
+   }
+  ],
+  "n3_tithe": [
+   [
+    "",
+    "Two riders stand at the barricade in white quilted suits and mirrored visors, tubes running into their collars."
+   ],
+   [
+    "Memo",
+    "Noonriders. Halogen's people."
+   ],
+   [
+    "Juno",
+    "Noonriders?"
+   ],
+   [
+    "Memo",
+    "They ride at noon. That's the whole point. Showing you they can."
+   ],
+   [
+    "Noonrider",
+    "Tithe."
+   ],
+   [
+    "Memo",
+    "The tithe. Water, from every town on the Thirty-Five. Every month, every town."
+   ],
+   [
+    "",
+    "Memo hands over four jugs. Nobody speaks. One rider's visor stays turned toward Juno a beat too long."
+   ],
+   [
+    "Noonrider",
+    "...Name?"
+   ],
+   {
+    "do": "choice",
+    "q": "The rider is waiting.",
+    "opts": [
+     [
+      "Say nothing",
+      [
+       [
+        "",
+        "Juno says nothing. The visor turns away."
+       ]
+      ]
+     ],
+     [
+      "\"Juno.\"",
+      [
+       [
+        "Juno",
+        "Juno."
+       ],
+       [
+        "Noonrider",
+        "Juno."
+       ],
+       [
+        "",
+        "The rider says it like something to remember."
+       ],
+       {
+        "do": "flag",
+        "f": "told_rider"
+       }
+      ]
+     ]
+    ]
+   },
+   [
+    "",
+    "They go west at a walk, in no hurry. Nobody moves until they're gone."
+   ],
+   [
+    "Memo",
+    "Go home, mija. Don't be out when the bell goes."
+   ],
+   {
+    "do": "step",
+    "to": "n3_late"
+   }
+  ],
+  "n4_memo": [
+   [
+    "Memo",
+    "Come look."
+   ],
+   [
+    "",
+    "In the dust past the barricade: tracks. Hundreds. Six wheels, treads, things with feet. All going one way."
+   ],
+   [
+    "Memo",
+    "East. Every machine in the brush, heading for the White Bowl."
+   ],
+   [
+    "Juno",
+    "The dry lake."
+   ],
+   [
+    "Memo",
+    "The White Bowl. There was a lake there once, my abuelo said. You couldn't see across it."
+   ],
+   [
+    "Memo",
+    "Something out there is calling them. Don't you go and answer it."
+   ],
+   {
+    "do": "step",
+    "to": "n4_sleep"
+   }
+  ],
+  "n6_east": [
+   [
+    "Memo",
+    "East road's sealed. Nobody goes to the lake."
+   ],
+   [
+    "Juno",
+    "Memo."
+   ],
+   [
+    "Memo",
+    "...I didn't see you. I didn't see the kid either."
+   ]
+  ],
+  "night:7": [
+   [
+    "Memo",
+    "Rafa did the straps on that pack. I did the hard part. Supervising."
+   ],
+   [
+    "Memo",
+    "Thirty-Five north. Chuy will let you by. Don't stop for riders."
+   ]
+  ],
+  "n2_table": [
+   [
+    "Memo",
+    "Talk to Lupe. She runs the table, whatever she tells you."
+   ]
+  ],
   "pancha": [
    [
     "Memo",
@@ -832,26 +1397,152 @@
    ]
   ]
  },
- "nina": [
-  [
-   "Nina",
-   "Tavo says the Old Trail is the oldest place in the world. I say it's the drain."
+ "nina": {
+  "n4_mower": [
+   [
+    "Nina",
+    "It stopped at Shutter. Right in the middle of a row."
+   ],
+   [
+    "",
+    "The little mower sits in its square of dead grass, still. It's turned to face east."
+   ],
+   [
+    "Nina",
+    "They're all facing east. The Strays went east. Everything's going east."
+   ],
+   [
+    "Nina",
+    "Is something wrong with east?"
+   ],
+   {
+    "do": "step",
+    "to": "n4_ines"
+   }
   ],
-  [
-   "Nina",
-   "The drain has bones in it. That's how you know it's old."
-  ]
- ],
- "tona": [
-  [
-   "Abuela Toña",
-   "One candle for Elías. One for Rosa, in case."
+  "night:7": [
+   [
+    "Nina",
+    "Are you coming back?"
+   ],
+   [
+    "Juno",
+    "I'm coming back."
+   ],
+   [
+    "Nina",
+    "Then push me on the swing when you do. Higher than Tavo."
+   ]
   ],
-  [
-   "Abuela Toña",
-   "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."
+  "*": [
+   [
+    "Nina",
+    "Tavo says the Old Trail is the oldest place in the world. I say it's the drain."
+   ],
+   [
+    "Nina",
+    "The drain has bones in it. That's how you know it's old."
+   ]
   ]
- ],
+ },
+ "tona": {
+  "n2_shares&fina_started&!drop_tona": [
+   [
+    "Abuela Toña",
+    "Fina's water. Bless her, and bless you for carrying it."
+   ],
+   {
+    "do": "take",
+    "id": "waterjug",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "drop_tona"
+   },
+   [
+    "Abuela Toña",
+    "One candle for Elías. One for Rosa, in case. And one for whoever's walking tonight."
+   ]
+  ],
+  "n4_shoes&has:shoes": [
+   [
+    "Abuela Toña",
+    "His shoes. Ay, look at the heels. He walked crooked, your papá."
+   ],
+   {
+    "do": "take",
+    "id": "shoes",
+    "n": 1
+   },
+   [
+    "",
+    "Toña sets the shoes under the candles, toes pointing out, the way you leave shoes by a door."
+   ],
+   [
+    "Abuela Toña",
+    "So he walks easy. Wherever he's walking."
+   ],
+   {
+    "do": "flag",
+    "f": "shoes_given"
+   },
+   {
+    "do": "step",
+    "to": "n4_memo"
+   }
+  ],
+  "n4_shoes&shoes_asked": [
+   [
+    "Abuela Toña",
+    "His shoes, mija. They'll be by his chair."
+   ]
+  ],
+  "n4_shoes": [
+   [
+    "Abuela Toña",
+    "Juno. Bring me Elías's shoes. For the shrine."
+   ],
+   [
+    "Juno",
+    "His shoes?"
+   ],
+   [
+    "Abuela Toña",
+    "The dead walk a long way. Nobody should do it barefoot."
+   ],
+   {
+    "do": "flag",
+    "f": "shoes_asked"
+   }
+  ],
+  "night:7&shoes_given": [
+   [
+    "Abuela Toña",
+    "His shoes are under the candles. He walks easy. Now you."
+   ],
+   [
+    "Abuela Toña",
+    "One for whoever's walking tonight. That's you, mija. It was always going to be you."
+   ]
+  ],
+  "night:7": [
+   [
+    "Abuela Toña",
+    "One candle for whoever's walking tonight. I'll keep it lit till you're back."
+   ]
+  ],
+  "*": [
+   [
+    "Abuela Toña",
+    "One candle for Elías. One for Rosa, in case."
+   ],
+   [
+    "Abuela Toña",
+    "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."
+   ]
+  ]
+ },
  "intro": [
   {
    "do": "wait",
@@ -994,30 +1685,97 @@
    "ms": 900
   }
  ],
- "cot": [
-  [
-   "",
-   "Her cot, in the cooler, beside their bed."
+ "cot": {
+  "n2_sleep": [
+   [
+    "",
+    "Before she sleeps, Juno opens the staybook and writes in it, in her own hand, for the first time."
+   ],
+   {
+    "do": "page",
+    "n": "j2"
+   },
+   {
+    "do": "nightEnd"
+   }
   ],
-  {
-   "do": "choice",
-   "q": "Sleep until Lamp?",
-   "opts": [
-    [
-     "Sleep",
-     [
-      {
-       "do": "rest"
-      }
-     ]
-    ],
-    [
-     "Not yet",
-     []
-    ]
+  "n3_late": [
+   [
+    "",
+    "Juno lies down. Far off, the bell starts. Then, under it, someone pounding on the hatch."
+   ],
+   {
+    "do": "run",
+    "id": "gueroGone"
+   }
+  ],
+  "n3_search|n3_home": [
+   [
+    "",
+    "Not now. Not with Güero out there."
    ]
-  }
- ],
+  ],
+  "n3_sleep": [
+   {
+    "do": "page",
+    "n": "j3"
+   },
+   {
+    "do": "nightEnd"
+   }
+  ],
+  "n4_sleep": [
+   {
+    "do": "page",
+    "n": "j4"
+   },
+   {
+    "do": "nightEnd"
+   }
+  ],
+  "n5_sleep": [
+   {
+    "do": "page",
+    "n": "j5"
+   },
+   {
+    "do": "nightEnd"
+   }
+  ],
+  "n6_home": [
+   {
+    "do": "page",
+    "n": "j6"
+   },
+   {
+    "do": "nightEnd"
+   }
+  ],
+  "*": [
+   [
+    "",
+    "Her cot, in the cooler, beside their bed."
+   ],
+   {
+    "do": "choice",
+    "q": "Sleep until Lamp?",
+    "opts": [
+     [
+      "Sleep",
+      [
+       {
+        "do": "rest"
+       }
+      ]
+     ],
+     [
+      "Not yet",
+      []
+     ]
+    ]
+   }
+  ]
+ },
  "shutterBell": [
   [
    "",
@@ -1496,5 +2254,1050 @@
     "f": "shop_done"
    }
   ]
- }
+ },
+ "wake2": [
+  [
+   "",
+   "Lamp. Somebody is pounding on the door."
+  ],
+  [
+   "Kit",
+   "Juno! You slept through Daysleep like a dead man."
+  ],
+  [
+   "Kit",
+   "Sorry. Like a... sorry."
+  ],
+  [
+   "Juno",
+   "Daysleep's for sleeping, Kit. That's the whole word."
+  ],
+  [
+   "Kit",
+   "The elders want you. At the Chapel. Hermana Lupe said bring you, so I'm bringing you."
+  ],
+  {
+   "do": "flag",
+   "f": "sides"
+  }
+ ],
+ "ines": {
+  "n2_shares&fina_started&!drop_cellar": [
+   [
+    "Doña Inés",
+    "Fina's water? Gracias, mija. Set it by the steps, the floor's cooler."
+   ],
+   {
+    "do": "take",
+    "id": "waterjug",
+    "n": 1
+   },
+   {
+    "do": "flag",
+    "f": "drop_cellar"
+   },
+   [
+    "Güero",
+    "Is that Juno Mar? Kit says you killed a Stray with your face."
+   ],
+   [
+    "Juno",
+    "With a pipe."
+   ],
+   [
+    "Güero",
+    "Kit says face."
+   ],
+   [
+    "Doña Inés",
+    "Güero. Bed."
+   ]
+  ],
+  "n4_ines&guero_lost": [
+   [
+    "",
+    "Doña Inés sits on the bottom step of the cellar, facing the hatch. She doesn't look up."
+   ],
+   [
+    "Juno",
+    "Doña Inés."
+   ],
+   [
+    "Doña Inés",
+    "He'll be thirsty. When he comes back."
+   ],
+   {
+    "do": "choice",
+    "q": "The lantern by her hatch has gone out.",
+    "opts": [
+     [
+      "Light it for her",
+      [
+       [
+        "",
+        "Juno goes up and lights the lantern by the hatch, and leaves it where Inés can see it from the steps."
+       ],
+       {
+        "do": "flag",
+        "f": "ines_lantern"
+       }
+      ]
+     ],
+     [
+      "Leave her be",
+      [
+       [
+        "",
+        "Juno leaves the water she brought on the step, and goes up quietly."
+       ]
+      ]
+     ]
+    ]
+   },
+   [
+    "Doña Inés",
+    "...Toña was asking for you."
+   ],
+   {
+    "do": "step",
+    "to": "n4_shoes"
+   }
+  ],
+  "n4_ines": [
+   [
+    "Doña Inés",
+    "Juno. Sit down. No, sit."
+   ],
+   [
+    "Doña Inés",
+    "You walked into the white for him. Nobody does that. Nobody."
+   ],
+   [
+    "",
+    "She presses a tin of white into Juno's hands. It's half full."
+   ],
+   {
+    "do": "white",
+    "add": 1
+   },
+   [
+    "Güero",
+    "I saw where they went. The machines. They all went to the lake."
+   ],
+   [
+    "Doña Inés",
+    "Güero."
+   ],
+   [
+    "Güero",
+    "They're waiting there. All of them."
+   ],
+   [
+    "Doña Inés",
+    "...Toña was asking for you, mija."
+   ],
+   {
+    "do": "step",
+    "to": "n4_shoes"
+   }
+  ],
+  "night:7&guero_lost": [
+   [
+    "Doña Inés",
+    "If you see him out there. On the road."
+   ],
+   [
+    "Juno",
+    "I'll look. Every road."
+   ],
+   [
+    "Doña Inés",
+    "Every road."
+   ]
+  ],
+  "night:7": [
+   [
+    "Güero",
+    "I want to go with you. I can carry stuff. I carried a whole jug once."
+   ],
+   [
+    "Doña Inés",
+    "He's staying. Go with God, mija. Come back with rain."
+   ]
+  ],
+  "*": [
+   [
+    "Doña Inés",
+    "Mind your head on the way down. Everybody hits it once."
+   ]
+  ]
+ },
+ "guero": {
+  "n3_search": [
+   [
+    "Güero",
+    "Juno? I followed them. They went in a line. Like a parade."
+   ],
+   [
+    "Juno",
+    "Güero. Your mamá is going out of her mind."
+   ],
+   [
+    "Güero",
+    "They're all going to the lake. All of them. Like something's calling."
+   ],
+   [
+    "Juno",
+    "Up. Hold my hand. Shade to shade, and you don't let go."
+   ],
+   {
+    "do": "flag",
+    "f": "guero_found"
+   },
+   {
+    "do": "step",
+    "to": "n3_home"
+   }
+  ],
+  "night:4": [
+   [
+    "Güero",
+    "Mamá says I can't go outside until I'm forty."
+   ]
+  ],
+  "*": [
+   [
+    "Güero",
+    "Kit says you killed a Stray with your face."
+   ]
+  ]
+ },
+ "dogs": [
+  [
+   "",
+   "Something moves between the shelves at the back. Low, and more than one."
+  ],
+  [
+   "Kit",
+   "Dogs. Juno. Those are dogs."
+  ],
+  {
+   "do": "fight",
+   "id": "dogs",
+   "win": "dogsWin"
+  }
+ ],
+ "dogsWin": [
+  [
+   "",
+   "The last dog limps off into the dark. The biggest one wore a collar, rotted through."
+  ],
+  [
+   "Kit",
+   "Somebody had that dog once. Somebody loved it."
+  ],
+  [
+   "Juno",
+   "Somebody loved all of them once."
+  ],
+  {
+   "do": "flag",
+   "f": "dogs_done"
+  },
+  {
+   "do": "item",
+   "id": "scrap",
+   "n": 2
+  }
+ ],
+ "ehshelf": {
+  "n2_store&dogs_done": [
+   [
+    "",
+    "High on the end of an aisle, chalk on the metal: E.H., in Papá's hand. A tick for every shelf he cleared."
+   ],
+   [
+    "",
+    "Two shelves have no tick."
+   ],
+   [
+    "Juno",
+    "Two left."
+   ],
+   {
+    "do": "step",
+    "to": "n2_memo"
+   }
+  ],
+  "n2_store": [
+   [
+    "",
+    "Shelves to the roof. Something is breathing at the back of the store."
+   ]
+  ],
+  "n5_shelves": [
+   [
+    "Kit",
+    "Give me a boost. No, a real boost."
+   ],
+   [
+    "",
+    "Kit climbs. Juno climbs after him. The last two shelves: a roll of Papá's tools, still oiled, and a coil of mirror wire."
+   ],
+   {
+    "do": "item",
+    "id": "toolroll",
+    "n": 1
+   },
+   {
+    "do": "item",
+    "id": "wire",
+    "n": 1
+   },
+   [
+    "",
+    "Juno chalks a tick on each. Under E.H., she writes J.M."
+   ],
+   {
+    "do": "step",
+    "to": "n5_market"
+   }
+  ],
+  "*": [
+   [
+    "",
+    "Papá's chalk: E.H., and a tick on every shelf."
+   ]
+  ]
+ },
+ "rider": [
+  [
+   "Noonrider",
+   "..."
+  ]
+ ],
+ "wake3": [
+  [
+   "",
+   "Lamp. Kit is at the door, out of breath, pointing."
+  ],
+  [
+   "Kit",
+   "Juno. The Strays. You have to see. Come on!"
+  ],
+  {
+   "do": "go",
+   "to": "span",
+   "spawn": "seven-flags:home"
+  },
+  {
+   "do": "strays"
+  },
+  [
+   "Kit",
+   "They never do that. They never go in a line. They never go anywhere."
+  ],
+  [
+   "Kit",
+   "I'm so happy and I'm going to throw up."
+  ],
+  [
+   "",
+   "Far off, at the east barricade, voices. Strangers' voices."
+  ]
+ ],
+ "gueroGone": [
+  [
+   "Doña Inés",
+   "Juno! Juno, open up!"
+  ],
+  [
+   "Doña Inés",
+   "Güero. He went after the machines. East. He said he wanted to see where they go."
+  ],
+  [
+   "Juno",
+   "The bell's already rung."
+  ],
+  [
+   "Doña Inés",
+   "I know. I know."
+  ],
+  [
+   "",
+   "Outside, the sky is going white."
+  ],
+  {
+   "do": "clock",
+   "at": "07:05"
+  },
+  {
+   "do": "go",
+   "to": "span",
+   "spawn": "seven-flags:home"
+  },
+  {
+   "do": "step",
+   "to": "n3_search"
+  },
+  [
+   "",
+   "The white. Every step in the sun costs water; shade only slows it. Find him, and get you both home."
+  ]
+ ],
+ "reunion": [
+  [
+   "Doña Inés",
+   "Güero!"
+  ],
+  [
+   "",
+   "Inés doesn't let go of her son for a long time."
+  ],
+  [
+   "Güero",
+   "Mamá. Mamá, they're all at the lake. All the machines. Like they're waiting."
+  ],
+  [
+   "Doña Inés",
+   "Hush. Hush now."
+  ],
+  [
+   "Doña Inés",
+   "Juno. I can't... Go home, mija. Sleep. Go before the white takes you too."
+  ],
+  {
+   "do": "step",
+   "to": "n3_sleep"
+  }
+ ],
+ "gueroLost": [
+  [
+   "",
+   "The white closes in. The last thing Juno sees is the sky, and nothing in it."
+  ],
+  [
+   "",
+   "She wakes in the cooler at Lamp. Memo dragged her in at dusk."
+  ],
+  [
+   "Memo",
+   "You were alone, mija. There was nobody with you."
+  ],
+  [
+   "",
+   "Güero's small footprints lead east, after the machines, until the wind takes them."
+  ],
+  {
+   "do": "page",
+   "n": "j3b"
+  }
+ ],
+ "gueroDragged": [
+  [
+   "",
+   "The white closes in, Güero's hand still in hers."
+  ],
+  [
+   "",
+   "She wakes in the cooler at Lamp. Memo dragged them both in at dusk."
+  ],
+  [
+   "Memo",
+   "The boy was sitting on you. Keeping the sun off your face with his shirt."
+  ],
+  {
+   "do": "page",
+   "n": "j3"
+  }
+ ],
+ "wake4": {
+  "guero_lost": [
+   [
+    "",
+    "Lamp. Kit is at the door. He doesn't knock."
+   ],
+   [
+    "Kit",
+    "...Inés's porch light is out."
+   ],
+   [
+    "Kit",
+    "Nina says the mower stopped. In Abby's yard. It just stopped."
+   ],
+   {
+    "do": "flag",
+    "f": "mower_stopped"
+   }
+  ],
+  "*": [
+   [
+    "",
+    "Lamp. Kit is at the door, and for once he knocks."
+   ],
+   [
+    "Kit",
+    "Güero's telling everybody you carried him home on your back through the white. Is that true?"
+   ],
+   [
+    "Juno",
+    "He walked."
+   ],
+   [
+    "Kit",
+    "I'm telling it the back way."
+   ],
+   [
+    "Kit",
+    "Also Nina says the mower stopped. In Abby's yard. It just stopped."
+   ],
+   {
+    "do": "flag",
+    "f": "mower_stopped"
+   }
+  ]
+ },
+ "shoes": {
+  "n4_shoes&shoes_asked&!has:shoes&!shoes_given": [
+   [
+    "",
+    "Papá's shoes, by his chair. Still laced the way he left them."
+   ],
+   {
+    "do": "item",
+    "id": "shoes",
+    "n": 1
+   }
+  ],
+  "shoes_given": [
+   [
+    "",
+    "The place by his chair where his shoes were."
+   ]
+  ],
+  "*": [
+   [
+    "",
+    "Papá's shoes, by his chair. Still laced the way he left them."
+   ]
+  ]
+ },
+ "wake5": [
+  [
+   "",
+   "Lamp. The town sounds the way it always does. That's almost strange now."
+  ],
+  [
+   "Kit",
+   "Your papá's two shelves. Tonight? We should do it tonight."
+  ],
+  [
+   "Juno",
+   "Why tonight?"
+  ],
+  [
+   "Kit",
+   "I don't know. It feels like a tonight."
+  ]
+ ],
+ "roof": {
+  "n5_roof": [
+   [
+    "",
+    "A ladder up the side of the store. Kit is already halfway up."
+   ],
+   [
+    "",
+    "On the roof the town is all lanterns, and past it the brush is all dark."
+   ],
+   [
+    "Kit",
+    "Juno. Look east."
+   ],
+   [
+    "",
+    "Out at the White Bowl: lights. Small and many, moving slow, like a fair."
+   ],
+   [
+    "Kit",
+    "That's them. That's all the machines."
+   ],
+   [
+    "Kit",
+    "Do you think rain is loud? Like, loud loud?"
+   ],
+   [
+    "Juno",
+    "Papá said applause."
+   ],
+   [
+    "Kit",
+    "I'd clap back."
+   ],
+   {
+    "do": "step",
+    "to": "n5_sleep"
+   }
+  ],
+  "n7_roof": [
+   [
+    "",
+    "The roof. The lanterns. NIM's screen lights the underside of Juno's chin."
+   ],
+   [
+    "NIM",
+    "There's a place called Station Nine. North. Far."
+   ],
+   [
+    "NIM",
+    "A lake so big you can't see across it. If I get there, I can grow a sky."
+   ],
+   [
+    "NIM",
+    "Rain. Over everything. Over here."
+   ],
+   [
+    "",
+    "Juno remembers a sheet, a fire, her father's hands making birds."
+   ],
+   [
+    "Papá",
+    "Not in my lifetime, mija..."
+   ],
+   [
+    "Papá",
+    "Maybe in yours."
+   ],
+   {
+    "do": "choice",
+    "q": "Nobody is going to make her.",
+    "opts": [
+     [
+      "Carry it",
+      [
+       [
+        "Juno",
+        "I'll carry you, NIM."
+       ],
+       [
+        "NIM",
+        "You'll get tired."
+       ],
+       [
+        "Juno",
+        "Then I'll carry you tired."
+       ],
+       {
+        "do": "step",
+        "to": "n7_pack"
+       }
+      ]
+     ],
+     [
+      "Not yet",
+      [
+       [
+        "",
+        "Juno sits a while longer. The lanterns burn."
+       ]
+      ]
+     ]
+    ]
+   }
+  ],
+  "*": [
+   [
+    "",
+    "A ladder up the side of Mar Farm. The roof is where the town watches the sky."
+   ]
+  ]
+ },
+ "wake6": [
+  [
+   "",
+   "Lamp. Kit is at the door with a pipe and a water jug, which he holds up like an answer."
+  ],
+  [
+   "Kit",
+   "Memo sealed the east road. Nobody goes to the lake. Everybody's saying it."
+  ],
+  [
+   "Kit",
+   "You're going. I can tell. You've got your going face."
+  ],
+  [
+   "Juno",
+   "Kit."
+  ],
+  [
+   "Kit",
+   "I'm coming. I'm not asking, I'm telling you a thing that's happening."
+  ]
+ ],
+ "digger": {
+  "n6_wreck": [
+   [
+    "",
+    "The drone lies across the lakebed, longer than the store, its skin split open. Scavengers from town pry at it with bars."
+   ],
+   [
+    "Scavenger",
+    "Don't touch the edges. They're hot even at night."
+   ],
+   [
+    "Scavenger",
+    "There's a hatch on the far side, hanging open. Nobody wants to go first."
+   ],
+   [
+    "Juno",
+    "Why not?"
+   ],
+   [
+    "Scavenger",
+    "Something in there is humming."
+   ],
+   [
+    "",
+    "Up on the dam, two figures in white quilted suits stand very still, watching."
+   ],
+   {
+    "do": "step",
+    "to": "n6_fuselage"
+   }
+  ],
+  "*": [
+   [
+    "Scavenger",
+    "Don't touch the edges."
+   ]
+  ]
+ },
+ "scout": [
+  [
+   "Noonrider",
+   "..."
+  ],
+  [
+   "",
+   "The visor doesn't move. It's watching the wreck."
+  ]
+ ],
+ "wreck": {
+  "n6_wreck": [
+   [
+    "",
+    "A hatch, hanging open. Inside, something hums."
+   ],
+   [
+    "Kit",
+    "Maybe ask the ones with the bars first?"
+   ]
+  ]
+ },
+ "plane": [
+  [
+   "",
+   "An old plane with propellers, sunk in the crust to its wings. It's been here longer than anybody."
+  ]
+ ],
+ "footprint": [
+  [
+   "",
+   "In a patch of mud the wind didn't reach: a small footprint. Just one."
+  ],
+  {
+   "do": "flag",
+   "f": "footprint_seen"
+  }
+ ],
+ "cradle": {
+  "n6_fuselage": [
+   [
+    "",
+    "At the end of the tilted corridor, in a cradle of cold metal: a canister the size of a water jug, frost on its sides."
+   ],
+   [
+    "",
+    "Juno pulls it free. It's heavier than it looks, and cold enough to hurt."
+   ],
+   [
+    "",
+    "A small screen on its side lights up. Two dots, and a line under them. A face."
+   ],
+   [
+    "NIM",
+    "Oh! Hello! Hello. Can you tell me what day it is?"
+   ],
+   [
+    "Juno",
+    "...It's Lamp."
+   ],
+   [
+    "NIM",
+    "What year?"
+   ],
+   [
+    "Kit",
+    "Twenty-one seventy-nine."
+   ],
+   [
+    "NIM",
+    "Oh. Oh, that's a lot of years."
+   ],
+   [
+    "NIM",
+    "Did it work? Did anyone launch the others?"
+   ],
+   [
+    "Juno",
+    "The others?"
+   ],
+   [
+    "",
+    "Outside, through the hull, something enormous starts to climb."
+   ],
+   [
+    "NIM",
+    "Oh no. I'm talking too much. When I talk, they hear me. The Wardens. They answer each other."
+   ],
+   {
+    "do": "item",
+    "id": "nim",
+    "n": 1
+   },
+   {
+    "do": "step",
+    "to": "n6_warden"
+   }
+  ],
+  "*": [
+   [
+    "",
+    "The empty cradle, still cold."
+   ]
+  ]
+ },
+ "wardenRise": [
+  [
+   "",
+   "Over the lip of the dam, something climbs: four legs, a dome, one white eye."
+  ],
+  [
+   "NIM",
+   "That's a Warden. It heard me. I'm sorry. I'm sorry!"
+  ],
+  [
+   "Kit",
+   "Can you be sorry quieter?"
+  ],
+  {
+   "do": "fight",
+   "id": "warden",
+   "win": "wardenWin"
+  }
+ ],
+ "wardenWin": [
+  [
+   "",
+   "The Warden's eye goes dark, and the whole machine settles into the crust like something tired."
+  ],
+  [
+   "NIM",
+   "I'll be quiet. I'll try. The quieter I am, the weaker they hear me."
+  ],
+  [
+   "",
+   "Up on the dam, the two figures in white turn and walk west, not hurrying."
+  ],
+  [
+   "Kit",
+   "They saw. They saw everything."
+  ],
+  [
+   "Juno",
+   "Then we go home. Now."
+  ],
+  {
+   "do": "step",
+   "to": "n6_home"
+  }
+ ],
+ "wake7": [
+  {
+   "do": "noonBell"
+  },
+  [
+   "",
+   "Noon. Memo's bell, in the middle of Daysleep. It doesn't stop."
+  ],
+  [
+   "Kit",
+   "Juno! Juno, the machines! They're all around the farm!"
+  ],
+  [
+   "",
+   "Through the crack of the door: Strays, circling the lot in the white. Out past the yards, Hounds pace the brush, low and fast."
+  ],
+  [
+   "Kit",
+   "Hounds. Memo says they're Hounds. They hunt."
+  ],
+  [
+   "NIM",
+   "They can hear me, even when I'm quiet. I'm sorry."
+  ],
+  [
+   "Juno",
+   "Then we wait for Lamp. Nobody opens a door."
+  ],
+  {
+   "do": "clock",
+   "at": "18:40"
+  },
+  [
+   "",
+   "Lamp. One by one the machines roll off into the brush. The town comes out to talk."
+  ]
+ ],
+ "workbench": {
+  "n7_pack&has:toolroll&has:wire&has:cell": [
+   [
+    "",
+    "Papá's workbench. His tool roll, open, like he just stepped out."
+   ],
+   [
+    "",
+    "Juno and Kit work through the first hours of the night: the mirror wire, the dead cell, scrap for a frame. Rafa comes by with straps. Fina brings a cloth. Memo supervises."
+   ],
+   {
+    "do": "take",
+    "id": "toolroll",
+    "n": 1
+   },
+   {
+    "do": "take",
+    "id": "wire",
+    "n": 1
+   },
+   {
+    "do": "take",
+    "id": "cell",
+    "n": 1
+   },
+   {
+    "do": "take",
+    "id": "scrap",
+    "n": 2
+   },
+   {
+    "do": "item",
+    "id": "pack",
+    "n": 1
+   },
+   [
+    "NIM",
+    "It's dark in here. It's nice. They can't hear me as well."
+   ],
+   [
+    "Juno",
+    "A shielded pack. Papá's wire."
+   ],
+   {
+    "do": "step",
+    "to": "n7_goodbyes"
+   }
+  ],
+  "n7_pack": [
+   [
+    "",
+    "Papá's workbench. Something's missing: his tools, the mirror wire, or a cell."
+   ]
+  ],
+  "*": [
+   [
+    "",
+    "Papá's workbench. Everything where his hands left it."
+   ]
+  ]
+ },
+ "sled": {
+  "n7_sled": [
+   [
+    "Kit",
+    "Juno! Look what I found. Help me flip it."
+   ],
+   [
+    "",
+    "A big green highway sign, face down. They heave it over. Underneath, where the sun never reached, the letters are still white."
+   ],
+   [
+    "",
+    "WELCOME TO LAREDO"
+   ],
+   [
+    "Kit",
+    "What's a Laredo?"
+   ],
+   [
+    "Juno",
+    "I don't know. Somebody's home, once."
+   ],
+   [
+    "Kit",
+    "It slides. Juno, it slides. It's a sled. We put everything on it and we pull."
+   ],
+   [
+    "",
+    "They load the sign: water, the pack with NIM in it, Papá's wraps. What they can carry. What they can't, they leave by the door."
+   ],
+   {
+    "do": "step",
+    "to": "n7_leave"
+   }
+  ],
+  "*": [
+   [
+    "",
+    "A big highway sign, face down in the caliche."
+   ]
+  ]
+ },
+ "leaveTown": [
+  [
+   "",
+   "Lamp. Up the Thirty-Five, pulling the sign."
+  ],
+  [
+   "Chuy",
+   "I'm supposed to say nobody goes north."
+  ],
+  [
+   "Chuy",
+   "...Go on. Come back with rain."
+  ],
+  [
+   "",
+   "Behind them, every lantern in Seven Flags."
+  ],
+  [
+   "Kit",
+   "Juno. Way up the road. Lights."
+  ],
+  [
+   "Juno",
+   "Riders?"
+  ],
+  [
+   "Kit",
+   "Too far to matter."
+  ],
+  [
+   "Juno",
+   "Yet."
+  ],
+  {
+   "do": "prologueEnd"
+  }
+ ],
+ "hatch": {}
 }

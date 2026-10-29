@@ -404,5 +404,97 @@
       "skyline": true,
       "lamp": 0.6
     }
+  },
+  "dogs": {
+    "spot": "here",
+    "noRun": "There's nowhere to run in the dark.",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Feral dogs, out of the back rooms!",
+    "enemies": [
+      {
+        "id": "dog",
+        "name": "Dog",
+        "sprite": "dog",
+        "height": 0.8,
+        "spd": 12,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Dog",
+            "hp": 12,
+            "soft": true
+          }
+        ],
+        "flee": 3
+      },
+      {
+        "id": "dog2",
+        "name": "Dog",
+        "sprite": "dog",
+        "height": 0.75,
+        "spd": 11,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Dog",
+            "hp": 11,
+            "soft": true
+          }
+        ],
+        "flee": 3
+      },
+      {
+        "id": "dog3",
+        "name": "Collared dog",
+        "sprite": "dog",
+        "height": 0.9,
+        "spd": 10,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Collared dog",
+            "hp": 16,
+            "soft": true
+          }
+        ],
+        "flee": 4
+      }
+    ]
+  },
+  "warden": {
+    "spot": "here",
+    "noRun": "It's between you and the road home.",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A Warden! It heard NIM!",
+    "enemies": [
+      {
+        "id": "warden",
+        "name": "Warden",
+        "sprite": "warden",
+        "height": 2.6,
+        "spd": 6,
+        "eye": true,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Searchlight eye",
+            "hp": 18,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Dome",
+            "hp": 60,
+            "armor": 0.3
+          }
+        ]
+      }
+    ]
   }
 }

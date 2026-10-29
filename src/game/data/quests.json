@@ -1,35 +1,524 @@
 {
-  "mission": "Seven Flags · Night one",
+  "_": "The prologue, night by night (docs/design/prologue.md). A step is one objective. `marker` points at a person (npc:id), a scripted thing (i:script), a place ([x, z] in region coordinates), or is keyed by condition like a dialogue entry. `tasks` are flags done in any order, then `then` is the next step. `arrive` fires on reaching a map or room; `faint` says what fainting in the white means at that step; `exit` turns an edge road into a script. `via` is how the step is done, in order: the prologue checker (src/game/progress.ts) walks it.",
+  "mission": "Seven Flags",
+  "nights": {
+    "1": {
+      "title": "Night one",
+      "name": "Given to the Sun",
+      "first": "burial"
+    },
+    "2": {
+      "title": "Night two",
+      "name": "Her Father's Share",
+      "first": "n2_table",
+      "wake": "wake2"
+    },
+    "3": {
+      "title": "Night three",
+      "name": "The Signs",
+      "first": "n3_tithe",
+      "wake": "wake3"
+    },
+    "4": {
+      "title": "Night four",
+      "name": "Tracks East",
+      "first": "n4_mower",
+      "wake": "wake4"
+    },
+    "5": {
+      "title": "Night five",
+      "name": "Two Shelves Left",
+      "first": "n5_shelves",
+      "wake": "wake5",
+      "dawn": "drone"
+    },
+    "6": {
+      "title": "Night six",
+      "name": "The White Bowl",
+      "first": "n6_east",
+      "wake": "wake6"
+    },
+    "7": {
+      "title": "Night seven",
+      "name": "The Choice",
+      "first": "n7_meeting",
+      "wake": "wake7",
+      "at": "12:00"
+    }
+  },
   "steps": {
     "burial": {
       "obj": "",
-      "marker": null
+      "marker": null,
+      "night": 1,
+      "via": [
+        {
+          "code": "burial",
+          "script": "burial"
+        }
+      ]
     },
     "home": {
       "obj": "Feed the goats and check the water tank",
-      "marker": "homeTasks"
+      "marker": "homeTasks",
+      "night": 1,
+      "via": [
+        {
+          "thing": "pen"
+        },
+        {
+          "thing": "tank"
+        }
+      ]
     },
     "market": {
       "obj": "Trade the milk with Doña Chayo at the night market in the Plaza",
-      "marker": "npc:chayo"
+      "marker": "npc:chayo",
+      "night": 1,
+      "via": [
+        {
+          "npc": "chayo"
+        }
+      ]
     },
     "kit": {
       "obj": "Find Kit by the seven flags",
-      "marker": "npc:kit"
+      "marker": "npc:kit",
+      "night": 1,
+      "via": [
+        {
+          "npc": "kit"
+        }
+      ]
     },
     "pancha": {
       "obj": "Find Pancha down by the drain, east of the park",
       "marker": [
         115,
         211
+      ],
+      "night": 1,
+      "via": [
+        {
+          "code": "drainZone",
+          "script": "drainIntro"
+        }
       ]
     },
     "home2": {
       "obj": "Get home to Mar Farm before Shutter",
-      "marker": "i:door"
+      "marker": "i:door",
+      "night": 1,
+      "via": [
+        {
+          "thing": "door"
+        }
+      ]
+    },
+    "n2_table": {
+      "night": 2,
+      "obj": "Go to the elders' table at the Chapel",
+      "marker": [
+        106,
+        175.6
+      ],
+      "via": [
+        {
+          "room": "chapel",
+          "npc": "lupe"
+        }
+      ]
+    },
+    "n2_shares": {
+      "night": 2,
+      "obj": "Your father's share",
+      "tasks": {
+        "fina_done": "The water shift with Doña Fina",
+        "wraps_got": "Daylight wraps from Rubén's stall",
+        "salve_used": "The salve for Kit's hand"
+      },
+      "then": "n2_store",
+      "marker": {
+        "fina_started&!drop_cellar": "i:hatch",
+        "fina_started&!drop_tona": "npc:tona",
+        "!fina_done": "npc:fina",
+        "!wraps_got": "npc:ruben",
+        "*": null
+      },
+      "via": [
+        {
+          "npc": "fina"
+        },
+        {
+          "room": "cellar",
+          "npc": "ines"
+        },
+        {
+          "npc": "tona"
+        },
+        {
+          "npc": "fina"
+        },
+        {
+          "npc": "ruben"
+        },
+        {
+          "npc": "kit"
+        }
+      ]
+    },
+    "n2_store": {
+      "night": 2,
+      "obj": "Walk Papá's salvage route to the Big Store",
+      "marker": [
+        170.6,
+        79.6
+      ],
+      "via": [
+        {
+          "room": "big-store",
+          "zone": "dogs"
+        },
+        {
+          "room": "big-store",
+          "thing": "ehshelf"
+        }
+      ]
+    },
+    "n2_memo": {
+      "night": 2,
+      "obj": "Memo wants a word at the east barricade",
+      "marker": "npc:memo",
+      "via": [
+        {
+          "npc": "memo"
+        }
+      ]
+    },
+    "n2_sleep": {
+      "night": 2,
+      "obj": "Go home and sleep",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot"
+        }
+      ]
+    },
+    "n3_tithe": {
+      "night": 3,
+      "obj": "Riders at the east barricade",
+      "marker": "npc:memo",
+      "via": [
+        {
+          "npc": "memo"
+        }
+      ]
+    },
+    "n3_late": {
+      "night": 3,
+      "obj": "The night's nearly done. Get home.",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot"
+        }
+      ]
+    },
+    "n3_search": {
+      "night": 3,
+      "obj": "Find Güero. He followed the machines east.",
+      "marker": null,
+      "faint": {
+        "flag": "guero_lost",
+        "script": "gueroLost",
+        "night": 4
+      },
+      "via": [
+        {
+          "npc": "guero",
+          "day": true
+        }
+      ]
+    },
+    "n3_home": {
+      "night": 3,
+      "obj": "Get Güero home to the Cellars",
+      "marker": "i:hatch",
+      "faint": {
+        "flag": "memo_dragged",
+        "script": "gueroDragged",
+        "night": 4
+      },
+      "arrive": {
+        "at": "cellar",
+        "script": "reunion"
+      },
+      "via": [
+        {
+          "room": "cellar",
+          "code": "arrive",
+          "day": true
+        }
+      ]
+    },
+    "n3_sleep": {
+      "night": 3,
+      "obj": "The white is up. Get home and sleep.",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot",
+          "day": true
+        }
+      ]
+    },
+    "n4_mower": {
+      "night": 4,
+      "obj": "Nina says the mower in Abby's yard has stopped",
+      "marker": "npc:nina",
+      "via": [
+        {
+          "npc": "nina"
+        }
+      ]
+    },
+    "n4_ines": {
+      "night": 4,
+      "obj": "Go and see Doña Inés in the Cellars",
+      "marker": "i:hatch",
+      "via": [
+        {
+          "room": "cellar",
+          "npc": "ines"
+        }
+      ]
+    },
+    "n4_shoes": {
+      "night": 4,
+      "obj": "Abuela Toña wants Papá's shoes for her shrine",
+      "marker": {
+        "has:shoes": "npc:tona",
+        "shoes_asked": "i:door",
+        "*": "npc:tona"
+      },
+      "via": [
+        {
+          "npc": "tona"
+        },
+        {
+          "room": "mar-home",
+          "thing": "shoes"
+        },
+        {
+          "npc": "tona"
+        }
+      ]
+    },
+    "n4_memo": {
+      "night": 4,
+      "obj": "Memo found something at the east barricade",
+      "marker": "npc:memo",
+      "via": [
+        {
+          "npc": "memo"
+        }
+      ]
+    },
+    "n4_sleep": {
+      "night": 4,
+      "obj": "Go home and sleep",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot"
+        }
+      ]
+    },
+    "n5_shelves": {
+      "night": 5,
+      "obj": "Clear Papá's last two shelves in the Big Store",
+      "marker": [
+        170.6,
+        79.6
+      ],
+      "via": [
+        {
+          "room": "big-store",
+          "thing": "ehshelf"
+        }
+      ]
+    },
+    "n5_market": {
+      "night": 5,
+      "obj": "The night market. Don Beto has a story.",
+      "marker": "npc:beto",
+      "via": [
+        {
+          "npc": "beto"
+        }
+      ]
+    },
+    "n5_roof": {
+      "night": 5,
+      "obj": "Kit wants to watch the sky from Mar Farm's roof",
+      "marker": "i:roof",
+      "via": [
+        {
+          "thing": "roof"
+        }
+      ]
+    },
+    "n5_sleep": {
+      "night": 5,
+      "obj": "Go home and sleep",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot"
+        }
+      ]
+    },
+    "n6_east": {
+      "night": 6,
+      "obj": "Go east, down the Lake Road to the White Bowl",
+      "marker": [
+        224,
+        296
+      ],
+      "arrive": {
+        "at": "white-bowl",
+        "then": "n6_wreck"
+      },
+      "via": [
+        {
+          "piece": "white-bowl",
+          "code": "arrive"
+        }
+      ]
+    },
+    "n6_wreck": {
+      "night": 6,
+      "obj": "The wreck on the dry lake",
+      "marker": "npc:digger",
+      "via": [
+        {
+          "npc": "digger"
+        }
+      ]
+    },
+    "n6_fuselage": {
+      "night": 6,
+      "obj": "Go inside the wreck",
+      "marker": "i:wreck",
+      "via": [
+        {
+          "room": "fuselage",
+          "thing": "cradle"
+        }
+      ]
+    },
+    "n6_warden": {
+      "night": 6,
+      "obj": "Get out of the wreck",
+      "marker": null,
+      "arrive": {
+        "at": "white-bowl",
+        "script": "wardenRise"
+      },
+      "via": [
+        {
+          "piece": "white-bowl",
+          "code": "arrive"
+        }
+      ]
+    },
+    "n6_home": {
+      "night": 6,
+      "obj": "Get home to Mar Farm and sleep",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "cot"
+        }
+      ]
+    },
+    "n7_meeting": {
+      "night": 7,
+      "obj": "The town meets under the seven flags",
+      "marker": "npc:lupe",
+      "via": [
+        {
+          "npc": "lupe"
+        }
+      ]
+    },
+    "n7_roof": {
+      "night": 7,
+      "obj": "Up on the roof, with NIM",
+      "marker": "i:roof",
+      "via": [
+        {
+          "thing": "roof"
+        }
+      ]
+    },
+    "n7_pack": {
+      "night": 7,
+      "obj": "Build a shielded pack at Papá's workbench",
+      "marker": "i:door",
+      "via": [
+        {
+          "room": "mar-home",
+          "thing": "workbench"
+        }
+      ]
+    },
+    "n7_goodbyes": {
+      "night": 7,
+      "obj": "Say goodbye. Hermana Lupe is waiting at the platform.",
+      "marker": "npc:lupe",
+      "via": [
+        {
+          "npc": "lupe"
+        }
+      ]
+    },
+    "n7_sled": {
+      "night": 7,
+      "obj": "Kit found something by the Ramp",
+      "marker": "i:sled",
+      "via": [
+        {
+          "thing": "sled"
+        }
+      ]
+    },
+    "n7_leave": {
+      "night": 7,
+      "obj": "Leave at Lamp, up the Thirty-Five",
+      "marker": [
+        53,
+        2
+      ],
+      "exit": {
+        "thirty-five": "leaveTown"
+      },
+      "via": [
+        {
+          "exit": "thirty-five"
+        }
+      ]
     },
     "free": {
-      "obj": "Night one is over. Seven Flags is yours to explore.",
+      "night": 0,
+      "obj": "Seven Flags is yours to walk.",
       "marker": null
     }
   }

@@ -16,7 +16,7 @@ import { ITEM_NAMES } from './state';
 
 export interface Page { who: 'dad' | 'mom'; text: string; teach: string }
 /** The staybook in order: her parents' pages, then Juno's own (side stories). */
-export const PAGE_ORDER = ['1', '2', '3', '5', 'last', 'jflour_a', 'jflour_b', 'jbell', 'jneto_a', 'jneto_b', 'jcloud_a', 'jcloud_b'];
+export const PAGE_ORDER = ['1', '2', '3', '5', 'last', 'j2', 'j3', 'j3b', 'j4', 'j5', 'j6', 'jflour_a', 'jflour_b', 'jbell', 'jneto_a', 'jneto_b', 'jcloud_a', 'jcloud_b'];
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);

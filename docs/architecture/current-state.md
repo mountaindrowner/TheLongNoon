@@ -410,6 +410,62 @@ to them. So either through a tunnel that allows us to load it, or like a narrow 
   - a new playtest walks through the underpass and the trail gate and back;
   - the side-story playtest crosses between the regions.
 
+## Piece 11 (done): the whole prologue, seven nights, and a checker that proves it can be done
+
+The owner, 2026-10-29: *"make sure that the logic exists now. Have a few extra story pieces for nights 4 and 5 …
+make sure that those paths exist, that the conversation and dialogue exist. Make sure that the progression is
+possible … for every part of the prologue."* Before this, only night one was built; after it the game fell into
+free roam.
+
+- **Nights as data** (`data/quests.json`). Each night has a first step, a wake script, and an hour to wake at
+  (night seven: noon). Each step has:
+  - an objective and a marker (a person, a thing, a place, or chosen by condition);
+  - optionally `tasks` done in any order, then `then`;
+  - `arrive` (reaching a map or room), `faint` (what the white means at that step), `exit` (a road the step turns
+    into a script);
+  - `via`: how the step is done, which is what the checker walks.
+- **A night ends when Juno sleeps on her cot** (the cot's scripts call `nightEnd`): the night's card, then the next
+  night at Lamp in Mar Farm. Night five's dawn is the drone's day. Night seven ends up the Thirty-Five, with the
+  prologue's card.
+- **What the nights needed:**
+  - **People and things for one beat:** NPC, Thing and Trigger `when`, Guard `unless`, prop `userData.when`.
+  - **Conditions:** `|` (or), `night:N`, `has:item`, `white:N`.
+  - **Script commands:** `nightEnd`, `clock`, `fight`, `strays`, `noonBell`, `prologueEnd`.
+  - **Fights:** they can happen where the story starts them. The feral dogs in the Big Store (three of them, the
+    overworld camera indoors) and the Warden in the White Bowl. Both are in `battles.json`.
+  - **Followers:** Kit can be talked to while he follows; Güero follows Juno home on night three.
+  - **Wraps** slow the white (×0.7), the small rule the owner should confirm (prologue.md).
+- **New places:**
+  - Doña Inés's cellar under a hatch behind the Plaza (blue lantern; it goes dark if Güero is lost).
+  - The Big Store's loading dock and its inside.
+  - A ladder up Mar Farm's west wall to the roof.
+  - Papá's shoes and workbench inside Mar Farm.
+  - In the White Bowl: the drone's wreck (there only after day five) and the inside of it, plus the old plane.
+  - On the Ramp: a second fallen sign (the sled; WELCOME TO LAREDO underneath, an Old Name hint).
+  - The elders at the Chapel's table; the Noonriders at the barricade; Güero in the Lake Road culvert by day;
+    Nina in Abby's yard; the town at the Plaza meeting.
+- **New people** (`tools/gen-cast.mjs`, the locked look): Doña Inés, Güero, a feral dog, the Warden.
+- **The checker:**
+  - **On paper** (`game/progress.ts`, no screen): conditions, and the scripts run for their effect on the state.
+    `walk` follows the steps down a branch. `lint` checks every script: its commands, its targets (scripts,
+    pages, stories, steps, places, fights, items), and that every flag a condition reads is set somewhere.
+  - **In the game** (`__LN.prologueCheck()`): builds every region and room and floods where Juno can walk. Then it
+    walks the three branches of night three and asks, at every step, whether the person, thing, spot or road is
+    there at that point (by day, only people who stay out) and reachable on foot. It also checks doors and their
+    way back, markers, and night three's daylight against water and health. `?step=` catches up with the same
+    walk.
+  - The result, step by step: `docs/design/prologue-walk.md`. It was tested by breaking three things on purpose;
+    it caught all three.
+- **Tests:**
+  - the checker, asserted empty;
+  - night one's end into night two;
+  - night two's cot into night three's Strays;
+  - the dogs' fight opening indoors;
+  - the white taking Juno on the search (Güero lost, night four begins);
+  - leaving past Chuy (the prologue's card).
+- **CI:** the 1080p tests split into two jobs.
+- **Open:** prologue.md, "Open for the owner".
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

@@ -34,7 +34,9 @@ export interface GameState {
 
 export const SAVE_KEY = 'longnoon.save';
 
-export const ITEM_NAMES: Record<string, string> = { staybook: 'The staybook', milk: 'Goat milk', scrap: 'Scrap metal', cell: 'Dead solar cell', bearings: 'Ball bearings', flour: 'Sack of mesquite flour', jug: 'Rubén\'s jug', bell: 'The church bell', cloud: 'Stuffed cloud' };
+export const ITEM_NAMES: Record<string, string> = { staybook: 'The staybook', milk: 'Goat milk', scrap: 'Scrap metal', cell: 'Dead solar cell', bearings: 'Ball bearings', flour: 'Sack of mesquite flour', jug: 'Rubén\'s jug', bell: 'The church bell', cloud: 'Stuffed cloud',
+  waterjug: 'Water jug', salve: 'Salve', wraps: 'Daylight wraps', shoes: 'Papá\'s shoes', toolroll: 'Papá\'s tool roll', wire: 'Mirror wire',
+  nim: 'The canister', pack: 'Shielded pack', mirrorwraps: 'Papá\'s mirror-cloth wraps' };
 
 export function newState(start: GameState['where']): GameState {
   return {

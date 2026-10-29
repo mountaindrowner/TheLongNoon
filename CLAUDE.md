@@ -9,7 +9,7 @@ spec. Every session starts fresh, so read these first:
 - `docs/design/held-ideas.md`: the owner's ideas waiting for a go (daytime shade-as-cover, …). Don't build them unasked.
 - `docs/architecture/current-state.md`: what's built, where it departs from the spec (and why), what's next.
 - `docs/design/legacy-breakdown.md`: what the first version does, beat by beat, and where each part lives in the rebuild.
-- `docs/design/prologue.md`: the prologue's seven nights, what's built, what waits on the owner.
+- `docs/design/prologue.md`: the prologue's seven nights, what's built, what waits on the owner. Each night is data in `src/game/data/quests.json`; `docs/design/prologue-walk.md` is the checker's walk through all of it.
 - `docs/design/cast.md`: **the cast's locked look** (PixelLab, styled on Juno). New characters are made with `tools/gen-cast.mjs` and only that way.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
@@ -24,7 +24,7 @@ npm run build          # dist/index.html, the whole game in one offline file
 npm test               # typecheck, build (rebuild + legacy), Playwright at 1080p and phone landscape
 ```
 
-A new game opens on the title. `?time=lamp|night|shutter|white|day` holds the light still and `?clock=HH:MM` starts the running clock elsewhere; either one skips the title and starts in free roam. `?step=home|market|kit|pancha|home2|burial` starts at a mission step with what came before it. `?battle=director|topdown|diorama|shoulder|hero|iso|cuts` frames fights (default `director`); `#fight-<name>` jumps straight into the drain fight framed that way, and `#drone` plays the drone's day (both work on the shared page, where `?` doesn't). `window.__LN` (pos, areaId, piece, tp, face, go, talking, mode, step, state, scripting, clock, phase, lit, setClock, doorIssues, checkAllRooms, edgeIssues, regions, shadeAt, people, bellUp) is there for tests and checks. Outdoors there are three regions, `span` (the town), `hill` and `mallside`; `go(region, 'map:spawn')` crosses between them.
+A new game opens on the title. `?time=lamp|night|shutter|white|day` holds the light still and `?clock=HH:MM` starts the running clock elsewhere; either one skips the title and starts in free roam. `?step=<any step in data/quests.json>` (`home`, `n4_shoes`, `n7_leave`…) starts there with what came before it, caught up by walking the prologue on paper (`src/game/progress.ts`). `?battle=director|topdown|diorama|shoulder|hero|iso|cuts` frames fights (default `director`); `#fight-<name>` jumps straight into the drain fight framed that way, and `#drone` plays the drone's day (both work on the shared page, where `?` doesn't). `window.__LN` (pos, areaId, piece, tp, face, go, talking, mode, step, state, scripting, clock, phase, lit, setClock, doorIssues, checkAllRooms, edgeIssues, prologueCheck, regions, shadeAt, people, bellUp, whenProps) is there for tests and checks. `prologueCheck()` must come back with no problems: it proves every step of the prologue can be done (`docs/design/prologue-walk.md`). Outdoors there are three regions, `span` (the town), `hill` and `mallside`; `go(region, 'map:spawn')` crosses between them.
 Headless Chromium needs `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; it renders a frame or two
 a second, so tests wait on outcomes, never fixed durations.
 

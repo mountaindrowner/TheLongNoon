@@ -38,9 +38,9 @@ const CAST_META = (Object.values(import.meta.glob('../assets/cast/cast.json', { 
 const CAST_URL = Object.fromEntries(Object.entries(import.meta.glob('../assets/cast/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>).map(([k, v]) => [k.split('/').pop()!.replace('.png', ''), v]));
 /** The cast figure an atlas name is drawn from now (the Stray's wreck is the Stray, gone dark). */
 const CAST_OF: Record<string, string> = { strayBroken: 'stray' };
-const castId = (id: string): string | null => { const c = CAST_OF[id] ?? id; return CAST_META[c] && CAST_URL[c] ? c : null; };
+const castId = (id: string): string | null => { for (const c of [CAST_OF[id] ?? id, BASE[id]]) if (c && CAST_META[c] && CAST_URL[c]) return c; return null; };
 /** What an animal is when its own look isn't drawn yet. */
-const BASE: Record<string, string> = { pancha: 'goat' };
+const BASE: Record<string, string> = { pancha: 'goat', dog: 'coyote', warden: 'hauler' };
 /** Animals come in a few looks (the owner, 2026-10-27: "a little bit of variation"): one picked from where it
  *  stands, so a pen is mixed and stays the same each visit. Only looks that have been drawn are used. */
 export function variant(kind: string, x: number, z: number): string {

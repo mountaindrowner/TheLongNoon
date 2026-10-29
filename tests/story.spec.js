@@ -105,7 +105,7 @@ test('the drain: the Stray and the coyote, the fight, and Kit comes along', asyn
   expect(errors).toEqual([]);
 });
 
-test('home before Shutter: Memo\'s bell, Kit runs home, the empty chair, and Seven Flags is yours', async ({ page }, info) => {
+test('home before Shutter: Memo\'s bell, Kit runs home, the empty chair, and night two begins', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
   test.setTimeout(900_000);
   const errors = watchErrors(page);
@@ -122,8 +122,13 @@ test('home before Shutter: Memo\'s bell, Kit runs home, the empty chair, and Sev
   await page.screenshot({ path: info.outputPath('end-card.png') });
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
-  await until(page, () => window.__LN.mode === 'play' && window.__LN.step === 'free' && !window.__LN.busy, undefined, 300_000);
-  await expect(page.locator('.objective.on')).toContainText('yours to explore');
+  // the next Lamp: Kit at the door, and the elders want her (night two, Her Father's Share)
+  await until(page, () => window.__LN.talking, undefined, 300_000);
+  await readThrough(page);
+  expect([await ln(page, 'step'), await ln(page, 'areaId')]).toEqual(['n2_table', 'mar-home']);
+  await expect(page.locator('.objective.on')).toContainText('Night two');
+  await expect(page.locator('.objective.on')).toContainText("elders' table");
+  expect((await ln(page, 'state')).flags.sides).toBe(true);
   expect(errors).toEqual([]);
 });
 
@@ -148,7 +153,8 @@ async function talkAt(page, x, z, fx, fz, who) {
   await until(page, (w) => document.querySelector('.prompt.on')?.textContent.includes(w) || window.__LN.talking, who);
   if (!(await ln(page, 'talking'))) await page.keyboard.press('KeyE');
   await until(page, () => window.__LN.talking || window.__LN.scripting);
-  await readThrough(page);
+  // a talk can end a night (the card) or start a fight: stop there and let the test go on
+  await readThrough(page, (s) => s.card || s.fight);
 }
 async function inRoom(page, to, spawn) {
   await page.evaluate(([to, spawn]) => window.__LN.go(to, spawn), [to, spawn]);
@@ -205,5 +211,87 @@ test('side stories: the flour to the church, Neto and the bell at the mall, and 
   expect((await flags()).bell_hung).toBe(true);
   expect(await page.evaluate(() => window.__LN.bellUp)).toBe(true);
   await expect(page.locator('.obj-side')).toHaveText('');
+  expect(errors).toEqual([]);
+});
+
+// ---------------------------------------------------------------- the prologue, nights two to seven (docs/design/prologue.md)
+
+test('the prologue can be done: every step, on every branch, has its person or thing there and reachable', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'builds every map: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?time=night');
+  const r = await page.evaluate(() => window.__LN.prologueCheck());
+  require('fs').writeFileSync(info.outputPath('prologue-check.json'), JSON.stringify(r, null, 1));
+  expect(r.problems).toEqual([]);
+  expect(Object.keys(r.logs)).toHaveLength(3);
+  expect(errors).toEqual([]);
+});
+
+test('night two ends on the cot: Juno writes her first page, and night three opens on the Strays in a line', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=n2_sleep&time=night');
+  await inRoom(page, 'mar-home', 'door');
+  await talkAt(page, 4.1, 9.4, 0, -1, 'Cot');
+  await readThrough(page, (s) => s.card);
+  await expect(page.locator('.end-card.on h2')).toHaveText('Night two');
+  expect((await ln(page, 'state')).pages).toContain('j2');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await until(page, () => window.__LN.talking, undefined, 300_000);
+  await readThrough(page);
+  expect([await ln(page, 'step'), await ln(page, 'areaId')]).toEqual(['n3_tithe', 'span']);
+  await expect(page.locator('.objective.on')).toContainText('Night three');
+  await page.screenshot({ path: info.outputPath('night-three.png') });
+  expect(errors).toEqual([]);
+});
+
+test('the dogs in the Big Store: walking into the back starts the fight, indoors, three of them', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=n2_store&time=night');
+  await inRoom(page, 'big-store', 'door');
+  // into the back half of the store, where the roof came down
+  await page.evaluate(async () => { await window.__LN.tp(19.5, 10.4); });
+  await page.keyboard.down('ArrowUp');
+  await until(page, () => window.__LN.talking, undefined, 240_000);
+  await page.keyboard.up('ArrowUp');
+  await readThrough(page, (s) => s.fight);
+  // the turn strip: Juno, Kit and three dogs (the dogs are quicker, so they go first)
+  await until(page, () => document.querySelectorAll('.fight.on .f-turns > *').length >= 5, undefined, 240_000);
+  await page.screenshot({ path: info.outputPath('dogs.png') });
+  expect(errors).toEqual([]);
+});
+
+test('night three: the white takes Juno while she searches, Güero is lost, and night four begins', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=n3_search&clock=09:00');
+  // out on the Lake Road in full sun, nothing left
+  await page.evaluate(async () => { const s = window.__LN.state; s.water = 0; s.party.juno.hp = 1; delete s.items.wraps; await window.__LN.tp(226, 190); });
+  await until(page, () => window.__LN.talking, undefined, 600_000);
+  await readThrough(page);
+  const s = await ln(page, 'state');
+  expect([s.step, s.flags.guero_lost, s.pages.includes('j3b')]).toEqual(['n4_mower', true, true]);
+  expect(errors).toEqual([]);
+});
+
+test('night seven: Chuy lets Juno by, and up the Thirty-Five the prologue ends', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=n7_leave&time=lamp');
+  // up the northbound lanes (the median is at x 53)
+  await page.evaluate(async () => { await window.__LN.tp(50, 5); window.__LN.face(0, -1); });
+  await page.keyboard.down('ArrowUp');
+  await until(page, () => window.__LN.talking, undefined, 300_000);
+  await page.keyboard.up('ArrowUp');
+  await readThrough(page, (s) => s.card);
+  await expect(page.locator('.end-card.on h2')).toHaveText('Seven Flags');
+  expect(await ln(page, 'step')).toBe('free');
   expect(errors).toEqual([]);
 });

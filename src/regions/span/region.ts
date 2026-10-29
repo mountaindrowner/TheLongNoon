@@ -8,7 +8,7 @@ import { sevenFlagsTown } from './seven-flags';
 import { ramp } from './ramp';
 import { lakeRoad } from './lake-road';
 import { whiteBowl } from './white-bowl';
-import { marHome, chapel, finaHouse, kidsHouse, churchHall, mallCourt, mallShop } from './rooms';
+import { marHome, chapel, finaHouse, kidsHouse, churchHall, mallCourt, mallShop, cellar, bigStore, fuselage } from './rooms';
 import { abandonedMall } from './mall';
 import { trailNorth } from './trail';
 import { churchOnTheHill } from './church';
@@ -138,6 +138,9 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
     'church-hall': churchHall({ to: HILL, spawn: 'church:door', night }),
     'mall-court': mallCourt({ to: MALLSIDE, spawn: 'mall:court', night }),
     'mall-shop': mallShop({ to: 'mall-court', spawn: 'grille', night }),
+    cellar: cellar({ to: SPAN, spawn: 'seven-flags:hatch', night }),
+    'big-store': bigStore({ to: SPAN, spawn: 'seven-flags:dock', night }),
+    fuselage: fuselage({ to: SPAN, spawn: 'white-bowl:wreck', night }),
   };
 }
 

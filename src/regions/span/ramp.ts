@@ -96,6 +96,8 @@ export function ramp(night: boolean): SectionSpec {
           x0: 5, x1: 22, z0: 1.5, z1: 4.2, back: [14.6, 8.6],
           lines: ['Whoa. That’s the Thirty-Five, Juno. Nobody walks north alone.', 'Go on home. Whatever’s up that road will still be there tomorrow.'],
           again: ['Still the Thirty-Five. Still no.'],
+          // the night Juno leaves (night seven), he lets her by
+          unless: 'n7_leave',
         },
       });
       const seed = (): number => d.seed();
@@ -146,6 +148,9 @@ export function ramp(night: boolean): SectionSpec {
       tires(scene, 81, 12, 5);
 
       // ------------------------------------------------ brush
+      // ------------------------------------------------ a second sign down by the ramp's foot: the sled, on the last night
+      fallenSign(scene, 24, 52, -0.4);
+      d.things.push({ x: 24, z: 53.8, r: 2.6, label: 'Sign', script: 'sled' });
       brushFill(d, 63, 1);
       openScatter(d, 64, ['x', 's'], 0.9, (x, z) => clearOf(FRONTAGE, 3)(x, z) && clearOf([A, B], 4)(x, z) && x > HW.x1 + 1.5);
 

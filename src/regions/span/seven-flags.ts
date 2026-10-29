@@ -466,6 +466,36 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       // north-east: the Old Trail narrows to a gate of two posts, a lantern hung between them
       d.built.push(trailGate(scene, 189.6, 21, 3.2, Math.PI / 2, night));
       d.spawns.trail = { x: 187.6, z: 21, face: 'W' };
+
+      // ------------------------------------------------ the prologue's places in town (docs/design/prologue.md)
+      // the Cellars: Doña Inés's hatch behind the Plaza, a blue lantern by it (night two's water shift, night three)
+      const HATCH = { x: 107.4, z: 141.2 };
+      const hatch = new THREE.Group();
+      hatch.add(box(1.6, 0.3, 1.4, M.wood(), 0, 0, 0), box(1.8, 0.12, 0.12, M.steel(), 0, 0.3, -0.7));
+      hatch.children[0]!.rotation.x = -0.25;
+      hatch.position.set(HATCH.x, heightAt(HATCH.x, HATCH.z), HATCH.z);
+      scene.add(shade(hatch));
+      addSolid(HATCH.x - 0.8, HATCH.z - 0.7, HATCH.x + 0.8, HATCH.z + 0.3);
+      scene.add(box(0.1, 1.5, 0.1, M.wood(), HATCH.x + 1.2, heightAt(HATCH.x, HATCH.z), HATCH.z - 0.3));
+      const blue = box(0.26, 0.3, 0.26, new THREE.MeshStandardMaterial({ color: '#9ad8ff', emissive: new THREE.Color('#5aa8ff'), emissiveIntensity: night ? 3 : 0.4 }), HATCH.x + 1.2, heightAt(HATCH.x, HATCH.z) + 1.5, HATCH.z - 0.3);
+      blue.userData.when = '!guero_lost|ines_lantern'; // the porch goes dark if Güero isn't found, until someone lights it
+      scene.add(blue);
+      markDoor(HATCH.x, HATCH.z + 0.3, 'open');
+      d.things.push({ x: HATCH.x, z: HATCH.z + 0.9, r: 1.5, label: 'Hatch', script: 'hatch', go: { to: 'cellar', spawn: 'door' } });
+      d.spawns.hatch = { x: HATCH.x, z: HATCH.z + 1.8, face: 'S' };
+      // the Big Store's loading dock, at the east end of its front: its roll-up door jammed half open (Papá's route)
+      const DOCK = { x: BIGSTORE.x + 6.6, z: BIGSTORE.z + BIGSTORE.d / 2 };
+      d.built.push(dressDoor(scene, DOCK.x, heightAt(DOCK.x, DOCK.z), DOCK.z + 0.04, 3.0, 2.4, 'open', night));
+      markDoor(DOCK.x, DOCK.z + 0.1, 'open');
+      d.things.push({ x: DOCK.x, z: DOCK.z + 0.9, r: 1.6, label: 'Loading dock', go: { to: 'big-store', spawn: 'door' } });
+      d.spawns.dock = { x: DOCK.x, z: DOCK.z + 1.8, face: 'S' };
+      // a ladder up the front of Mar Farm, at its west end: the roof is where the town watches the sky (nights five, seven)
+      const ROOF = { x: STORE.x - STORE.w / 2 + 1.4, z: STORE.z + STORE.d / 2 + 0.12 };
+      const rung = M.wood(), gy = heightAt(ROOF.x, ROOF.z);
+      for (const sx of [-0.36, 0.36]) scene.add(shade(box(0.14, 4.6, 0.14, rung, ROOF.x + sx, gy, ROOF.z)));
+      for (let i = 0; i < 11; i++) scene.add(box(0.72, 0.1, 0.1, rung, ROOF.x, gy + 0.35 + i * 0.4, ROOF.z));
+      addSolid(ROOF.x - 0.45, ROOF.z - 0.1, ROOF.x + 0.45, ROOF.z + 0.2);
+      d.things.push({ x: ROOF.x, z: ROOF.z + 0.9, r: 1.5, label: 'Ladder', script: 'roof' });
       brushFill(d, 77, 0.8, 3, (x, z) => x > xAt(I35, z) - 18); // the outside, only as far as anyone can see from the road
       for (const [x, z, s] of [[120, 100, 1.1], [130, 88, 1.0], [96, 60, 1.0], [150, 50, 1.1], [60, 70, 0.9], [178, 100, 1.0]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.3);
       for (const [x, z, s] of [[124, 108, 0.9], [70, 96, 0.8], [158, 128.4, 0.9], [100, 120, 0.8], [176, 58, 1.0]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
@@ -500,7 +530,9 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         { x: 189, z: 120, r: 2.0, label: 'Barricade', lines: ['Barriers across the boulevard and a car on its side. Past it, the road goes east toward the lake.'] },
       );
       d.npcs.push(
-        { id: 'lupe', name: 'Hermana Lupe', sprite: 'lupe', x: 133.2, z: 123, face: 'E', lines: ['Keep the lantern lit, mija. Somebody always has to.'] },
+        { id: 'lupe', name: 'Hermana Lupe', sprite: 'lupe', x: 133.2, z: 123, face: 'E', when: '!n2_table&!n7_meeting', lines: ['Keep the lantern lit, mija. Somebody always has to.'] },
+        // night seven: the whole town under the seven flags
+        { id: 'lupe', name: 'Hermana Lupe', sprite: 'lupe', x: 86.4, z: 141.4, face: 'S', when: 'n7_meeting' },
         { id: 'tona', name: 'Abuela Toña', sprite: 'tona', x: 111.4, z: 112.8, face: 'S', lines: ['One candle for Elías. One for Rosa, in case.', "And one for whoever's walking tonight. That's you, mija. Go on. I've got you covered."] },
         { id: 'nacho', name: 'Abuelo Nacho', sprite: 'nacho', x: 125.4, z: 49.2, face: 'S', lines: ["There's a bench up the way. Somebody carved a heart in it. Ancient."] },
         { id: 'chayo', name: 'Doña Chayo', sprite: 'chayo', x: 81.9, z: 143.9, face: 'S', lines: ["White's not for looking at, mija. Put it on before you leave, not when you feel it."] },
@@ -509,7 +541,12 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
         { id: 'kit', name: 'Kit', sprite: 'kit', x: 84, z: 139, face: 'E', lines: ['Does rain make a noise? Like, when it hits stuff?', 'Your papá said his abuelo heard it once. He said it sounds like applause.'] },
         { id: 'fina', name: 'Doña Fina', sprite: 'fina', x: 76.5, z: 146.6, face: 'S', lines: ['Agua, agua. Clean, boiled, blessed. Two out of three, guaranteed.', 'Which two? Depends on the day, mija.'] },
         { id: 'tavo', name: 'Tavo', sprite: 'tavo', x: 91.9, z: 149.4, face: 'E', lines: ['Did you know the Old Trail is the oldest place in the whole world?', 'Abuelo Nacho says the first people walked it. It’s north. It has benches.'] },
-        { id: 'nina', name: 'Nina', sprite: 'nina', x: 96.2, z: 149.6, face: 'W', lines: ['Tavo says the Old Trail is the oldest place in the world. I say it’s the drain.', 'The drain has bones in it. That’s how you know it’s old.'] },
+        // night four: Nina in Abby's yard, by the mower that stopped
+        { id: 'nina', name: 'Nina', sprite: 'nina', x: 171.6, z: 68.6, face: 'E', when: 'n4_mower' },
+        { id: 'nina', name: 'Nina', sprite: 'nina', x: 96.2, z: 149.6, face: 'W', when: '!n4_mower', lines: ['Tavo says the Old Trail is the oldest place in the world. I say it’s the drain.', 'The drain has bones in it. That’s how you know it’s old.'] },
+        // night three: the Noonriders at the barricade for the tithe
+        { id: 'rider', name: 'Noonrider', sprite: 'noonrider', x: 190.2, z: 123.6, face: 'W', when: 'n3_tithe' },
+        { id: 'rider', name: 'Noonrider', sprite: 'noonrider', x: 190.4, z: 129.0, face: 'W', when: 'n3_tithe' },
         { id: 'memo', name: 'Memo', sprite: 'memo', x: 187, z: 126.4, face: 'W', lines: ['Nobody goes out the east road after Lamp. Not without a reason and a pipe.', 'Big tracks out by the lake lately. Bigger than any Stray.'] },
       );
       for (const [x, z] of [[148, 120], [151, 122], [152.6, 119.6], [149, 123.4]] as Pt[]) d.roamers.push({ sprite: 'goat', frames: [], x, z, area: [147, 119, 153.6, 124], speed: 0.6, height: 0.62 });

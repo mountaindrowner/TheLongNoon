@@ -1,5 +1,3 @@
-import type { GameState } from './state';
-
 /**
  * Scripts, as the first version wrote them (legacy/poc2 12-dialogue.js and
  * data/dialogue.json). A script is a list of lines and commands:
@@ -28,18 +26,10 @@ export interface Stage {
 
 export class Director {
   private depth = 0;
-  constructor(private readonly dlg: Dialogue, private readonly steps: Record<string, unknown>, private readonly state: () => GameState, private readonly stage: Stage) {}
+  /** `cond` reads a condition key (game/progress.ts: steps, nights, items, white, flags). */
+  constructor(private readonly dlg: Dialogue, readonly cond: (key: string) => boolean, private readonly stage: Stage) {}
 
   get running(): boolean { return this.depth > 0; }
-
-  cond(key: string): boolean {
-    const s = this.state();
-    return key.split('&').every((tok) => {
-      if (tok.startsWith('!')) return !s.flags[tok.slice(1)];
-      if (tok in this.steps) return s.step === tok;
-      return !!s.flags[tok];
-    });
-  }
 
   /** The script an id resolves to now, or null. */
   resolve(id: string): Script | null {

@@ -1,0 +1,54 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a Warden, a huge old-world guardian machine three times a Stray's size, walking on four heavy jointed legs: a domed grey armoured body scorched by the sun, one big white searchlight eye in the middle, a ring of antennas and dishes on its back that hum, cables trailing, menacing and slow. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
+  },
+  "character_id": "71233de9-828c-48c6-9d7f-3f60cd9cf868",
+  "anims": {
+    "idle": {
+      "animation_group_id": "cabcc192-c42e-42c9-b69f-398da6f18a6b",
+      "fps": 5,
+      "body": {
+        "character_id": "71233de9-828c-48c6-9d7f-3f60cd9cf868",
+        "mode": "v3",
+        "action_description": "idle: standing on its four legs, searchlight eye sweeping, antennas humming",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "4430c765-3da0-4936-82f1-439138d37da3",
+      "fps": 11,
+      "body": {
+        "character_id": "71233de9-828c-48c6-9d7f-3f60cd9cf868",
+        "mode": "v3",
+        "action_description": "stalking forward slowly on four heavy jointed legs, body swaying",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-29T15:26:50.319Z"
+}

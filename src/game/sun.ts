@@ -18,6 +18,8 @@ export const SUN = {
   /** Seconds of daylight (this day, shade counted at half) before each condition sets in. */
   burnAfter: 20,
   blindAfter: 45,
+  /** Wraps on (Rubén's, or Papá's mirror cloth): the white works this much slower. */
+  wrapsSlow: 0.7,
   /** Health Juno wakes with after fainting, as a share of her most. */
   faintHp: 0.5,
 };

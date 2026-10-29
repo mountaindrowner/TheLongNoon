@@ -1,0 +1,100 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a feral dog, thin and scarred, patchy brown-and-black coat, a torn ear, a rotted leather collar still on its neck, teeth bared, low and hungry. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "dog"
+  },
+  "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+  "anims": {
+    "idle": {
+      "animation_group_id": "d0fbc661-7f2f-495c-8982-4859d9834cc1",
+      "fps": 5,
+      "body": {
+        "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+        "template_animation_id": "idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "fcc3b640-04ff-4bc6-a0ce-1a565f7c025f",
+      "fps": 11,
+      "body": {
+        "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+        "template_animation_id": "walk-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "run": {
+      "animation_group_id": "ed403165-832a-407a-87c6-abbca02c050f",
+      "fps": 14,
+      "body": {
+        "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "b32e8b97-e08f-4aca-bd3f-c140f8524172",
+      "fps": 12,
+      "body": {
+        "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+        "mode": "v3",
+        "action_description": "lunging forward with jaws snapping, then springing back",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "b7807eb3-b488-4932-bef0-60335c23654c",
+      "fps": 10,
+      "body": {
+        "character_id": "af5ec022-78f1-4e95-9be7-a4465d8d2cc2",
+        "mode": "v3",
+        "action_description": "yelping and recoiling from a hit, tail tucked",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-29T15:18:13.034Z"
+}

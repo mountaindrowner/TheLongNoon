@@ -316,7 +316,7 @@ export class Fight {
       this.w.blind(f.actor);
       this.float(f.actor, 'BREAK!', 'brk', 0.7);
       this.w.sound.brk();
-      await this.say('Sensor broken! The Stray is blind and stunned.', 1600);
+      await this.say(`Sensor broken! The ${f.name} is blind and stunned.`, 1600);
     }
     if (f.def.flee && !f.fled && f.parts[0]!.hp <= f.def.flee) await this.flee(f);
     else if (!alive(f)) {
@@ -348,20 +348,22 @@ export class Fight {
   private async enemyTurn(f: Foe): Promise<void> {
     const up = this.party.filter((p) => p.hp > 0);
     if (!up.length) return;
-    if (f.id === 'coyote') {
+    // animals bite the weakest; machines spark and ram (a Warden harder, and its sweep finds everyone)
+    if (f.id === 'coyote' || f.id.startsWith('dog')) {
       const t = up.slice().sort((a, b) => a.hp - b.hp)[0]!;
       this.w.sound.growl();
-      await this.say(`The coyote lunges at ${t.name}!`, 450);
+      await this.say(`The ${f.name.toLowerCase()} lunges at ${t.name}!`, 450);
       await this.hit(f, [t], ri(4, 6), 'lunge');
       return;
     }
-    if (f.stunned > 0) { f.stunned--; this.w.sound.beep(); await this.say('The Stray spins in place, blind.', 1200); return; }
-    if (!f.eyeBroken && Math.random() < 0.35) { await this.say('The Stray sparks! Arcs jump across the concrete.', 600); await this.hit(f, up, ri(4, 6), 'spark'); return; }
+    const big = f.id === 'warden', it = `The ${f.name}`;
+    if (f.stunned > 0) { f.stunned--; this.w.sound.beep(); await this.say(`${it} spins in place, blind.`, 1200); return; }
+    if (!f.eyeBroken && Math.random() < 0.35) { await this.say(big ? `${it}'s eye flares white! The light burns.` : `${it} sparks! Arcs jump across the concrete.`, 600); await this.hit(f, up, big ? ri(6, 8) : ri(4, 6), 'spark'); return; }
     const t = up[ri(0, up.length - 1)]!;
     this.w.sound.servo();
-    await this.say(`The Stray rams ${t.name}!`, 450);
-    if (f.eyeBroken && Math.random() < 0.4) { await this.lunge(f.actor, t.actor, 0.35); this.float(t.actor, 'Miss', 'miss'); await this.say('Blind, it slams into the concrete instead.', 1000); return; }
-    await this.hit(f, [t], ri(7, 10), 'ram');
+    await this.say(big ? `${it} stamps down on ${t.name}!` : `${it} rams ${t.name}!`, 450);
+    if (f.eyeBroken && Math.random() < 0.4) { await this.lunge(f.actor, t.actor, 0.35); this.float(t.actor, 'Miss', 'miss'); await this.say('Blind, it slams into the ground instead.', 1000); return; }
+    await this.hit(f, [t], big ? ri(9, 13) : ri(7, 10), 'ram');
   }
 
   /**

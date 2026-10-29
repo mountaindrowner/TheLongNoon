@@ -1,0 +1,57 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "Güero, a small boy of about seven: pale sun-bleached blond hair, a too-big faded red t-shirt, dusty shorts, bare scabbed knees, a toy truck in one hand, bright curious face. a person of a small South Texas border town generations after the sky turned white, sun-faded patched clothes, dust on the boots",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "mannequin"
+  },
+  "character_id": "998fe979-4168-414a-a104-57f1eee537e0",
+  "anims": {
+    "idle": {
+      "animation_group_id": "f67418d9-025d-4eae-a526-a639b21e494b",
+      "fps": 5,
+      "body": {
+        "character_id": "998fe979-4168-414a-a104-57f1eee537e0",
+        "template_animation_id": "breathing-idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "4ab0eff4-e612-4541-8f70-8dfbfb4f4b7f",
+      "fps": 11,
+      "body": {
+        "character_id": "998fe979-4168-414a-a104-57f1eee537e0",
+        "template_animation_id": "walking-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-29T15:18:35.550Z",
+  "portrait": {
+    "endpoint": "v2/portrait-character-pro",
+    "direction": "character_to_portrait",
+    "result_size": 128,
+    "at": "2026-10-29T15:53:16.892Z"
+  }
+}

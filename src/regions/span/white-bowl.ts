@@ -1,4 +1,8 @@
+import * as THREE from 'three';
 import type { Grid, RGB, SectionSpec } from '../../engine/section';
+import { box, colMat, shade } from '../../engine/geo';
+import { addSolid } from '../../engine/world';
+import { markDoor } from '../../engine/doorway';
 import { rock, boardSign } from '../../engine/props';
 import { fbm, vnoise } from '../../engine/noise';
 import { STRAW, nopal, skull, lanternPost } from './props';
@@ -126,6 +130,36 @@ export function whiteBowl(night: boolean): SectionSpec {
       for (const [x, z, s] of [[18, 26, 1.2], [14, 46, 1.1], [22, 72, 1.3], [46, 18, 1.0], [112, 40, 1.2], [118, 72, 1.1], [98, 86, 1.0], [40, 86, 1.1], [60, 18, 1.0]] as Array<[number, number, number]>) d.tree(deadMesquite(x, z, s, seed()), 0.25);
       for (const [x, z, s] of [[66, 54, 0.5], [90, 74, 0.4], [36, 54, 0.55], [100, 44, 0.45], [54, 36, 0.4]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
       for (const [x, z, s] of [[100, 12, 0.9], [14, 18, 0.8], [124, 44, 1.0]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
+      // ------------------------------------------------ the old plane, buried to its wings (always here)
+      const plane = new THREE.Group(), tin = colMat('#b8b4a8', { metalness: 0.4, roughness: 0.7 });
+      plane.add(box(1.4, 0.9, 7, tin, 0, -0.3, 0), box(9, 0.14, 1.6, tin, 0, 0.0, -0.4), box(0.14, 1.4, 1.0, tin, 0, 0.4, 3.0));
+      plane.position.set(104, 0, 78); plane.rotation.y = 0.5;
+      scene.add(shade(plane));
+      addSolid(100, 74, 108, 82);
+      // ------------------------------------------------ the drone, down on day five (it's here only after it falls)
+      const wreck = new THREE.Group(), hull = colMat('#d8d4cc', { metalness: 0.5, roughness: 0.45 }), burnt = colMat('#2a2624', { roughness: 1 });
+      wreck.add(box(16, 2.2, 3.4, hull, 0, 0, 0), box(6, 0.2, 8, hull, -1, 1.0, 0), box(2.2, 1.6, 3.0, burnt, 5.6, 0.1, 0));
+      wreck.children[1]!.rotation.z = 0.12;
+      const gap = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.6), new THREE.MeshBasicMaterial({ color: '#050505' }));
+      gap.position.set(6.5, 0.9, 1.72);
+      wreck.add(gap);
+      wreck.position.set(40, 0, 64);
+      wreck.userData.when = 'drone_down';
+      scene.add(shade(wreck));
+      addSolid(32, 62.2, 48, 65.6);
+      markDoor(46.5, 65.8, 'open');
+      d.spawns.wreck = { x: 46.5, z: 67.4, face: 'S' };
+      d.things.push(
+        { x: 104, z: 80, r: 3.0, label: 'Plane', script: 'plane' },
+        { x: 46.5, z: 66.2, r: 1.6, label: 'Hatch', script: 'wreck', when: 'drone_down', go: { to: 'fuselage', spawn: 'door' } },
+        { x: 52, z: 70, r: 1.4, label: 'Mud', script: 'footprint', when: 'guero_lost&drone_down&!footprint_seen' },
+      );
+      // night six: scavengers from town at the wreck, and two Noonrider scouts on the dam
+      d.npcs.push(
+        { id: 'digger', name: 'Scavenger', sprite: 'scav', x: 36, z: 67.6, face: 'S', when: 'night:6' },
+        { id: 'scout', name: 'Noonrider', sprite: 'noonrider', x: 8, z: 34, face: 'E', when: 'night:6' },
+        { id: 'scout', name: 'Noonrider', sprite: 'noonrider', x: 8, z: 46, face: 'E', when: 'night:6' },
+      );
       brushFill(d, 85, 1);
       openScatter(d, 81, ['x', 's'], 0.5, (x, z) => !(x > 66 && x < 96 && z < 20) && !(x > 18 && x < 38 && z < 18));
       d.things.push(

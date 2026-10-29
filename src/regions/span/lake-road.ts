@@ -145,6 +145,8 @@ export function lakeRoad(night: boolean): SectionSpec {
         { x: 84, z: 35.2, r: 1.4, label: 'Stones', lines: ['Stones stacked waist high, bleached white. Bones between them, set with care.'] },
         { x: 30.6, z: 86, r: 2.2, label: 'Yard', lines: ['Cars stacked on cars, every door gone, every hood gone. The fences in town came from here.'] },
       );
+      // night three: Güero, out in the white after the machines, crouched in the culvert's shade
+      d.npcs.push({ id: 'guero', name: 'Güero', sprite: 'guero', x: 66.4, z: BLVD.z0 - 2.4, face: 'W', allDay: true, when: 'n3_search', lines: ['They went this way. All of them.'] });
       d.npcs.push({ id: 'memo', name: 'Memo', sprite: 'memo', x: 27, z: 56.4, face: 'E', lines: ['Nobody goes out the east road after Lamp. Not without a reason and a pipe.', 'Big tracks out by the lake lately. Bigger than any Stray.'] });
     },
   };

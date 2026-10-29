@@ -37,7 +37,7 @@ const COST = { figure: 15, template: 4, custom: 4, portrait: 17 };
 // animations in four directions (the owner, 2026-10-27): front, back and both sides
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
-const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog' };
+const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog', dog: 'dog' };
 /** The four-legged skeleton has its own templates (idle, walk, run; no attack). */
 const DOG = { idle: 'idle', walk: 'walk-8-frames', run: 'running-8-frames' };
 const ANIM = {
@@ -62,6 +62,8 @@ const CUSTOM = {
   },
   coyote: { attack: 'lunging forward with jaws snapping, then springing back', hurt: 'yelping and recoiling from a hit, tail tucked' },
   coyote2: { attack: 'lunging forward with jaws snapping, then springing back', hurt: 'yelping and recoiling from a hit, tail tucked' },
+  dog: { attack: 'lunging forward with jaws snapping, then springing back', hurt: 'yelping and recoiling from a hit, tail tucked' },
+  warden: { idle: 'idle: standing on its four legs, searchlight eye sweeping, antennas humming', walk: 'stalking forward slowly on four heavy jointed legs, body swaying' },
   chicken: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken2: { idle: 'idle: pecking at the ground, head bobbing', walk: 'walking, head bobbing with each step' },
   chicken3: { idle: 'idle: puffing up, head bobbing', walk: 'strutting, head bobbing with each step' },
