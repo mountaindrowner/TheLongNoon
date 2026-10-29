@@ -43,8 +43,13 @@ import { churchOnTheHill } from './church';
  */
 
 export const SPAN = 'span';
+/** The hill north-east of town (the Trail North and the church) and the dead mall south-west: places of their own,
+ *  reached from town by a transition (the owner, 2026-10-29), not walked into across a seam. */
+export const HILL = 'hill';
+export const MALLSIDE = 'mallside';
 
-/** Each map's place in the region (its top-left corner, world units). */
+/** Each map's place (its top-left corner, world units). One coordinate frame for every region, so a point says
+ *  which region it's in and story markers can point across. */
 export const PLACE: Record<string, [number, number]> = {
   ramp: [40, 0],
   'seven-flags': [0, 64],
@@ -54,31 +59,54 @@ export const PLACE: Record<string, [number, number]> = {
   church: [208, -48],
   mall: [-40, 224],
 };
+const SIZE: Record<string, [number, number]> = {
+  ramp: [88, 64], 'seven-flags': [192, 160], 'lake-road': [96, 132], 'white-bowl': [132, 96], trail: [88, 72], church: [120, 96], mall: [132, 96],
+};
 /** Where a new game starts: the lot in front of Mar Farm, by the platform where Papá lies. */
 export const START: Spot = { x: 137, z: 64 + 122.5, face: 'N' };
 
-export function spanRegion(mood: Mood, night: boolean, start: Spot = START): RegionSpec {
+/** The outdoor regions: their maps, their names, and where you arrive if nothing says otherwise. */
+export const REGIONS: Record<string, { title: string; sub: string; pieces: string[]; start: Spot }> = {
+  [SPAN]: { title: 'Seven Flags', sub: 'A town that stayed', pieces: ['ramp', 'seven-flags', 'lake-road', 'white-bowl'], start: START },
+  [HILL]: { title: 'The Hill', sub: 'Up the Old Trail', pieces: ['trail', 'church'], start: { x: 196.4, z: 85, face: 'E' } },
+  [MALLSIDE]: { title: 'The Mall', sub: 'Under the long roof', pieces: ['mall'], start: { x: 56, z: 228.2, face: 'S' } },
+};
+/** The region a map belongs to. */
+export const regionOf = (piece: string): string | null => Object.keys(REGIONS).find((r) => REGIONS[r]!.pieces.includes(piece)) ?? null;
+/** The region a point lies in (null between maps). */
+export function regionAt(x: number, z: number): string | null {
+  for (const [id, [px, pz]] of Object.entries(PLACE)) {
+    const [w, h] = SIZE[id]!;
+    if (x >= px && x < px + w && z >= pz && z < pz + h) return regionOf(id);
+  }
+  return null;
+}
+/** Where, in one region, the way to another one is (for markers pointing at a place in the other). */
+export const GATES: Record<string, Record<string, [number, number]>> = {
+  [SPAN]: { [HILL]: [189.6, 85], [MALLSIDE]: [56.3, 222.6] },
+  [HILL]: { [SPAN]: [194.4, 85], [MALLSIDE]: [194.4, 85] },
+  [MALLSIDE]: { [SPAN]: [56, 225.6], [HILL]: [56, 225.6] },
+};
+
+const BUILDERS: Record<string, (night: boolean) => import('../../engine/section').SectionSpec> = {
+  ramp, 'seven-flags': sevenFlagsTown, 'lake-road': lakeRoad, 'white-bowl': whiteBowl, trail: trailNorth, church: churchOnTheHill, mall: abandonedMall,
+};
+
+export function spanRegion(mood: Mood, night: boolean, start?: Spot, id = SPAN): RegionSpec {
   resetSpan();
   const shifted = new Map<number, string>(); // occluder index → the map that made it
   let seen = 0;
+  const R = REGIONS[id]!;
   return {
-    id: SPAN,
-    title: 'Seven Flags',
-    sub: 'A town that stayed',
+    id,
+    title: R.title,
+    sub: R.sub,
     mood,
     heightSeed: 41,
-    start,
+    start: start ?? R.start,
     apron: spanApron(),
     lights: 10,
-    pieces: [
-      { at: PLACE.ramp!, spec: ramp(night) },
-      { at: PLACE['seven-flags']!, spec: sevenFlagsTown(night) },
-      { at: PLACE['lake-road']!, spec: lakeRoad(night) },
-      { at: PLACE['white-bowl']!, spec: whiteBowl(night) },
-      { at: PLACE.trail!, spec: trailNorth(night) },
-      { at: PLACE.church!, spec: churchOnTheHill(night) },
-      { at: PLACE.mall!, spec: abandonedMall(night) },
-    ],
+    pieces: R.pieces.map((p) => ({ at: PLACE[p]!, spec: BUILDERS[p]!(night) })),
     afterPiece(p) {
       // the Span's fading overhead props were registered in map space; move them into region space
       for (; seen < occluders.length; seen++) {
@@ -107,8 +135,8 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
     chapel: chapel({ to: SPAN, spawn: 'seven-flags:chapel', night }),
     'fina-house': finaHouse({ to: SPAN, spawn: 'seven-flags:fina', night }),
     'kids-house': kidsHouse({ to: SPAN, spawn: 'seven-flags:kids', night }),
-    'church-hall': churchHall({ to: SPAN, spawn: 'church:door', night }),
-    'mall-court': mallCourt({ to: SPAN, spawn: 'mall:court', night }),
+    'church-hall': churchHall({ to: HILL, spawn: 'church:door', night }),
+    'mall-court': mallCourt({ to: MALLSIDE, spawn: 'mall:court', night }),
     'mall-shop': mallShop({ to: 'mall-court', spawn: 'grille', night }),
   };
 }

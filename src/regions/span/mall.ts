@@ -6,7 +6,7 @@ import { building, M, type Built } from '../../engine/buildings';
 import { addSolid, heightAt } from '../../engine/world';
 import { fbm } from '../../engine/noise';
 import { STRAW, nopal, carHulk, lanternPost, skull } from './props';
-import { spanPaint, cairn, jerseys } from './kit';
+import { spanPaint, cairn, jerseys, underpass } from './kit';
 import { spanDoor } from './doors';
 import { SPAN_FLORA, deadMesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
@@ -156,9 +156,13 @@ export function abandonedMall(night: boolean): SectionSpec {
       addSolid(79.4, 71.4, 84.6, 72.6);
 
       // ------------------------------------------------ the way in from town, and where the ring road meets the brush
-      boardSign(scene, 99.6, 4, 'NO AGUA', 0.1, 161);
-      d.things.push({ x: 99.6, z: 5, r: 1.6, label: 'Sign', lines: ['A board on a post, painted by hand: NO AGUA. Somebody has added a skull underneath in charcoal.'] });
-      skull(scene, 101, 6, 0.8);
+      // the underpass back to town, under the old rail embankment, a lantern hung at its mouth
+      underpass(scene, 96, 1.8, 6, 1);
+      d.built.push(lanternPost(scene, 92, 4.2, night, night));
+      d.spawns.town = { x: 96, z: 4.2, face: 'S' };
+      boardSign(scene, 101.6, 5.4, 'NO AGUA', 0.1, 161);
+      d.things.push({ x: 101.6, z: 6.4, r: 1.6, label: 'Sign', lines: ['A board on a post, painted by hand: NO AGUA. Somebody has added a skull underneath in charcoal.'] });
+      skull(scene, 103, 7.4, 0.8);
       jerseys(scene, [[RING.x0 + 0.6, 40], [RING.x0 + 0.6, 56]], seed());
       rubble(scene, 120, 46, 1.4, seed()); cairn(scene, 14, 88, seed());
       d.built.push(lanternPost(scene, COURT.x + 2.4, COURT.z + COURT.d / 2 + 1.0, night, night));

@@ -530,3 +530,54 @@ export function picnicShelter(s: O, x: number, z: number, rot: number): void {
   addSolid(x - 1.1, z - 0.4, x + 1.1, z + 0.4);
   occluders.push({ mats: [roof.material as THREE.Material], rect: [x - 2.4, z - 5.4, x + 2.4, z + 1.2], k: 1 });
 }
+
+// ------------------------------------------------------------------ ways through to the places beyond town
+
+/**
+ * An underpass: a concrete box through the old rail embankment, the road running in under it and the far end
+ * too far to see. The way to the mall (the owner, 2026-10-29: "a tunnel that allows us to load it"). `facing` is
+ * the side the mouth opens to: +1 south (toward the camera), -1 north. Its dark is a wall: whoever walks in is gone.
+ */
+export function underpass(s: O, x: number, z: number, w: number, facing: 1 | -1): void {
+  const D = 5, H = 2.6, BERM = 10;
+  const g = new THREE.Group();
+  const conc = colMat('#9a958a', { roughness: 0.9 }), earth = colMat('#8a7656', { roughness: 1 }), steel = colMat('#4a4440', { metalness: 0.5, roughness: 0.6 });
+  const dark = new THREE.MeshBasicMaterial({ color: '#040404' });
+  // the box: two walls, a deck, a face band with a parapet; inside, nothing you can see
+  for (const sx of [-1, 1]) g.add(box(0.6, H, D, conc, sx * (w / 2 + 0.3), 0, -D / 2));
+  g.add(box(w + 1.2, 0.5, D, conc, 0, H, -D / 2));
+  g.add(box(w + 1.2, 0.5, 0.3, conc, 0, H + 0.5, 0.1));
+  const inside = new THREE.Mesh(boxGeo(w, H, 0.2), dark);
+  inside.position.set(0, H / 2, -1.6);
+  g.add(inside);
+  // the embankment either side, stepped down toward its foot, and the rails across the top
+  for (const sx of [-1, 1]) {
+    const cx = sx * (w / 2 + 0.6 + BERM / 2);
+    g.add(box(BERM, H + 0.5, D, earth, cx, 0, -D / 2), box(BERM, (H + 0.5) * 0.55, 1.6, earth, cx, 0, 0.7));
+  }
+  for (const rx of [-0.75, 0.75]) g.add(box(w + 2 * BERM + 1.2, 0.12, 0.1, steel, 0, H + 0.5, -D / 2 + rx));
+  for (let i = -12; i <= 12; i++) g.add(box(0.22, 0.08, 2.0, colMat('#5a4636', { roughness: 1 }), i * 0.68, H + 0.46, -D / 2));
+  g.rotation.y = facing > 0 ? 0 : Math.PI;
+  s.add(shade(at(g, x, z)));
+  // the walls and the embankment are solid; the mouth is open
+  const zA = facing > 0 ? z - D : z - 2.3, zB = facing > 0 ? z + 2.3 : z + D;
+  addSolid(x - w / 2 - 0.6 - BERM, zA, x - w / 2, zB);
+  addSolid(x + w / 2, zA, x + w / 2 + 0.6 + BERM, zB);
+  // coming at it from the far side of the camera, the embankment thins so she can be seen walking in
+  if (facing < 0) occluders.push({ mats: [conc, earth], rect: [x - w / 2 - BERM, z - 7, x + w / 2 + BERM, z + D], k: 1 });
+}
+
+/** Where a footpath leaves for somewhere: two posts and a crossbar, a lantern hung from it, lit at night. */
+export function trailGate(s: O, x: number, z: number, w: number, rot: number, night: boolean): Built {
+  const g = new THREE.Group();
+  const wood = colMat('#6a5038', { roughness: 1 });
+  for (const sx of [-1, 1]) g.add(box(0.18, 2.6, 0.18, wood, sx * w / 2, 0, 0));
+  g.add(box(w + 0.5, 0.16, 0.16, wood, 0, 2.5, 0));
+  g.add(box(0.03, 0.4, 0.03, colMat('#222', {}), 0, 2.1, 0));
+  const glass = colMat('#ffd590', { emissive: new THREE.Color(night ? '#ffb35c' : '#000000'), emissiveIntensity: night ? 3 : 0 });
+  g.add(box(0.22, 0.3, 0.22, glass, 0, 1.8, 0));
+  g.rotation.y = rot;
+  s.add(shade(at(g, x, z)));
+  for (const sx of [-1, 1]) { const px = x + Math.cos(rot) * sx * w / 2, pz = z - Math.sin(rot) * sx * w / 2; addSolid(px - 0.15, pz - 0.15, px + 0.15, pz + 0.15); }
+  return { update(t: number) { if (night) glass.emissiveIntensity = 3 * (0.92 + Math.sin(t * 5.1) * 0.06); } };
+}

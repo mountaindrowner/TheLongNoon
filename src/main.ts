@@ -27,7 +27,7 @@ import PAGES from './game/data/pages.json';
 import STORIES from './game/data/stories.json';
 import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
-import { SPAN, START, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
+import { SPAN, HILL, START, REGIONS, GATES, regionOf, regionAt, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
 
 /**
  * The Long Noon, rebuilt on the world style spec (docs/style/world-style-spec.md)
@@ -126,6 +126,11 @@ interface World {
 let ROOMS = spanRooms(night);
 const worlds = new Map<string, World>();
 let cur: World;
+/** An outdoor region (the town, the hill, the mall), as against a room. */
+const isOut = (w: World | undefined): boolean => !!w && w.id in REGIONS;
+/** The outdoor region built now (one at a time). */
+const outWorld = (): World | undefined => [...worlds.values()].find((w) => isOut(w));
+const outRegion = (): Region | undefined => outWorld()?.area as Region | undefined;
 let player: Actor;
 let loaded = false;
 let busy = false;
@@ -133,14 +138,14 @@ let busy = false;
 async function buildWorld(id: string, at?: Spot): Promise<World> {
   const scene = new THREE.Scene();
   let area: Area, issues: string[];
-  if (id === SPAN) {
+  if (id in REGIONS) {
     beginArea();
-    const region = await buildRegion(scene, night, spanRegion(sky(), night, at));
+    const region = await buildRegion(scene, night, spanRegion(sky(), night, at, id));
     area = region;
     issues = region.doorIssues;
   } else {
     // a map half-built in the region shares the builders' state; let it finish first
-    await (worlds.get(SPAN)?.area as Region | undefined)?.idle();
+    await outRegion()?.idle();
     clearDoorMarks();
     area = await ROOMS[id]!(scene, night);
     issues = checkDoors(area);
@@ -149,7 +154,7 @@ async function buildWorld(id: string, at?: Spot): Promise<World> {
   const lights = applyMood(scene, renderer, post, area.mood);
   const tint = new THREE.Color().setRGB(...area.mood.sprite);
   const w: World = { id, scene, area, lights, people: [], roamers: [], tint, issues };
-  if (id === SPAN) {
+  if (id in REGIONS) {
     // the region streams: its people and animals come and go with their maps
     const region = area as Region;
     for (const b of region.pieces) await populate(w, b.npcs, b.roamers ?? [], b.id);
@@ -168,7 +173,7 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
   for (const npc of npcs) {
     if (npc.id === 'kit' && S && (S.flags.drainStarted || S.joined.includes('kit'))) continue;
     // by day the town is shut: outdoors, only the lookouts stay out
-    if (w.id === SPAN && !night && !npc.allDay) continue;
+    if (isOut(w) && !night && !npc.allDay) continue;
     const a = await Actor.person(npc.sprite, w.tint);
     a.place(npc.x, w.area.ground(npc.x, npc.z), npc.z);
     a.dir = npc.face ?? 'S';
@@ -176,7 +181,7 @@ async function populate(w: World, npcs: NPC[], roamers: NonNullable<Area['roamer
     w.people.push({ npc, actor: a, tag });
   }
   // the animals are under the shade-cloth by day too (the bible: "let out only at night"); the machines own the day
-  for (const r of w.id === SPAN && !night ? roamers.filter((q) => q.sprite === 'stray') : roamers) {
+  for (const r of isOut(w) && !night ? roamers.filter((q) => q.sprite === 'stray') : roamers) {
     const a = await Actor.critter(variant(r.sprite, r.x, r.z), w.tint, r.height);
     a.place(r.x, w.area.ground(r.x, r.z), r.z);
     w.scene.add(a.root);
@@ -203,7 +208,7 @@ function enter(w: World, spawn: string | Spot): void {
   post.setScene(w.scene, camera);
   moodPost(renderer, post, w.area.mood);
   w.scene.add(player.root);
-  if (w.id === SPAN) relight(true);
+  if (isOut(w)) relight(true);
   player.setTint(w.tint);
   placeAt(typeof spawn === 'string' ? w.area.spawns[spawn] ?? w.area.spawns.start! : spawn);
   bringCast(w);
@@ -213,7 +218,7 @@ function enter(w: World, spawn: string | Spot): void {
 let lightAge = 0;
 /** Outdoors, the light follows the clock: the mood, and the tint on every sprite. Rooms keep their own lamps. */
 function relight(force = false): void {
-  if (cur.id !== SPAN || (time.frozen && !force)) return;
+  if (!isOut(cur) || (time.frozen && !force)) return;
   const m = sky();
   cur.lights.set(m);
   cur.tint.setRGB(...m.sprite);
@@ -239,13 +244,13 @@ async function turnOfDay(lit: boolean): Promise<void> {
   night = lit;
   ROOMS = spanRooms(night);
   const here = cur;
-  const outdoors = here.id === SPAN;
+  const outdoors = isOut(here);
   if (outdoors) { ui.showPrompt(null); await ui.dissolve(true); }
   for (const w of [...worlds.values()]) if (w !== here) { dispose(w); worlds.delete(w.id); }
   if (outdoors) {
-    worlds.delete(SPAN);
+    worlds.delete(here.id);
     const at: Spot = { x: player.x, z: player.z };
-    const w = await buildWorld(SPAN, at);
+    const w = await buildWorld(here.id, at);
     enter(w, at);
     dispose(here);
     await ui.dissolve(false);
@@ -265,13 +270,21 @@ async function go(to: string, spawn: string | Spot): Promise<void> {
   busy = true;
   ui.showPrompt(null);
   await ui.dissolve(true);
+  // one outdoor region at a time: going on to another, the one behind is let go (its rooms with it)
+  const leaving = to in REGIONS ? outWorld() : undefined;
+  const crossing = !!leaving && leaving.id !== to;
+  if (crossing) for (const old of [...worlds.values()]) if (old !== cur) { dispose(old); worlds.delete(old.id); }
+  if (crossing) worlds.delete(leaving!.id);
   const w = worlds.get(to) ?? (await buildWorld(to));
-  if (to === SPAN) await (typeof spawn === 'string' ? (w.area as Region).prepare(spawn) : (w.area as Region).settle(spawn.x, spawn.z));
+  if (to in REGIONS) await (typeof spawn === 'string' ? (w.area as Region).prepare(spawn) : (w.area as Region).settle(spawn.x, spawn.z));
+  const from = cur;
   enter(w, spawn);
+  if (crossing && from !== w) dispose(from);
   if (staleRoom && staleRoom !== w) { dispose(staleRoom); staleRoom = null; }
   lastPiece = '';
   await ui.dissolve(false);
-  if (to !== SPAN) ui.nameTag(w.area.title, w.area.sub);
+  if (!(to in REGIONS)) ui.nameTag(w.area.title, w.area.sub);
+  else if (crossing) { const p = (w.area as Region).pieceAt(player.x, player.z); if (p) { ui.nameTag(p.title, p.sub); lastPiece = p.id; } }
   busy = false;
 }
 
@@ -344,7 +357,7 @@ async function interact(tg: Target): Promise<void> {
 /** Someone holding a line across a way out (NPC `guard`), if (x, z) is on it. */
 const onGuard = (n: NPC, x: number, z: number): boolean => !!n.guard && x >= n.guard.x0 && x <= n.guard.x1 && z >= n.guard.z0 && z <= n.guard.z1;
 function guardAt(x: number, z: number): boolean {
-  const region = worlds.get(SPAN)?.area as Region | undefined;
+  const region = outRegion();
   return !!region && region.npcs.some((n) => onGuard(n, x, z));
 }
 /** Juno walking under the story's control (turned back at a guard's line), so the frame plays her walk. */
@@ -380,7 +393,10 @@ async function checkTriggers(): Promise<void> {
   if (held) { await turnBack(held); return; }
   for (const tr of cur.area.triggers) {
     if (!tr.go || player.x < tr.x0 || player.x > tr.x1 || player.z < tr.z0 || player.z > tr.z1) continue;
-    if (tr.go.to === SPAN || ROOMS[tr.go.to]) { await go(tr.go.to, tr.go.spawn); return; }
+    if (tr.go.to in REGIONS || ROOMS[tr.go.to]) { await go(tr.go.to, tr.go.spawn); return; }
+    // a road on to a map of another region: the transition (the hill, the mall)
+    const other = regionOf(tr.go.to);
+    if (other) { await go(other, `${tr.go.to}:${tr.go.spawn}`); return; }
     // a road on to a piece not built yet: turn back at the edge rather than promise what isn't there
     busy = true;
     await ui.dissolve(true);
@@ -463,16 +479,16 @@ function frame(): void {
   } else { player.moving = walking; player.animate(dt); }
 
   // crossing from one section of the region into the next: just the name tag, no cut
-  if (cur.id === SPAN) {
+  if (isOut(cur)) {
     const p = (area as Region).pieceAt(player.x, player.z);
     if (p && p.id !== lastPiece) { if (lastPiece) ui.nameTag(p.title, p.sub); lastPiece = p.id; }
   }
 
   for (const p of cur.people) p.actor.animate(dt);
-  if (cur.id === SPAN && time.phase === 'Shutter' && !fight.active) goingIn(dt);
+  if (isOut(cur) && time.phase === 'Shutter' && !fight.active) goingIn(dt);
   // once the bell is home, Benny rings it at Lamp: heard on the hill and down the trail
   if (time.phase !== lastPhase) {
-    if (lastPhase && time.phase === 'Lamp' && S.flags.bell_hung && cur.id === SPAN && ['church', 'trail'].includes(lastPiece)) sound.bell();
+    if (lastPhase && time.phase === 'Lamp' && S.flags.bell_hung && cur.id === HILL) sound.bell();
     lastPhase = time.phase;
   }
   follow(dt);
@@ -499,7 +515,7 @@ function frame(): void {
   }
   if (tilt > 0.001) { camera.position.y -= tilt * 8; camera.lookAt(v.set(camTarget.x, camTarget.y + tilt * 17, camTarget.z - tilt * 30)); }
   cur.lights.follow(player.root.position);
-  if (cur.id === SPAN) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
+  if (isOut(cur)) { fadeOccluders(player.x, player.z, dt); swaySpan(t); }
 
   // tilt-shift: the sharp band tracks the player's height on screen (spec §4); in a fight, the fight's middle
   if (staged) v.set(CENTRE.x, cur.area.ground(CENTRE.x, CENTRE.z) + 0.8, CENTRE.z).project(camera);
@@ -658,7 +674,7 @@ function storyStage(): (StoryStage & { title: string }) | null {
 }
 /** Put the bell back in the church's belfry once it's been brought home (church.ts names it). */
 function showBell(): void {
-  const b = (worlds.get(SPAN)?.scene)?.getObjectByName('church-bell');
+  const b = outWorld()?.scene.getObjectByName('church-bell');
   if (b) b.visible = !!S.flags.bell_hung;
 }
 
@@ -695,13 +711,16 @@ function storyPoint(): [number, number] | null {
   if (!st?.marker) return null;
   const m = st.marker;
   if (m.startsWith('npc:')) { const p = cur.people.find((q) => q.npc.id === m.slice(4)); if (p) return [p.actor.x, p.actor.z]; }
-  else if (cur.id !== SPAN) { const t = cur.area.things.find((q) => q.script === m.slice(2)); if (t) return [t.x, t.z]; }
+  else if (!isOut(cur)) { const t = cur.area.things.find((q) => q.script === m.slice(2)); if (t) return [t.x, t.z]; }
   // out in the region it points at the place; inside a room that isn't the place, nowhere
-  if (cur.id !== SPAN) return null;
+  if (!isOut(cur)) return null;
   return known.get(m) ?? st.at ?? null;
 }
 function markGoal(): void {
-  const g = mode === 'play' && cur.id === SPAN && free() ? goalPoint() : null;
+  let g = mode === 'play' && isOut(cur) && free() ? goalPoint() : null;
+  // a goal in another region (the hill, the mall, the town): point at the way there
+  const there = g && regionAt(g[0], g[1]);
+  if (there && there !== cur.id) g = GATES[cur.id]?.[there] ?? null;
   if (!g || Math.hypot(player.x - g[0], player.z - g[1]) < 2.4) { hud.mark(null); return; }
   v.set(g[0], cur.area.ground(g[0], g[1]) + 2.1, g[1]).project(camera);
   hud.mark({ x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, behind: v.z > 1 });
@@ -761,7 +780,7 @@ function weather(dt: number): void {
   if (time.frozen || fainting) { hud.warning(null); return; }
   const ph = time.phase;
   const door = known.get('i:door');
-  const sheltered = cur.id !== SPAN || (!!door && Math.hypot(player.x - door[0], player.z - door[1]) < 3.4);
+  const sheltered = !isOut(cur) || (!!door && Math.hypot(player.x - door[0], player.z - door[1]) < 3.4);
   if (ph === 'Shutter' && S.flags.shutterWarn !== S.day) { S.flags.shutterWarn = S.day; hud.toast('Shutter. Get under a roof before the white.', true, 4200); }
   if (ph === 'Day' && !sheltered) {
     const shade = inShade(dt), k = shade ? 1 / SUN.shadeSlows : 1;
@@ -839,7 +858,9 @@ async function loadGame(): Promise<boolean> {
   S = s;
   await setTime(S.clock);
   const w = S.where;
-  await go(w.world in ROOMS || w.world === SPAN ? w.world : SPAN, { x: w.x, z: w.z, face: w.face });
+  // a save from before the hill and the mall were their own places says 'span' for them too
+  const world = w.world in ROOMS ? w.world : w.world in REGIONS ? (regionAt(w.x, w.z) ?? w.world) : SPAN;
+  await go(world, { x: w.x, z: w.z, face: w.face });
   mode = 'play';
   hud.show(true);
   minimap.hidden = false;
@@ -1464,7 +1485,7 @@ async function afterEnding(): Promise<void> {
 let stepAge = 0, ambAge = 0;
 const T = { goat: 4, chick: 3, pancha: 2, howl: 40 };
 function footstep(): void {
-  if (cur.id !== SPAN) { sound.step('floor'); return; }
+  if (!isOut(cur)) { sound.step('floor'); return; }
   const c = (cur.area as Region).groundColor(player.x, player.z);
   // grey ground is road or concrete; anything browner is dirt
   sound.step(c && Math.abs(c[0] - c[2]) < 26 ? 'hard' : 'dirt');
@@ -1494,7 +1515,7 @@ function ambience(): void {
 let mapAge = 0;
 let outside: { x: number; z: number; dir: Actor['dir'] } = { x: 0, z: 0, dir: 'S' };
 function drawMap(): void {
-  if (cur.id !== SPAN) { minimap.draw(outside.x, outside.z, outside.dir, [], cur.area.title, true); return; }
+  if (!isOut(cur)) { minimap.draw(outside.x, outside.z, outside.dir, [], cur.area.title, true); return; }
   outside = { x: player.x, z: player.z, dir: player.dir };
   const marks: MapMark[] = [];
   for (const p of cur.people) marks.push({ x: p.actor.x, z: p.actor.z, kind: 'person' });
@@ -1512,8 +1533,8 @@ load().then(() => {
     ready: true,
     get pos() { return [player.x, player.z]; },
     get areaId() { return cur.area.id; },
-    pieceAtPoint(x: number, z: number) { return cur.id === SPAN ? (cur.area as Region).pieceAt(x, z)?.id ?? null : null; },
-    get piece() { return cur.id === SPAN ? (cur.area as Region).pieceAt(player.x, player.z)?.id ?? null : null; },
+    pieceAtPoint(x: number, z: number) { return isOut(cur) ? (cur.area as Region).pieceAt(x, z)?.id ?? null : null; },
+    get piece() { return isOut(cur) ? (cur.area as Region).pieceAt(player.x, player.z)?.id ?? null : null; },
     get doorIssues() { return [...worlds.values()].flatMap((w) => w.issues); },
     get talking() { return ui.talking; },
     get mode() { return mode; },
@@ -1530,8 +1551,8 @@ load().then(() => {
     get directorNow() { return direct.hold ?? DIRECTOR.rotation[direct.rot]; },
     get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
-    get buildMs() { return cur.id === SPAN ? (cur.area as Region).buildMs : {}; },
-    get built() { return cur.id === SPAN ? (cur.area as Region).pieces.map((p) => p.id) : []; },
+    get buildMs() { return isOut(cur) ? (cur.area as Region).buildMs : {}; },
+    get built() { return isOut(cur) ? (cur.area as Region).pieces.map((p) => p.id) : []; },
     get clock() { return time.minute; },
     get phase() { return time.phase; },
     get lit() { return night; },
@@ -1539,18 +1560,24 @@ load().then(() => {
     setClock(m: number, run = false) { time.set(m); time.frozen = !run; shownMinute = -1; showClock(); relight(true); },
     /** Put Juno at (x, z); in the region, the maps around her are built first. */
     async tp(x: number, z: number) {
-      if (cur.id === SPAN) await (cur.area as Region).settle(x, z);
+      if (isOut(cur)) await (cur.area as Region).settle(x, z);
       player.place(x, cur.area.ground(x, z), z); camTarget.copy(clampCam(x, z)); safe = [x, z];
     },
     face(dx: number, dz: number) { player.face(dx, dz); },
-    go: (to: string, spawn: string) => go(to, spawn),
+    go: (to: string, spawn: string | Spot) => go(to, spawn),
     /** Build every room and return any broken door promise across the whole region. */
     /** Build every map of the region and every room, and return any broken door promise. */
     async checkAllRooms() {
-      const region = worlds.get(SPAN)?.area as Region | undefined;
-      const issues = region ? await region.checkEach(player.x, player.z) : [];
+      // each outdoor region in turn (one is built at a time), then every room, then back where Juno was
+      const back: [string, Spot] = [cur.id, { x: player.x, z: player.z }];
+      const issues: string[] = [];
+      for (const id of Object.keys(REGIONS)) {
+        if (cur.id !== id) await go(id, REGIONS[id]!.start);
+        issues.push(...await (cur.area as Region).checkEach(player.x, player.z));
+      }
       for (const id of Object.keys(ROOMS)) if (!worlds.has(id)) await buildWorld(id);
-      for (const w of worlds.values()) if (w.id !== SPAN) issues.push(...w.issues);
+      for (const w of worlds.values()) if (!isOut(w)) issues.push(...w.issues);
+      await go(...back);
       return issues;
     },
     rooms: Object.keys(ROOMS),
@@ -1559,20 +1586,25 @@ load().then(() => {
     shadeAt: (x: number, z: number) => shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + 1.72, z)),
     get shaded() { return shaded; },
     get people() { return cur.people.map((p) => p.npc.id); },
-    get bellUp() { return !!(worlds.get(SPAN)?.scene)?.getObjectByName('church-bell')?.visible; },
+    get bellUp() { return !!outWorld()?.scene.getObjectByName('church-bell')?.visible; },
     shadeDebug(x: number, z: number, y: number) { const r = shadedFromSun(renderer, cur.lights.sun, new THREE.Vector3(x, cur.area.ground(x, z) + y, z)); return [r, ...shadeLast]; },
     /**
      * Walk out from Juno over the whole region (every map built) and report anywhere she can reach that she
      * shouldn't: ground past every map's edge, or a road on to a map that isn't built. Empty is clean: every
      * edge she can get to is a physical barrier or a person who turns her back.
      */
+    regions: Object.keys(REGIONS),
     async edgeIssues(step = 0.5) {
-      const region = worlds.get(SPAN)?.area as Region | undefined;
+      const region = outRegion();
       if (!region) return ['no region'];
       region.hold = true;
       await region.buildAll();
-      const unbuilt = region.triggers.filter((tr) => tr.go && tr.go.to !== SPAN && !ROOMS[tr.go.to]);
-      const [sx, sz] = cur.id === SPAN ? [player.x, player.z] : [START.x, START.z];
+      // a way on to another region (the hill, the mall) is a transition: as good as a wall
+      const onward = (to: string): boolean => to in REGIONS || !!regionOf(to);
+      const gates = region.triggers.filter((tr) => tr.go && onward(tr.go.to));
+      const unbuilt = region.triggers.filter((tr) => tr.go && !onward(tr.go.to) && !ROOMS[tr.go.to]);
+      const home = REGIONS[region.id]!.start;
+      const [sx, sz] = isOut(cur) ? [player.x, player.z] : [home.x, home.z];
       const key = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096);
       const seen = new Set<number>([key(Math.round(sx / step), Math.round(sz / step))]);
       const todo: Array<[number, number]> = [[Math.round(sx / step), Math.round(sz / step)]];
@@ -1582,6 +1614,7 @@ load().then(() => {
         const x = i * step, z = j * step;
         // reported once per patch of about 16 units, so one leak reads as one line
         const patch = `${Math.floor(x / 16) * 16},${Math.floor(z / 16) * 16}`;
+        if (gates.some((t) => x >= t.x0 && x <= t.x1 && z >= t.z0 && z <= t.z1)) continue; // walked into another region
         if (!region.pieceAt(x, z)) { if (!found.has(`off:${patch}`)) found.set(`off:${patch}`, [x, z]); continue; }
         const tr = unbuilt.find((t) => x >= t.x0 && x <= t.x1 && z >= t.z0 && z <= t.z1);
         if (tr) { const k = `road:${tr.go!.to}`; if (!found.has(k)) found.set(k, [x, z]); continue; }
@@ -1599,7 +1632,7 @@ load().then(() => {
     /** A map of the current world drawn straight down, north up, `ppu` pixels per unit, with what's placed on it.
      *  For the overview (docs/design/regions/): no fog, no post, the shadow stretched over the whole map. */
     async overview(ppu = 10, bounds?: [number, number, number, number]) {
-      const region = cur.id === SPAN ? (cur.area as Region) : null;
+      const region = isOut(cur) ? (cur.area as Region) : null;
       if (region) { region.hold = true; await region.buildAll(); }
       const [x0, z0, x1, z1] = bounds ?? (region
         ? [Math.min(...region.plan.map((p) => p.ox)), Math.min(...region.plan.map((p) => p.oz)), Math.max(...region.plan.map((p) => p.ox + p.cols)), Math.max(...region.plan.map((p) => p.oz + p.rows))]

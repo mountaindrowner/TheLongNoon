@@ -170,7 +170,8 @@ test('side stories: the flour to the church, Neto and the bell at the mall, and 
   await talkAt(page, 96.5, 204.6, 0, -1, 'Rubén');
   expect((await flags()).q_neto).toBe(true);
 
-  // up the hill: Marta takes the sack; Benny tells of the bell
+  // up the hill (a place of its own, through the trail gate): Marta takes the sack; Benny tells of the bell
+  await inRoom(page, 'hill', 'trail:town');
   await talkAt(page, 274, 5.8, 0, -1, 'Doña Marta');
   expect((await flags()).flour_given).toBe(true);
   await talkAt(page, 267.6, -15, 0, -1, 'Benny');
@@ -194,11 +195,12 @@ test('side stories: the flour to the church, Neto and the bell at the mall, and 
   await page.screenshot({ path: info.outputPath('shop.png') });
 
   // home with the news: Rubén, then the bell to Benny, and it hangs in the arch
-  await inRoom(page, 'span', 'mall:court');
+  await inRoom(page, 'span', 'seven-flags:mall');
   await talkAt(page, 96.5, 204.6, 0, -1, 'Rubén');
   expect((await flags()).q_neto_done).toBe(true);
   await talkAt(page, 81.9, 209.1, 0, -1, 'Doña Chayo');
   expect((await flags()).q_flour_done).toBe(true);
+  await inRoom(page, 'hill', 'trail:town');
   await talkAt(page, 267.6, -15, 0, -1, 'Benny');
   expect((await flags()).bell_hung).toBe(true);
   expect(await page.evaluate(() => window.__LN.bellUp)).toBe(true);

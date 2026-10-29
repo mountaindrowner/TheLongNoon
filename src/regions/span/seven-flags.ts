@@ -9,7 +9,7 @@ import { addSolid, heightAt } from '../../engine/world';
 import { rng, fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, palm, nopal, waterTower, lanternPost, solarPanels, clothesline, shadeSail, jugs, drum, tires, carHulk, burialPlatform, roofLetters, blockWall, mailbox } from './props';
-import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall } from './kit';
+import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall, underpass, trailGate } from './kit';
 import { spanDoor, type SpanDoor } from './doors';
 import { SPAN_FLORA, mesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
@@ -458,6 +458,14 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       for (const pts of [INTL, SHILOH, DELMAR.slice(1)]) { const p = poles(pts, 5.6); powerLine(scene, p, p.slice(1).map((_, i) => [i, i + 1] as [number, number])); }
 
       // ------------------------------------------------ brush, the outside, the open ground
+      // ------------------------------------------------ the ways out to the places beyond town (2026-10-29: transitions)
+      // south-west: the side street runs under the old rail embankment, and the mall is on the far side
+      underpass(scene, 56.3, 159.2, 6, -1);
+      d.spawns.mall = { x: 56.3, z: 156.8, face: 'N' };
+      d.things.push({ x: 56.3, z: 157.6, r: 2.2, label: 'Underpass', lines: ['The street goes in under the old rail bank. Dark the whole way through. Somebody has hung a lantern at the far end.'] });
+      // north-east: the Old Trail narrows to a gate of two posts, a lantern hung between them
+      d.built.push(trailGate(scene, 189.6, 21, 3.2, Math.PI / 2, night));
+      d.spawns.trail = { x: 187.6, z: 21, face: 'W' };
       brushFill(d, 77, 0.8, 3, (x, z) => x > xAt(I35, z) - 18); // the outside, only as far as anyone can see from the road
       for (const [x, z, s] of [[120, 100, 1.1], [130, 88, 1.0], [96, 60, 1.0], [150, 50, 1.1], [60, 70, 0.9], [178, 100, 1.0]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.3);
       for (const [x, z, s] of [[124, 108, 0.9], [70, 96, 0.8], [158, 128.4, 0.9], [100, 120, 0.8], [176, 58, 1.0]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());

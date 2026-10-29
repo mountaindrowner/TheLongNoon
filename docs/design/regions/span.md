@@ -37,11 +37,15 @@ The region from straight above, as built (regenerate with
 
 ![The Span from above](overview/span-day.webp)
 
-The same region with how it joins up drawn on: each map's outline, the numbered seams where you walk from one map
-into the next, the lit doors with rooms behind them, the ways on that are closed for now, and who starts or ends
-each side story (2026-10-29: seven maps, with the trail, the church and the mall):
+The same ground with how it joins up drawn on, pulled apart at the transitions: the town, the hill and the mall,
+the numbered seams where you walk from one map into the next, the trail gate and the underpass between places, the
+lit doors with rooms behind them, the ways on that are closed for now, and who starts or ends each side story:
 
 ![The Span, how the maps connect](overview/region-map.png)
+
+Since 2026-10-29 the hill (the trail and the church) and the mall are places of their own, entered by a transition:
+the trail gate north-east and the underpass under the old rail bank south-west (current-state piece 10). The town's
+four maps are still one walk.
 
 ## Seven Flags (192 × 160)
 

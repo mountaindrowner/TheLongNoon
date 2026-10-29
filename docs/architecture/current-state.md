@@ -344,7 +344,7 @@ shape of Mall del Norte."* The owner sent a map and a photo of the church.
     fountain, grilles down on every shop but one, sand blown in under the broken skylight, the scavenger's camp.
 - **Getting there:** the town's east edge opens where the Old Trail runs out; its south edge opens at the side
   street west of the boulevard. The church's boulevard and the mall's ring road run into brush, closed with wrecks.
-  `edgeIssues` is clean across all eight maps, and every door promise holds.
+  Since piece 10 both are places of their own, reached by a transition, not by a seam.
 - **New people** (`tools/gen-cast.mjs`, the locked look): Pastor Abel, Doña Marta, Benny, the traveler, the scavenger.
 - **Open:**
   - **The church's name on screen** is *the Open Door*. The real name shows only on the plaque, an Old Name hint,
@@ -381,6 +381,34 @@ water and tins of white, the rewards are pages in the staybook in Juno's own han
   - The bell hangs high on the church front, above what the camera shows at ground level (piece 8's framing
     question). You hear it at Lamp more than you see it.
   - Which night each story opens on, once nights two to five are built.
+
+## Piece 10 (done): the hill and the mall are places of their own
+
+The owner, 2026-10-29: *"I'd like it if the new additions were actually extensions, so you would have to transition
+to them. So either through a tunnel that allows us to load it, or like a narrow road, or we just transition."*
+
+- **Three outdoor regions** now (`regions/span/region.ts` `REGIONS`). Each is built on its own, with a dissolve
+  between them, the way a room is:
+  - **the town** (`span`): the Ramp, Seven Flags, the Lake Road and the White Bowl, still walked between with no cut;
+  - **the hill** (`hill`): the Trail North and the Open Door;
+  - **the mall** (`mallside`): the mall and its lot.
+- **One coordinate frame for all three.** The maps keep their places (`PLACE`), so a point says which region it's in
+  (`regionAt`). A story marker for a place in another region points at the way there (`GATES`). A save made at
+  the church before this change still loads at the church.
+- **The ways through:**
+  - **To the mall, a tunnel.** The side street runs south under the old rail embankment: a concrete box with
+    rails and ties across the top (`underpass`, kit.ts). Its dark is a wall, and walking in loads the mall. The
+    embankment thins as Juno walks under it, so she can be seen going in. On the mall side the same underpass
+    opens toward the camera, with a lantern hung at its mouth.
+  - **To the hill, a narrow road.** The Old Trail narrows to a gate of two posts and a crossbar with a lantern on
+    it (`trailGate`), at both ends.
+- **One outdoor region is built at a time.** Crossing to another lets go of the one behind (and its rooms). The
+  rooms at the church and the mall let you back out into their own region.
+- **Checks:**
+  - `checkAllRooms` visits each region in turn;
+  - `edgeIssues` counts a way into another region as closed, and is clean in all three;
+  - a new playtest walks through the underpass and the trail gate and back;
+  - the side-story playtest crosses between the regions.
 
 ## Where this departs from the spec, on purpose
 

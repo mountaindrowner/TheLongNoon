@@ -7,7 +7,7 @@ import { M } from '../../engine/buildings';
 import { addSolid } from '../../engine/world';
 import { fbm } from '../../engine/noise';
 import { STRAW, nopal, lanternPost, windmill, skull } from './props';
-import { spanPaint, cairn } from './kit';
+import { spanPaint, cairn, trailGate } from './kit';
 import { SPAN_FLORA, deadMesquite } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
 import { ruinWall, rubble } from './ruins';
@@ -143,6 +143,9 @@ export function trailNorth(night: boolean): SectionSpec {
       for (const [x, z, s] of [[12, 44, 0.9], [54, 34, 0.8], [36, 16, 0.85]] as Array<[number, number, number]>) nopal(scene, x, z, s, seed());
 
       d.spawns.trail = { x: 52, z: 3, face: 'S' };
+      // the way back to town: the same gate, seen from the trail's side
+      d.built.push(trailGate(scene, 2.4, 37, 3.2, Math.PI / 2, night));
+      d.spawns.town = { x: 4.4, z: 37, face: 'E' };
       brushFill(d, 141, 1);
       openScatter(d, 142, ['x', 's'], 0.8, (x, z) => clearOf(PATH, 2.6)(x, z) && Math.hypot(x - 64, z - 24) > 5 && Math.hypot(x - BRIDGE.x, z - BRIDGE.z) > 5);
     },
