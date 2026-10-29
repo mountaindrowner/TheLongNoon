@@ -13,6 +13,7 @@ spec. Every session starts fresh, so read these first:
 - `docs/design/cast.md`: **the cast's locked look** (PixelLab, styled on Juno). New characters are made with `tools/gen-cast.mjs` and only that way.
 - `docs/architecture/display-and-input.md`: 1080p desktop first; phones (landscape) are where the owner tests.
 - `docs/research/engineering-brief.md`: the agreed technical direction.
+- `docs/architecture/scaling.md`: what the build weighs and costs per frame, and what must change before the game grows (packaging, phone frame cost, splitting `main.ts`). `?perf`/`#perf` shows the numbers on a real device.
 - `legacy/poc2/`: the original proof of concept: its story, dialogue and quest data, sprites and music to bring across.
 
 ## Commands

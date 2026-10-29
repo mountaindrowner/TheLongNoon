@@ -235,14 +235,17 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     pool.drop(id);
     r.dropPiece?.(bp);
     pruneSways();
-    // free what only this map used: its geometry, and big one-off textures (its painted ground)
+    // free what only this map used: its geometry, and every material and texture no map still standing draws with
+    // (a kit's shared wood stays; this map's painted ground, its signs and its one-off colours go)
+    const mats = (o: THREE.Object3D): THREE.Material[] => { const m = (o as THREE.Mesh).material; return Array.isArray(m) ? m : m ? [m] : []; };
+    const texs = (m: THREE.Material): THREE.Texture[] => Object.values(m).filter((v) => (v as THREE.Texture | null)?.isTexture) as THREE.Texture[];
+    const keepM = new Set<THREE.Material>(), keepT = new Set<THREE.Texture>();
+    scene.traverse((o) => { for (const m of mats(o)) { keepM.add(m); for (const t of texs(m)) keepT.add(t); } });
     bp.group.traverse((o) => {
-      const m = o as THREE.Mesh;
-      m.geometry?.dispose();
-      for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) {
-        const map = (mat as THREE.MeshStandardMaterial).map;
-        const img = map?.image as { width?: number } | undefined;
-        if (map && (img?.width ?? 0) > 512) { map.dispose(); mat.dispose(); }
+      (o as THREE.Mesh).geometry?.dispose();
+      for (const m of mats(o)) {
+        for (const t of texs(m)) if (!keepT.has(t)) t.dispose();
+        if (!keepM.has(m)) m.dispose();
       }
     });
     refresh();

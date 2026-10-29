@@ -199,7 +199,7 @@ const adding = new Set<NPC>();
 function refreshPeople(): void {
   const w = cur;
   if (!w || !S) return;
-  for (const p of [...w.people]) if (p.npc.when && !director.cond(p.npc.when)) { w.scene.remove(p.actor.root); w.people.splice(w.people.indexOf(p), 1); }
+  for (const p of [...w.people]) if (p.npc.when && !director.cond(p.npc.when)) { letGo(w.scene, p.actor); w.people.splice(w.people.indexOf(p), 1); }
   const add = (npcs: NPC[], tag: string): void => { const want = npcs.filter((n) => n.when && director.cond(n.when)); if (want.length) void populate(w, want, [], tag); };
   if (isOut(w)) for (const b of (w.area as Region).pieces) add(b.npcs, b.id);
   else add(w.area.npcs, w.id);
@@ -209,9 +209,14 @@ function refreshPeople(): void {
 function showWhen(scene: THREE.Object3D): void {
   scene.traverse((o) => { if (typeof o.userData.when === 'string') o.visible = !!S && director.cond(o.userData.when); });
 }
+/** Take someone out of a scene for good, and free what their figure put on the GPU (their sheet stays shared). */
+function letGo(scene: THREE.Object3D, a: Actor): void {
+  scene.remove(a.root);
+  a.root.traverse((o) => { (o as THREE.Mesh).geometry?.dispose(); const m = (o as THREE.Mesh).material; for (const x of Array.isArray(m) ? m : m ? [m] : []) x.dispose(); });
+}
 function unpopulate(w: World, tag: string): void {
-  for (const p of w.people.filter((q) => q.tag === tag)) w.scene.remove(p.actor.root);
-  for (const r of w.roamers.filter((q) => q.tag === tag)) w.scene.remove(r.actor.root);
+  for (const p of w.people.filter((q) => q.tag === tag)) letGo(w.scene, p.actor);
+  for (const r of w.roamers.filter((q) => q.tag === tag)) letGo(w.scene, r.actor);
   w.people = w.people.filter((q) => q.tag !== tag);
   w.roamers = w.roamers.filter((q) => q.tag !== tag);
 }
@@ -252,9 +257,16 @@ function relight(force = false): void {
 /** Drop a built world and free what it put on the GPU. */
 function dispose(w: World): void {
   w.scene.traverse((o) => {
+    // a light's shadow map is a render target of its own
+    (o as THREE.DirectionalLight).shadow?.map?.dispose();
     const m = o as THREE.Mesh;
     m.geometry?.dispose();
-    for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) mat.dispose();
+    for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) {
+      // its textures too (a material doesn't free them): the painted ground, signs, walls. A shared one (a kit's wood,
+      // say) is only let go from the GPU; three uploads it again the next time something draws with it.
+      for (const v of Object.values(mat)) if ((v as THREE.Texture | null)?.isTexture) (v as THREE.Texture).dispose();
+      mat.dispose();
+    }
   });
 }
 
@@ -462,8 +474,29 @@ const clock = new THREE.Clock();
 const SPEED = 3.1, RUN = 5.0;
 let focusY = 0.46;
 const v = new THREE.Vector3();
+/** `?perf` (or `#perf`, which a shared or itch.io page passes on): a corner readout of what each frame costs (for testing on real phones): frames a second, draw calls and
+ *  triangles per frame (shadows and post included), what's on the GPU, the JS heap, and the last map built. */
+const PERF = params.has('perf') || location.hash === '#perf' ? Object.assign(document.createElement('div'), { className: 'perf' }) : null;
+if (PERF) {
+  Object.assign(PERF.style, { position: 'fixed', left: '4px', bottom: '4px', zIndex: '99', font: '11px monospace', color: '#cfe', background: 'rgba(0,0,0,.6)', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'pre' });
+  document.body.appendChild(PERF);
+  renderer.info.autoReset = false;
+}
+let perfAge = 0, perfFrames = 0, perfCalls = 0, perfTris = 0, perfLast = performance.now();
+function perfTick(): void {
+  if (!PERF) return;
+  const now = performance.now();
+  perfFrames++; perfAge += (now - perfLast) / 1000; perfLast = now; perfCalls = renderer.info.render.calls; perfTris = renderer.info.render.triangles;
+  renderer.info.reset();
+  if (perfAge < 0.5) return;
+  const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory, ms = isOut(cur) ? (cur.area as Region).buildMs : {};
+  const last = Object.entries(ms).pop();
+  PERF.textContent = `${(perfFrames / perfAge).toFixed(0)} fps  ${perfCalls} calls  ${(perfTris / 1000).toFixed(0)}k tris\n${renderer.info.memory.geometries} geo  ${renderer.info.memory.textures} tex${mem ? `  ${Math.round(mem.usedJSHeapSize / 1e6)} MB` : ''}${last ? `\nbuilt ${last[0]} in ${(last[1] / 1000).toFixed(1)} s` : ''}`;
+  perfAge = 0; perfFrames = 0;
+}
 function frame(): void {
   requestAnimationFrame(frame);
+  perfTick();
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
   if (!loaded) return;
   const area = cur.area;
@@ -822,7 +855,7 @@ function goingIn(dt: number): void {
     const stuck = cur.area.blocked(nx, nz, 0.2) && d > 1.2;
     if (d < 1.0 || stuck || h.t > 25) {
       // inside: the door shuts behind them
-      cur.scene.remove(p.actor.root);
+      letGo(cur.scene, p.actor);
       cur.people.splice(cur.people.indexOf(p), 1);
       headingIn.delete(p.npc.id);
       continue;
@@ -1089,7 +1122,7 @@ async function bringCast(w: World): Promise<void> {
   if (!S || !player) return;
   const joined = S.joined.includes('kit'), drainDone = !!S.flags.drainDone;
   // Kit leaves the plaza for good once the drain begins (and is back there in a new game)
-  if (S.flags.drainStarted || joined) for (const p of w.people.filter((q) => q.npc.id === 'kit')) { w.scene.remove(p.actor.root); w.people.splice(w.people.indexOf(p), 1); }
+  if (S.flags.drainStarted || joined) for (const p of w.people.filter((q) => q.npc.id === 'kit')) { letGo(w.scene, p.actor); w.people.splice(w.people.indexOf(p), 1); }
   else if (w.id === SPAN && !w.people.some((q) => q.npc.id === 'kit')) {
     const def = w.area.npcs.find((n) => n.id === 'kit'), piece = def && (w.area as Region).pieceAt(def.x, def.z);
     if (def && piece) await populate(w, [def], [], piece.id);
@@ -1745,6 +1778,18 @@ load().then(() => {
     get drone() { return drone ? { x: drone.position.x - player.x, y: drone.position.y, z: drone.position.z - player.z, t: lookUp, tilt } : null; },
     get busy() { return busy; },
     get buildMs() { return isOut(cur) ? (cur.area as Region).buildMs : {}; },
+    /** What the renderer carries right now (draw calls and triangles of the last frame, geometries and textures on the
+     *  GPU) and the JS heap where the browser tells it: for checking that the game holds as it grows. */
+    async stats() {
+      // the renderer's counters reset with every pass (the post passes too): count one whole frame instead
+      const r = renderer.info;
+      r.autoReset = false; r.reset();
+      await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+      r.autoReset = true;
+      const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+      let meshes = 0; cur.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes++; });
+      return { calls: r.render.calls, triangles: r.render.triangles, geometries: r.memory.geometries, textures: r.memory.textures, programs: r.programs?.length ?? 0, meshes, heapMB: mem ? Math.round(mem.usedJSHeapSize / 1e6) : null, worlds: [...worlds.keys()] };
+    },
     get built() { return isOut(cur) ? (cur.area as Region).pieces.map((p) => p.id) : []; },
     get clock() { return time.minute; },
     get phase() { return time.phase; },
