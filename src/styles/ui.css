@@ -210,10 +210,15 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
 .end-card p { margin: 0 0 18px; color: var(--muted); font-size: 19px; }
 .card-menu { width: 280px; }
 
-/* the tale: a firelit sheet over the fire; the chapter cards over black */
-.tale { z-index: 8; position: absolute; left: 50%; top: 2.5%; width: min(560px, 46vw); aspect-ratio: 320 / 150; transform: translateX(-50%); opacity: 0; transition: opacity 0.8s; pointer-events: none !important; filter: drop-shadow(0 0 26px rgba(255, 150, 60, 0.45)); }
-.tale.show { opacity: 1; }
-.tale canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; clip-path: polygon(0 2%, 8% 0, 22% 1.5%, 40% 0.2%, 60% 1.6%, 80% 0.3%, 100% 1.8%, 99.2% 30%, 100% 60%, 99% 98%, 78% 100%, 55% 98.6%, 30% 100%, 10% 98.4%, 0 99%, 0.8% 70%, 0 35%); }
+/* the old tale as a dream (dream.ts): a full-screen painting under the dialogue; the words become subtitles */
+.dream { z-index: 9; position: absolute; inset: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
+.dream.on { display: block; }
+.dlg.look-dream .dlg-panel, .dlg.look-dream.has-bust .dlg-panel { background: none; border: 0; box-shadow: none; backdrop-filter: none; text-align: center; padding: 10px 24px 14px; min-height: 0; }
+.dlg.look-dream .dlg-portrait { display: none; }
+.dlg.look-dream .dlg-name { font-size: 15px; letter-spacing: 0.18em; color: rgba(255, 220, 160, 0.8); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); }
+.dlg.look-dream .dlg-text { font-size: 25px; font-style: italic; line-height: 1.4; min-height: 0; color: #f6efe0; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9); }
+.dlg.look-dream .dlg-more, .dlg.look-dream.has-bust .dlg-more { right: 50%; }
+/* the chapter cards over black */
 .chapter { z-index: 12; position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #000; opacity: 0; transition: opacity 0.9s; }
 .chapter.on { display: flex; }
 .chapter.in { opacity: 1; }
@@ -348,6 +353,7 @@ body { font-family: 'Alegreya Sans', system-ui, sans-serif; color: var(--text); 
   .story-buttons { right: 96px; bottom: 18px; flex-direction: row; }
   .title-screen h1 { font-size: 46px; } .ts-tag { font-size: 15px; } .menu-item { font-size: 16px; padding: 5px 12px 6px; }
   .ts-inner { gap: 10px; transform: none; } .ts-sun { transform: scale(0.6); margin: -8px 0 -2px; } .ts-rule { margin: 6px 0 4px; } .ts-rule span { width: 70px; }
+  .dlg.look-dream .dlg-text { font-size: 17px; } .dlg.look-dream .dlg-name { font-size: 12px; }
   .ts-press { font-size: 16px; } .ts-menu .menu-item { font-size: 16px; } .ts-ver { bottom: 8px; font-size: 12px; }
   .ts-foot { bottom: 8px; font-size: 12px; }
   .pause { gap: 16px; } .pause-side { width: 250px; } .pause-side p { font-size: 14px; }

@@ -13,7 +13,7 @@ import { Actor, variant } from './game/actors';
 import { Clock, fmtTime, parseClock } from './game/clock';
 import { Director, type Cmd, type Dialogue, type Script, type Stage } from './game/script';
 import { Hud, PAGE_ORDER, type Page } from './game/hud';
-import { Tale } from './game/tale';
+import { Dream } from './game/dream';
 import { campfire, storyCamp } from './game/fire';
 import { Sound } from './game/sound';
 import { pauseAfter, voiceOf } from './game/voice';
@@ -68,7 +68,7 @@ const post = createPost(renderer, new THREE.Scene(), camera);
 const ui = new UI(host);
 const minimap = new Minimap(ui.root);
 const hud = new Hud(ui.root);
-const tale = new Tale(ui.root);
+const dream = new Dream(ui.root);
 const sound = new Sound();
 ui.onType = (name, text, i) => sound.voice(name, text, i);
 ui.pace = (text, i, name) => pauseAfter(text, i, 30 / (name ? voiceOf(name).rate ?? 1 : 1));
@@ -549,7 +549,7 @@ function frame(): void {
     }
   }
   if (lookUp > 0) skyward();
-  tale.draw(dt);
+  dream.draw(dt);
   for (const c of cine) c.animate(dt);
   fire?.update(t);
   hud.update(S, fmtTime(time.minute), time.phase, maxHp(S));
@@ -641,7 +641,8 @@ function frame(): void {
   if ((mapAge += dt) > 0.05) { mapAge = 0; drawMap(); }
   markGoal();
   post.tick(t);
-  post.composer.render();
+  // under a full-screen dream the world needn't be drawn
+  if (!dream.covering) post.composer.render();
 }
 
 // ------------------------------------------------------------ the story (legacy/poc2, broken down in docs/design/legacy-breakdown.md)
@@ -713,7 +714,14 @@ async function command(c: Cmd): Promise<void> {
     case 'hint': hud.toast(touchUI() ? 'Drag on the left to walk. Tap A to talk.' : 'Walk with WASD or the arrows. E or Space to talk. B opens the staybook.', false, 6000); break;
     case 'rest': await rest(); break;
     case 'cam': camHold = new THREE.Vector3(c.x as number, 0.8, c.z as number); break;
-    case 'tale': tale.set((c.p as string | null) ?? null); taleCam?.((c.p as string | null) ?? null); break;
+    case 'tale': {
+      // the old tale as a dream: through black into each part of it, and out again to the fire
+      const p = (c.p as string | null) ?? null;
+      if (p) ui.look('dream');
+      await dream.set(p);
+      if (!p) ui.look(null);
+      break;
+    }
     case 'sfx': sound.play(c.s as string); break;
     case 'ending': await ending(); break;
     case 'spawnEnemies': await spawnEnemies(); break;
@@ -1065,8 +1073,6 @@ let titleDrift = false;
 const FIRE = { x: 142.6, z: 64 + 124.2 };
 let fire: ReturnType<typeof campfire> | null = null;
 let camp: ReturnType<typeof storyCamp> | null = null;
-/** Where the camera looks while the tale is told: the family, or the sheet when a panel is up. */
-let taleCam: ((panel: string | null) => void) | null = null;
 const cine: Actor[] = [];
 function skipTale(): void {
   if (mode !== 'cine' || aborting) return;
@@ -1101,10 +1107,10 @@ async function theTale(): Promise<void> {
   const y = cur.area.ground(FIRE.x, FIRE.z);
   fire = campfire(FIRE.x, y, FIRE.z);
   cur.scene.add(fire.group);
-  camp = storyCamp(FIRE.x, y, FIRE.z, tale.texture());
+  camp = storyCamp(FIRE.x, y, FIRE.z);
   cur.scene.add(camp.group);
   (cur.area as Region).addLamp({ pos: new THREE.Vector3(FIRE.x, y + 0.8, FIRE.z), color: new THREE.Color('#ff8f3e'), intensity: 3.6, dist: 8, flicker: 0.35, tag: 'tale' });
-  // Papá by his radio, Mamá on her stool, little Juno on the blanket with her back to us, watching the sheet
+  // Papá by his radio, Mamá on her stool, little Juno on the blanket with her back to us, watching the fire
   for (const [id, dx, dz, face] of [['elias', -1.25, -0.6, 'S'], ['kidjuno', -0.35, 1.1, 'N'], ['rosa', 1.25, -0.45, 'W']] as const) {
     const a = await Actor.person(id, cur.tint);
     a.place(FIRE.x + dx, cur.area.ground(FIRE.x + dx, FIRE.z + dz), FIRE.z + dz);
@@ -1112,18 +1118,16 @@ async function theTale(): Promise<void> {
     cur.scene.add(a.root);
     cine.push(a);
   }
-  // a slow push in on the family; up to the sheet when the tale's on it, back down between
-  const family = new THREE.Vector3(FIRE.x, 0.9, FIRE.z + 0.15), cloth = new THREE.Vector3(FIRE.x, 1.35, FIRE.z - 1.35);
-  camHold = family.clone();
-  camZoom = 0.95; camZoomTo = 0.64;
+  // a slow push in on the family; when he starts the story it goes to black and the dream takes over (dream.ts)
+  camHold = new THREE.Vector3(FIRE.x, 0.9, FIRE.z - 0.2);
+  camZoom = 0.95; camZoomTo = 0.6;
   camTarget.copy(camHold);
-  taleCam = (p) => { camHold = (p ? cloth : family).clone(); camZoomTo = p ? 0.58 : 0.64; };
   hud.skip.classList.add('on');
   await hud.chapter('<p>A story told at Mar Farm,<br>a long time ago.</p>', 2800, () => aborting);
   if (!aborting) { await ui.fade(false, 1600); await run('intro'); }
   hud.skip.classList.remove('on');
-  taleCam = null;
-  tale.clear();
+  dream.clear();
+  ui.look(null);
   ui.endTalk();
   if (!aborting) { await ui.fade(true, 600); await hud.chapter('<h1>The Long Noon</h1><p>Many years later.</p>', 3600, () => aborting); }
   else await ui.fade(true, 200);
@@ -1131,7 +1135,6 @@ async function theTale(): Promise<void> {
   cine.length = 0;
   fire?.dispose(); fire = null;
   camp?.dispose(); camp = null;
-  tale.untexture();
   (cur.area as Region).dropLamps('tale');
   player.root.visible = true;
   if (lupe) lupe.actor.root.visible = true;

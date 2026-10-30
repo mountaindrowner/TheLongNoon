@@ -148,33 +148,14 @@ export function campfire(x: number, y: number, z: number): { group: THREE.Group;
 }
 
 /**
- * Around the fire the night Papá tells the old story: a sheet pegged to a line between two poles behind it (the
- * tale is drawn on it, `sheet`), a blanket for little Juno, his crank radio on a crate, a stool and a water jug for
- * Mamá. Placed relative to the fire's centre (`x`, `y`, `z`); taken down with `dispose`.
+ * Around the fire the night Papá tells the old story: a blanket for little Juno, his crank radio on a crate, a stool
+ * and a water jug for Mamá. Placed relative to the fire's centre (`x`, `y`, `z`); taken down with `dispose`. The
+ * story itself plays as a dream over the whole screen (dream.ts).
  */
-export function storyCamp(x: number, y: number, z: number, sheet: THREE.Texture): { group: THREE.Group; dispose(): void } {
+export function storyCamp(x: number, y: number, z: number): { group: THREE.Group; dispose(): void } {
   const g = new THREE.Group();
   g.position.set(x, y, z);
-  const pole = colMat('#5a4330', { roughness: 1 }), crate = colMat('#7a5a3a', { roughness: 1 }), dark = colMat('#2a2420', { roughness: 0.8 });
-  // the line and its poles, a little behind the fire; the sheet sags between the pegs
-  const SZ = -2.5, W = 3.4, H = 1.6, TOP = 2.72;
-  for (const sx of [-1, 1]) g.add(cyl(0.045, 0.055, 3.0, pole, sx * (W / 2 + 0.25), 0, SZ, 6));
-  const line = box(W + 0.6, 0.015, 0.015, dark, 0, TOP + 0.04, SZ);
-  g.add(line);
-  const geo = new THREE.PlaneGeometry(W, H, 16, 6);
-  const p = geo.attributes.position!;
-  for (let i = 0; i < p.count; i++) {
-    const u = p.getX(i) / W + 0.5, v = p.getY(i) / H + 0.5;
-    // sags between the three pegs, and bellies out a touch toward the fire
-    const sag = Math.abs(Math.sin(u * Math.PI * 2)) * 0.06 * (0.4 + v * 0.6);
-    p.setY(i, p.getY(i) - sag);
-    p.setZ(i, Math.sin(u * Math.PI) * 0.08 * (1 - v * 0.6));
-  }
-  geo.computeVertexNormals();
-  const cloth = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: sheet, color: '#c2ad8c', side: THREE.DoubleSide }));
-  cloth.position.set(0, TOP - H / 2, SZ);
-  g.add(cloth);
-  for (const px of [-W / 2 + 0.05, 0, W / 2 - 0.05]) g.add(box(0.04, 0.09, 0.03, crate, px, TOP - 0.05, SZ + 0.02));
+  const crate = colMat('#7a5a3a', { roughness: 1 }), dark = colMat('#2a2420', { roughness: 0.8 });
   // little Juno's blanket, striped, in front of the fire
   const blanket = box(1.1, 0.025, 0.75, colMat('#7a3226', { roughness: 1 }), -0.35, 0, 1.15);
   blanket.rotation.y = 0.15;

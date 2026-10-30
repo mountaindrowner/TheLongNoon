@@ -211,6 +211,12 @@ export class UI {
     this.prompt.classList.add('on');
   }
 
+  /** A different look for the dialogue box (e.g. 'dream': subtitles over a full-screen scene), or the usual (null). */
+  look(name: string | null): void {
+    for (const c of [...this.box.classList]) if (c.startsWith('look-')) this.box.classList.remove(c);
+    if (name) this.box.classList.add(`look-${name}`);
+  }
+
   /** One scripted line. Resolves once it's read; the box stays up for the next (close it with `endTalk`). */
   speak(name: string, text: string, portrait?: string): Promise<void> {
     return new Promise((res) => {
