@@ -1,8 +1,13 @@
+import * as THREE from 'three';
+
 /**
  * The old tale's painted panels, from the first version
- * (legacy/poc2 19-intro-cinematic.js), drawing for drawing: a 320 × 150
- * firelit sheet over the fire, each panel cross-fading into the next while
- * Papá talks. Ink on firelight, like shadow puppets.
+ * (legacy/poc2 19-intro-cinematic.js), drawing for drawing, with two more for the
+ * fuller telling (the long summers, the war that stopped the planes): a 320 × 150
+ * firelit sheet, each panel cross-fading into the next while Papá talks. Ink on
+ * firelight, like shadow puppets. Since 2026-10-30 the sheet hangs in the world,
+ * on a line behind the fire (`texture`); the old overlay is still there for any
+ * scene without one.
  */
 
 type G = CanvasRenderingContext2D;
@@ -43,6 +48,30 @@ function drone(g: G, x: number, y: number, s = 1, c = INK): void {
 }
 
 const PANELS: Record<string, (g: G, t: number) => void> = {
+  heat(g, t) {
+    // a sun too big, the ground cracked, people walking away with everything they own
+    O(g, 160, 40, 26 + Math.sin(t * 2) * 1.5, LIGHT);
+    for (let i = 0; i < 9; i++) { const y = 74 + i * 5; R(g, 0, y + Math.sin(t * 3 + i) * 1.2, 320, 1, `rgba(255,243,204,${0.08 + 0.02 * i})`); }
+    R(g, 0, 122, 320, 28, INK);
+    for (let i = 0; i < 12; i++) R(g, i * 27 + 6, 124 + (i % 3) * 3, 14, 1, '#c97a3a');
+    for (let i = 0; i < 7; i++) {
+      const x = 330 - ((t * 10 + i * 46) % 380), bob = Math.abs(Math.sin(t * 4 + i)) * 1.5;
+      person(g, x, 122 - bob, 0.95 - (i % 3) * 0.12);
+      R(g, x - 2, 103 - bob, 7, 6, INK); // a bundle on the back
+    }
+  },
+  war(g, t) {
+    // a dish on its tower, the flash, the planes coming down out of the sky
+    skyline(g, 0.2, true);
+    R(g, 196, 72, 6, 58, INK); O(g, 199, 66, 15, INK); R(g, 186, 64, 26, 4, '#1c0d07');
+    const boom = Math.max(0, Math.min(1, (t - 1.2) / 0.5));
+    if (boom > 0) { O(g, 199, 66, 10 + boom * 40, `rgba(255,243,204,${0.9 - boom * 0.6})`); O(g, 199, 66, 6 + boom * 18, `rgba(255,170,90,${1 - boom * 0.5})`); }
+    for (let i = 0; i < 3; i++) {
+      const k = Math.max(0, t - 2 - i * 0.9), x = 60 + i * 80 + k * 14, y = 24 + i * 6 + k * k * 9;
+      if (y < 128) { g.save(); g.translate(x, y); g.rotate(Math.min(0.9, k * 0.4)); drone(g, 0, 0, 0.8); g.restore(); }
+    }
+    for (const x of [40, 54, 268]) person(g, x, 130, 0.9, 1);
+  },
   rain(g, t) {
     skyline(g);
     for (let k = 0; k < 3; k++) {
@@ -120,27 +149,61 @@ export class Tale {
   private t = 0;
   private pt = 0;
   private f = 1;
+  private readonly cv: HTMLCanvasElement;
+  private tex: THREE.CanvasTexture | null = null;
+  private since = 1;
 
   constructor(parent: HTMLElement) {
     this.wrap = document.createElement('div');
     this.wrap.className = 'tale';
     const c = document.createElement('canvas');
     c.width = 320; c.height = 150;
+    this.cv = c;
     this.wrap.appendChild(c);
     parent.appendChild(this.wrap);
-    this.g = c.getContext('2d')!;
+    // kept on the CPU: a canvas drawn on the GPU stalls the frame each time WebGL reads it back for the cloth
+    this.g = c.getContext('2d', { willReadFrequently: true })!;
     this.g.imageSmoothingEnabled = false;
   }
 
   set(id: string | null): void {
     this.prev = this.cur; this.pt = this.t; this.cur = id; this.t = 0; this.f = 0;
-    this.wrap.classList.toggle('show', !!id || !!this.prev);
+    if (!this.tex) this.wrap.classList.toggle('show', !!id || !!this.prev);
   }
 
   /** Put it away at once (a skipped tale). */
   clear(): void { this.cur = this.prev = null; this.wrap.classList.remove('show'); }
 
+  /** The sheet as a texture for a cloth hung in the scene: from now on it's drawn there, blank between panels. */
+  texture(): THREE.CanvasTexture {
+    if (!this.tex) {
+      this.tex = new THREE.CanvasTexture(this.cv);
+      this.tex.magFilter = THREE.NearestFilter;
+      this.tex.minFilter = THREE.LinearFilter;
+      this.tex.generateMipmaps = false;
+      this.tex.colorSpace = THREE.SRGBColorSpace;
+      this.wrap.classList.remove('show');
+    }
+    return this.tex;
+  }
+  /** Back to the overlay (the scene took its cloth down). */
+  untexture(): void { this.tex?.dispose(); this.tex = null; }
+
   draw(dt: number): void {
+    if (this.tex) {
+      // in the world the cloth is always there: firelit and blank, or with the tale on it; redrawn about 15 times
+      // a second (shadow puppets flicker; the upload isn't free)
+      this.t += dt; this.pt += dt; this.f = Math.min(1, this.f + dt / 0.8);
+      if ((this.since += dt) < 1 / 15) return;
+      this.since = 0;
+      const g = this.g;
+      sheet(g, this.t);
+      if (this.prev && this.f < 1) { g.globalAlpha = 1 - this.f; PANELS[this.prev]?.(g, this.pt); g.globalAlpha = 1; }
+      if (this.cur) { g.globalAlpha = this.f; PANELS[this.cur]?.(g, this.t); g.globalAlpha = 1; }
+      else if (this.f >= 1) this.prev = null;
+      this.tex.needsUpdate = true;
+      return;
+    }
     if (!this.cur && !this.prev) return;
     this.t += dt; this.pt += dt; this.f = Math.min(1, this.f + dt / 0.8);
     const g = this.g;

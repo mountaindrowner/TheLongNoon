@@ -260,6 +260,9 @@ export class Hud {
   private readonly pauseMenu: Menu;
   private readonly cardMenu: Menu;
   private readonly options: Options;
+  private readonly press: HTMLParagraphElement;
+  /** Waiting on "press any key" at the title. */
+  private pressed: (() => void) | null = null;
   private bookClose: (() => void) | null = null;
   /** Plays an interface sound by name (game/sound.ts). */
   sfx: (n: string) => void = () => {};
@@ -297,12 +300,20 @@ export class Hud {
     this.chapterEl = el('div', 'chapter', this.root);
     this.skip = el('button', 'skip', this.root, 'Skip ›');
     this.buttons = el('div', 'story-buttons', this.root);
+    // the lockup: a sun on the line of the land, the name, a rule, the town's first rule
     const tm = el('div', 'ts-inner', this.title);
-    el('h1', '', tm, 'The Long Noon');
-    el('p', 'ts-tag', tm, 'Never walk in white.');
+    const lock = el('div', 'ts-lock', tm);
+    el('i', 'ts-sun', lock);
+    el('h1', '', lock, 'The Long Noon');
+    const rule = el('div', 'ts-rule', lock);
+    el('span', '', rule); el('b', '', rule); el('span', '', rule);
+    el('p', 'ts-tag', lock, 'Never walk in white.');
+    this.press = el('p', 'ts-press', tm, touch() ? 'Tap to begin' : 'Press any key');
     const sfx = (n: string): void => this.sfx(n);
     this.titleMenu = new Menu(tm, 'ts-menu', sfx);
     el('p', 'ts-foot', this.title, touch() ? 'Drag on the left to walk. Tap A to talk.' : 'WASD or arrows to walk · E to talk · B the staybook · M the map · Esc the menu');
+    el('p', 'ts-ver', this.title, 'The Prologue');
+    this.title.addEventListener('pointerdown', () => { if (this.pressed) { const r = this.pressed; this.pressed = null; r(); } });
     this.pauseMenu = new Menu(this.pause, 'pause-menu', sfx);
     el('div', 'pause-side', this.pause);
     el('h2', '', this.card, 'Night one');
@@ -314,10 +325,11 @@ export class Hud {
   }
 
   /** Whether any menu or the book is up (the world waits). */
-  get modal(): boolean { return this.menus.some((m) => m.open) || this.bookClose !== null || this.options.open; }
+  get modal(): boolean { return this.menus.some((m) => m.open) || this.bookClose !== null || this.options.open || this.pressed !== null; }
 
   /** Keys for whatever's open. True when it was used. */
   key(code: string): boolean {
+    if (this.pressed) { const r = this.pressed; this.pressed = null; r(); return true; }
     if (this.options.key(code)) return true;
     if (this.bookKey?.(code)) return true;
     for (const m of this.menus) if (m.key(code)) return true;
@@ -444,8 +456,15 @@ export class Hud {
   get bookOpen(): boolean { return this.bookClose !== null; }
 
   // ---------------------------------------------------------------- menus
-  async titleScreen(canContinue: boolean): Promise<'new' | 'continue' | 'options'> {
+  /** The title: first the name alone and "press any key" (`splash`), then the menu under it. */
+  async titleScreen(canContinue: boolean, splash = false): Promise<'new' | 'continue' | 'options'> {
     this.title.classList.add('on');
+    if (splash) {
+      this.title.classList.add('splash');
+      await new Promise<void>((r) => { this.pressed = r; });
+      this.title.classList.remove('splash');
+      this.sfx('open');
+    }
     const a = await this.titleMenu.show([{ id: 'new', label: 'New game' }, { id: 'continue', label: 'Continue', hidden: !canContinue }, { id: 'options', label: 'Options' }]);
     if (a !== 'options') this.title.classList.remove('on');
     return a === 'continue' || a === 'options' ? a : 'new';

@@ -1580,17 +1580,41 @@
    "Papá",
    "And when they got heavy, water fell out of them. All by itself. For free."
   ],
+  [
+   "Little Juno",
+   "For free? Not even a tin?"
+  ],
+  [
+   "Papá",
+   "Not even a tin. It fell on the roofs and the roads and the dogs. People ran from it."
+  ],
+  [
+   "Mamá",
+   "Ran from it. Imagine."
+  ],
+  {
+   "do": "tale",
+   "p": "heat"
+  },
+  [
+   "Papá",
+   "Then the world got hot. Hotter every year. Whole towns packed up and walked north, looking for shade."
+  ],
   {
    "do": "tale",
    "p": "machines"
   },
   [
    "Papá",
-   "Then the world got hot. Hotter every year. So the people built machines and sent them up to cool the sky down."
+   "So the people built machines. Six hundred of them. And they sent them up to cool the sky down."
   ],
   [
    "Papá",
    "They sprayed it with a kind of dust. A shade, to hide us from the sun."
+  ],
+  [
+   "Papá",
+   "And it worked. For a few years it was cool again. Everybody said we'd been saved."
   ],
   {
    "do": "tale",
@@ -1604,6 +1628,26 @@
    "Papá",
    "It was what made the clouds. And the machines' dust was killing it."
   ],
+  [
+   "Little Juno",
+   "Didn't anybody notice?"
+  ],
+  [
+   "Papá",
+   "One lady did. A doctor. She wrote it all down, and nobody listened."
+  ],
+  {
+   "do": "tale",
+   "p": "war"
+  },
+  [
+   "Papá",
+   "Then the clouds got thin, and the water got scarce, and people went to war over what was left."
+  ],
+  [
+   "Papá",
+   "Somebody blew up the stations that told the machines what to do. And the spraying stopped."
+  ],
   {
    "do": "tale",
    "p": "white"
@@ -1616,6 +1660,14 @@
    "Papá",
    "They called it the White Year. It lasted the rest of their lives."
   ],
+  [
+   "Mamá",
+   "Elías."
+  ],
+  [
+   "Papá",
+   "She asked for the whole thing."
+  ],
   {
    "do": "tale",
    "p": "below"
@@ -1623,6 +1675,10 @@
   [
    "Papá",
    "Most people didn't make it. The ones who did went down. Under bridges. Under stores. Into the dark, where the lanterns are."
+  ],
+  [
+   "Papá",
+   "They learned to sleep through the day and wake up when the sun goes down. Like us."
   ],
   [
    "Papá",

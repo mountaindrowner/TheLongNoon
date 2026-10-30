@@ -43,6 +43,10 @@ test('the title opens on New game; the old tale is told by the fire, and skippin
   test.setTimeout(420_000);
   const errors = watchErrors(page);
   await boot(page);
+  // the name alone first, then any key brings the menu
+  await expect(page.locator('.title-screen.on.splash .ts-press')).toBeVisible();
+  await page.screenshot({ path: info.outputPath('title-splash.png') });
+  await page.keyboard.press('Enter');
   await expect(page.locator('.title-screen.on .menu-item').first()).toHaveText('New game');
   await page.screenshot({ path: info.outputPath('title.png') });
   await page.keyboard.press('Enter');
@@ -61,6 +65,7 @@ test('options from the title: the volumes and text speed change by keys and taps
   test.setTimeout(420_000);
   const errors = watchErrors(page);
   await boot(page);
+  await page.locator('.title-screen.on.splash .ts-press').click();
   await page.locator('.title-screen.on .menu-item', { hasText: 'Options' }).click();
   await expect(page.locator('.options.on .opt-row').first()).toBeFocused();
   // Music is the second row: down, then two notches down
@@ -75,11 +80,13 @@ test('options from the title: the volumes and text speed change by keys and taps
   await page.keyboard.press('Escape');
   await expect(page.locator('.options.on')).toHaveCount(0);
   await expect(page.locator('.title-screen.on .menu-item').first()).toHaveText('New game');
+  await expect(page.locator('.title-screen.on.splash')).toHaveCount(0); // back from the options, straight to the menu
   // kept on the device, not in the save
   await boot(page);
   const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('longnoon.settings')));
   expect(kept.music).toBe(5);
   expect(kept.text).toBe('fast');
+  await page.locator('.title-screen.on.splash .ts-press').click();
   await page.locator('.title-screen.on .menu-item', { hasText: 'Options' }).click();
   await expect(page.locator('.opt-row', { hasText: 'Music' }).locator('.opt-num')).toHaveText('5');
   await page.locator('.opt-act', { hasText: 'Back to defaults' }).click();

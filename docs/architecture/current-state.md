@@ -589,11 +589,47 @@ the pause menu now both have **Options** (`hud.ts` `Options`, `game/settings.ts`
 - **Where it's kept:** on the device (`longnoon.settings`), apart from the saves. Changing options never touches a
   save's shape (rule 8).
 
+## Piece 16 (done): the title and the old tale
+
+The owner, 2026-10-30: *"a more official title screen and a better, more full intro scene of the story from before.
+Also the campfire scene looks wonky."*
+
+- **The title** is a centred lockup: a sun on the line of the land, the name, a gold rule, *Never walk in white.* It
+  shows alone first, with *Press any key* (*Tap to begin* on a phone). Then the menu comes up under it: New game,
+  Continue, Options. Behind it the camera drifts slowly over the Plaza at Lamp: the flags, the string lights, the
+  market. The first key or tap also starts the sound, which browsers hold until then. *The Prologue* sits in the
+  corner. Coming back from Options goes straight to the menu.
+- **The fire:**
+  - fieldstones of different sizes, two crossed logs under a teepee of sticks, and ash;
+  - flames drawn as pixel art (six frames, three sprites out of step);
+  - sparks that rise and go out;
+  - a small warm patch on the ground. The old big glow and the large blocks for stones are gone.
+- **The scene** (`storyCamp`, fire.ts):
+  - Papá stands by his crate and the crank radio he listened to every night.
+  - Mamá is by her stool and a clay jug.
+  - Little Juno is on a striped blanket with her back to us, watching.
+  - Behind them a sheet is pegged to a line between two poles. **The tale's panels are drawn on the sheet**, in the
+    world, no longer as a picture floating over the screen.
+  - The camera pushes in on the family, rises to the sheet whenever a panel is up, and comes back down between.
+- **The telling is fuller** (dialogue.json `intro`, 49 beats, up from 35). Every first-version line is still there.
+  New beats come from the story bible's history, in Papá's voice:
+  - the rain was free, *"not even a tin"*;
+  - the long summers and the walk north (a new *heat* panel);
+  - the six hundred planes, and the cool years everyone took for saved;
+  - the one doctor who wrote it all down;
+  - the war over water and the stations blown up (a new *war* panel);
+  - learning to live by night.
+
+  Little Juno asks and Mamá cuts in, so it plays as a family by a fire rather than a lecture.
+- **Cost:** the sheet is a CPU canvas redrawn 15 times a second. Redrawing a GPU canvas into a texture every frame
+  stalled every frame in software rendering, and would have cost phones too.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
 |---|---|---|
 | One fixed mood per scene, no clock (§5); the key light over the viewer's left shoulder | A clock moves the light through Lamp, the long night, Shutter and the white. The town is built twice (lanterns lit, lanterns out). By day the sun, and by night the moon, cross the sky east to west. | Settled by `docs/design/world-methodology.md` §5.3: night is the living time and daylight is its own state of the same map. The owner asked for a timed night and moving shadows (2026-10-28), over the Complete Story File's "no running clock". |
+| Every textured surface at 16 px per world unit (rule 1) | The old tale's sheet is a 320 × 150 painting on a 3.4-unit cloth, about 94 px a unit | The panels are the first version's drawings, line for line; drawn at 16 px a unit they'd lose the figures. The sheet is the one painted picture in the world. |
 | Prairie ground, lush green as the norm | Desert ground (caliche, sand, old asphalt); green only where water has been | The Span is a desert. The spec's mood line still holds: bleak, with bright life where it's tended. |
 | 64px, 8-direction PixelLab sprites (§13), every figure styled on the protagonist | 64px PixelLab figures in the spec's style, styled on Juno (`docs/design/cast.md`). The game plays four directions; animations are made in four (the owner, 2026-10-27). | Juno is the anchor in place of the spec's style character, so the cast is The Long Noon's own; the owner locked the look on 2026-10-27. Anyone not remade yet still uses the old 16×24 sprites. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |

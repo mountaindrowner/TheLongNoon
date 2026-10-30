@@ -14,7 +14,7 @@ import { Clock, fmtTime, parseClock } from './game/clock';
 import { Director, type Cmd, type Dialogue, type Script, type Stage } from './game/script';
 import { Hud, PAGE_ORDER, type Page } from './game/hud';
 import { Tale } from './game/tale';
-import { campfire } from './game/fire';
+import { campfire, storyCamp } from './game/fire';
 import { Sound } from './game/sound';
 import { pauseAfter, voiceOf } from './game/voice';
 import { loadSettings, saveSettings, TEXT_PACE, PIXEL_RATIO, type Settings } from './game/settings';
@@ -618,6 +618,7 @@ function frame(): void {
   // camera: follow the player, clamped so the edge never shows a void
   camTarget.lerp(clampCam(player.x, player.z), 1 - Math.exp(-dt * (camHold ? 2.2 : 4.5)));
   camZoom += (camZoomTo - camZoom) * (1 - Math.exp(-dt * 1.6));
+  if (titleDrift && camHold) { const k = t * 0.045; camHold.set(TITLE_VIEW.x + Math.sin(k) * 9, 0.8, TITLE_VIEW.z + Math.sin(k * 0.7) * 2.5); }
   if (staged) stageFrame(dt, t);
   else {
     camera.position.copy(camTarget).addScaledVector(CAM_OFFSET, camZoom);
@@ -712,7 +713,7 @@ async function command(c: Cmd): Promise<void> {
     case 'hint': hud.toast(touchUI() ? 'Drag on the left to walk. Tap A to talk.' : 'Walk with WASD or the arrows. E or Space to talk. B opens the staybook.', false, 6000); break;
     case 'rest': await rest(); break;
     case 'cam': camHold = new THREE.Vector3(c.x as number, 0.8, c.z as number); break;
-    case 'tale': tale.set((c.p as string | null) ?? null); break;
+    case 'tale': tale.set((c.p as string | null) ?? null); taleCam?.((c.p as string | null) ?? null); break;
     case 'sfx': sound.play(c.s as string); break;
     case 'ending': await ending(); break;
     case 'spawnEnemies': await spawnEnemies(); break;
@@ -1042,19 +1043,30 @@ async function titleScreen(): Promise<void> {
     await go(SPAN, 'start');
     await ui.fade(false, 600);
   }
-  camHold = new THREE.Vector3(START.x + 2, 0.8, START.z - 6);
-  camZoomTo = 1.25;
+  // the title drifts over the Plaza at Lamp: the seven flags, the string lights, the well
+  titleDrift = true;
+  camZoom = camZoomTo = 1.3;
+  camHold = new THREE.Vector3(TITLE_VIEW.x, 0.8, TITLE_VIEW.z);
+  camTarget.copy(camHold);
   sound.music('intro');
-  let a = await hud.titleScreen(hasSave());
+  let a = await hud.titleScreen(hasSave(), true);
   while (a === 'options') { await openOptions(); a = await hud.titleScreen(hasSave()); }
+  titleDrift = false;
   camZoomTo = 1;
   if (a === 'continue') { await ui.fade(true, 400); camHold = null; if (await loadGame()) { await ui.fade(false, 600); return; } }
   await newGame();
 }
 
+/** Where the title looks, and whether it's drifting (a slow sway across the Plaza while the menu waits). */
+const TITLE_VIEW = { x: 89, z: 64 + 143 };
+let titleDrift = false;
+
 // ---------------------------------------------------------------- the tale, then the burial
 const FIRE = { x: 142.6, z: 64 + 124.2 };
 let fire: ReturnType<typeof campfire> | null = null;
+let camp: ReturnType<typeof storyCamp> | null = null;
+/** Where the camera looks while the tale is told: the family, or the sheet when a panel is up. */
+let taleCam: ((panel: string | null) => void) | null = null;
 const cine: Actor[] = [];
 function skipTale(): void {
   if (mode !== 'cine' || aborting) return;
@@ -1089,21 +1101,28 @@ async function theTale(): Promise<void> {
   const y = cur.area.ground(FIRE.x, FIRE.z);
   fire = campfire(FIRE.x, y, FIRE.z);
   cur.scene.add(fire.group);
-  (cur.area as Region).addLamp({ pos: new THREE.Vector3(FIRE.x, y + 0.9, FIRE.z), color: new THREE.Color('#ff9a4a'), intensity: 5, dist: 9, flicker: 0.35, tag: 'tale' });
-  for (const [id, dx, dz, face] of [['elias', -1.6, 0, 'E'], ['kidjuno', -0.75, 0.8, 'E'], ['rosa', 1.5, 0.2, 'W']] as const) {
+  camp = storyCamp(FIRE.x, y, FIRE.z, tale.texture());
+  cur.scene.add(camp.group);
+  (cur.area as Region).addLamp({ pos: new THREE.Vector3(FIRE.x, y + 0.8, FIRE.z), color: new THREE.Color('#ff8f3e'), intensity: 3.6, dist: 8, flicker: 0.35, tag: 'tale' });
+  // Papá by his radio, Mamá on her stool, little Juno on the blanket with her back to us, watching the sheet
+  for (const [id, dx, dz, face] of [['elias', -1.25, -0.6, 'S'], ['kidjuno', -0.35, 1.1, 'N'], ['rosa', 1.25, -0.45, 'W']] as const) {
     const a = await Actor.person(id, cur.tint);
     a.place(FIRE.x + dx, cur.area.ground(FIRE.x + dx, FIRE.z + dz), FIRE.z + dz);
     a.dir = face;
     cur.scene.add(a.root);
     cine.push(a);
   }
-  camHold = new THREE.Vector3(FIRE.x + 0.3, 0.9, FIRE.z - 1.1); // the fire low in the frame, the sheet above it
-  camZoomTo = camZoom = 0.55;
+  // a slow push in on the family; up to the sheet when the tale's on it, back down between
+  const family = new THREE.Vector3(FIRE.x, 0.9, FIRE.z + 0.15), cloth = new THREE.Vector3(FIRE.x, 1.35, FIRE.z - 1.35);
+  camHold = family.clone();
+  camZoom = 0.95; camZoomTo = 0.64;
   camTarget.copy(camHold);
+  taleCam = (p) => { camHold = (p ? cloth : family).clone(); camZoomTo = p ? 0.58 : 0.64; };
   hud.skip.classList.add('on');
   await hud.chapter('<p>A story told at Mar Farm,<br>a long time ago.</p>', 2800, () => aborting);
   if (!aborting) { await ui.fade(false, 1600); await run('intro'); }
   hud.skip.classList.remove('on');
+  taleCam = null;
   tale.clear();
   ui.endTalk();
   if (!aborting) { await ui.fade(true, 600); await hud.chapter('<h1>The Long Noon</h1><p>Many years later.</p>', 3600, () => aborting); }
@@ -1111,6 +1130,8 @@ async function theTale(): Promise<void> {
   for (const a of cine) cur.scene.remove(a.root);
   cine.length = 0;
   fire?.dispose(); fire = null;
+  camp?.dispose(); camp = null;
+  tale.untexture();
   (cur.area as Region).dropLamps('tale');
   player.root.visible = true;
   if (lupe) lupe.actor.root.visible = true;
