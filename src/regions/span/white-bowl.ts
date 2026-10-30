@@ -6,7 +6,7 @@ import { markDoor } from '../../engine/doorway';
 import { rock, boardSign } from '../../engine/props';
 import { fbm, vnoise } from '../../engine/noise';
 import { STRAW, nopal, skull, lanternPost } from './props';
-import { spanPaint, tracks, intakeTower, buoy, boatHull, trailer, picnicShelter, cairn, headwall, exitVeil } from './kit';
+import { spanPaint, tracks, intakeTower, buoy, boatHull, trailer, picnicShelter, cairn, headwall } from './kit';
 import { SPAN_FLORA, deadMesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
 import { rubble } from './ruins';
@@ -160,9 +160,6 @@ export function whiteBowl(night: boolean): SectionSpec {
         { id: 'scout', name: 'Noonrider', sprite: 'noonrider', x: 8, z: 34, face: 'E', when: 'night:6' },
         { id: 'scout', name: 'Noonrider', sprite: 'noonrider', x: 8, z: 46, face: 'E', when: 'night:6' },
       );
-      // back up to the Lake Road, its own place: the road, and the drain beside it
-      exitVeil(scene, 80, 0, 8, 'n', night);
-      exitVeil(scene, 105, 0, 6, 'n', night, '#8a8a84');
       brushFill(d, 85, 1);
       openScatter(d, 81, ['x', 's'], 0.5, (x, z) => !(x > 66 && x < 96 && z < 20) && !(x > 18 && x < 38 && z < 18));
       d.things.push(

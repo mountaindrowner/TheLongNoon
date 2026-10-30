@@ -581,36 +581,3 @@ export function trailGate(s: O, x: number, z: number, w: number, rot: number, ni
   for (const sx of [-1, 1]) { const px = x + Math.cos(rot) * sx * w / 2, pz = z - Math.sin(rot) * sx * w / 2; addSolid(px - 0.15, pz - 0.15, px + 0.15, pz + 0.15); }
   return { update(t: number) { if (night) glass.emissiveIntensity = 3 * (0.92 + Math.sin(t * 5.1) * 0.06); } };
 }
-
-/**
- * Where a road leaves for another place (hub and spokes, 2026-10-29): the road runs on past the map's edge and
- * fades out, into the dark by night or into the white by day, the way Octopath ends a path at a map's edge. Past
- * the fade there's nothing built: walking into it is the transition. `side` is the edge it's on.
- */
-export function exitVeil(s: O, x: number, z: number, w: number, side: 'n' | 's' | 'e' | 'w', night: boolean, ground = '#5f5c57'): void {
-  const col = new THREE.Color(night ? '#05070c' : '#f2ecdc');
-  /** A flat sheet from `near` to `far` units out, clear at its near edge to `a1` at its far one (corner colours). */
-  const sheet = (near: number, far: number, wide: number, a0: number, a1: number): THREE.Mesh => {
-    const geo = new THREE.PlaneGeometry(wide, far - near);
-    geo.rotateX(-Math.PI / 2);
-    geo.translate(0, 0, -(near + far) / 2);
-    const pos = geo.attributes.position!, c = new Float32Array(pos.count * 4);
-    for (let i = 0; i < pos.count; i++) { const k = (-pos.getZ(i) - near) / (far - near); c.set([col.r, col.g, col.b, a0 + (a1 - a0) * k], i * 4); }
-    geo.setAttribute('color', new THREE.BufferAttribute(c, 4));
-    return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, fog: false, toneMapped: false }));
-  };
-  // a fade over the ground, clear at the edge and solid seven units out, then solid on past what the camera sees
-  // (a standing card read as a wall from this camera, so it all lies flat)
-  const g = new THREE.Group();
-  // the road (or the dirt) runs on past the edge at the edge's own height: no other map holds it up any more, and
-  // without it the camera would look past the map's rim into nothing
-  const on = new THREE.Mesh(new THREE.PlaneGeometry(w + 14, 22), colMat(ground, { roughness: 1 }));
-  on.rotation.x = -Math.PI / 2;
-  on.position.set(0, -0.02, -10.6);
-  on.receiveShadow = true;
-  const a = sheet(0, 7, w + 4, 0, 1), b = sheet(7, 22, w + 14, 1, 1);
-  a.position.y = b.position.y = 0.06;
-  g.add(on, a, b);
-  g.rotation.y = side === 'n' ? 0 : side === 'e' ? -Math.PI / 2 : side === 's' ? Math.PI : Math.PI / 2;
-  s.add(at(g, x, z));
-}

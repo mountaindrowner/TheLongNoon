@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { fbm, rng, vnoise } from './noise';
 import { setWorld, cell, heightAt, hitsSolid, addSolid, currentChunk, useChunk, type TileWorld } from './world';
-import { buildGround, buildGrass, buildWater, setAprons } from './terrain';
+import { buildGround, buildGrass, buildPatch, buildWater, setAprons } from './terrain';
 import { maskAt } from './layout';
 import { cottonwood, mesquite, deadTree, bush, motes, swayTrees } from './foliage';
 import { fence } from './fence';
@@ -187,6 +187,9 @@ export interface SectionSpec {
   heightSeed?: number;
   /** Build edge aprons (off inside a region, which frames its own outer edge). */
   aprons?: boolean;
+  /** Inside a region: ground past the edge where an exit leaves (local units), so the road and its banks run on
+   *  out of sight instead of stopping at the map's rim. The region lays them out on its own grid. */
+  runOuts?: Array<{ side: Side; x0: number; z0: number; x1: number; z1: number }>;
   /** Skip this map's motes (a region runs one set around the player). */
   noMotes?: boolean;
   /** The region's plants for the edges (default: the engine's prairie trees). */
@@ -237,7 +240,17 @@ export function section(spec: SectionSpec, pre?: Grid, pace?: () => Promise<void
     const seam = (side: Side): boolean => !!spec.outside && edges[side] === 'none';
     const get = (x: number, z: number): string => (grid.inb(x, z) ? grid.get(x, z) : spec.outside?.(x, z) ?? '#');
     const edgeDist = (x: number, z: number): Record<Side, number> => ({ n: z, s: ROWS - z, w: x, e: COLS - x });
+    // past the edge the land runs on as it meets it (the run-outs, the brush behind the frame), rolling a little more
+    // the farther out it goes; a road keeps level
+    const outCell = (x: number, z: number): string => grid.get(Math.min(COLS - 1, Math.max(0, x)), Math.min(ROWS - 1, Math.max(0, z)));
     const height = (x: number, z: number): number => {
+      const cx = Math.min(COLS - 0.01, Math.max(0.01, x)), cz = Math.min(ROWS - 0.01, Math.max(0.01, z));
+      if (cx === x && cz === z) return inner(x, z);
+      const [ox, oz] = spec.origin ?? [0, 0];
+      const k = Math.hypot(x - cx, z - cz), road = ROAD.has(outCell(Math.floor(x), Math.floor(z)));
+      return inner(cx, cz) + (road ? 0 : (fbm((x + ox) * 0.07, (z + oz) * 0.07, (spec.heightSeed ?? spec.seed) + 5, 2) - 0.5) * 0.7 * Math.min(1, k / 8));
+    };
+    const inner = (x: number, z: number): number => {
       const [ox, oz] = spec.origin ?? [0, 0];
       let h = (fbm((x + ox) * 0.09, (z + oz) * 0.09, spec.heightSeed ?? spec.seed, 3) - 0.5) * 0.45;
       const road = Math.max(maskAt(get, 'd', x, z), maskAt(get, 'e', x, z), maskAt(get, 'v', x, z));
@@ -296,6 +309,8 @@ export function section(spec: SectionSpec, pre?: Grid, pace?: () => Promise<void
     setAprons(spec.aprons ?? true);
     buildGround(scene);
     setAprons(true);
+    for (const ro of spec.runOuts ?? []) buildPatch(scene, ro.x0, ro.z0, ro.x1 - ro.x0, ro.z1 - ro.z0, outCell);
+    runOutFlora(d, spec, outCell);
     await step();
     const water: Array<[number, number]> = [];
     for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (get(x, z) === 'w') water.push([x, z]);
@@ -428,6 +443,40 @@ function frameEdges(d: Dress, spec: SectionSpec, exitAt: (side: Side, a: number,
         rock(d.scene, x, z, 0.35 + r() * 0.55, d.seed());
         if (r() > 0.8) { const [tx, tz] = P(a, 0.4); d.tree(F.tree(tx, tz, 0.9, d.seed()), 0); }
       }
+    }
+  }
+}
+
+/**
+ * The edge's own growth carried on over the run-outs: thicket for a brush edge, trees for a tree line, rock under a
+ * bluff, thickest along the road and thinning away from it. Only on the '#' the edge runs out with, never the road.
+ */
+function runOutFlora(d: Dress, spec: SectionSpec, outCell: (x: number, z: number) => string): void {
+  const { cols: COLS, rows: ROWS } = spec;
+  const F = spec.flora ?? PRAIRIE;
+  const r = rng(spec.seed * 57 + 11);
+  for (const ro of spec.runOuts ?? []) {
+    const st = spec.edges[ro.side] ?? 'trees';
+    const ns = ro.side === 'n' || ro.side === 's';
+    // how far each point along the edge is from ground that isn't brush (the road out)
+    const len = ns ? COLS : ROWS;
+    const edge = (a: number): string => outCell(ns ? a : ro.side === 'w' ? 0 : COLS - 1, ns ? (ro.side === 'n' ? 0 : ROWS - 1) : a);
+    const openAt: number[] = [];
+    for (let a = 0; a < len; a++) if (edge(a) !== '#') openAt.push(a + 0.5);
+    const fromRoad = (a: number): number => openAt.reduce((m, o) => Math.min(m, Math.abs(Math.min(len - 0.5, Math.max(0.5, a)) - o) + Math.max(0, -a, a - len)), 99);
+    for (let z = ro.z0 + 0.4; z < ro.z1; z += 1.3) for (let x = ro.x0 + 0.4; x < ro.x1; x += 1.3) {
+      const px = x + (r() - 0.5) * 0.9, pz = z + (r() - 0.5) * 0.9;
+      if (px > 0 && px < COLS && pz > 0 && pz < ROWS) continue;
+      if (outCell(Math.floor(px), Math.floor(pz)) !== '#') continue;
+      const dr = fromRoad(ns ? px : pz);
+      if (dr < 0.9 || r() > (dr < 3 ? 0.85 : dr < 7 ? 0.5 : 0.3)) continue;
+      const k = r(), s = 0.9 + r() * 0.6;
+      const o = st === 'brush' ? (k < 0.86 ? F.thicket(px, pz, s, d.seed()) : k < 0.95 ? F.tree(px, pz, s * 0.8, d.seed()) : F.dead(px, pz, 1.0, d.seed()))
+        : st === 'trees' ? (k < 0.6 ? F.tree(px, pz, s, d.seed()) : F.bush(px, pz, s * 0.8, d.seed()))
+        : st === 'bluff' ? null
+        : k < 0.7 ? F.bush(px, pz, s * 0.8, d.seed()) : k < 0.85 ? F.tree(px, pz, s * 0.8, d.seed()) : null;
+      if (o) d.scene.add(o);
+      else if (st === 'bluff') rock(d.scene, px, pz, 0.35 + r() * 0.55, d.seed());
     }
   }
 }

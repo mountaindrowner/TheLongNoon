@@ -9,7 +9,7 @@ import { addSolid, heightAt } from '../../engine/world';
 import { rng, fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, palm, nopal, waterTower, lanternPost, solarPanels, clothesline, shadeSail, jugs, drum, tires, carHulk, burialPlatform, roofLetters, blockWall, mailbox } from './props';
-import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall, underpass, trailGate, exitVeil } from './kit';
+import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall, underpass, trailGate } from './kit';
 import { spanDoor, type SpanDoor } from './doors';
 import { SPAN_FLORA, mesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
@@ -389,6 +389,8 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       carHulk(scene, 50, JUNCTION + 3.4, 0.4, seed());
       // the deck's east edge north of the junction, except where the on-ramp meets it
       jerseys(scene, [[56.6, -0.4], [57.6, 5.6]], seed(), DECK);
+      // north past the edge the deck runs on toward the Ramp, its barriers with it, out of sight
+      for (const x of [47.4, 56.6]) jerseys(scene, [[x, -0.4], [x, -24]], seed(), DECK);
       jerseys(scene, [[58, 11.6], [56.4, JUNCTION]], seed(), DECK);
       // the on-ramp's sides
       for (const off of [-2.3, 2.3]) {
@@ -468,11 +470,8 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       d.spawns.trail = { x: 187.6, z: 21, face: 'W' };
 
       // ------------------------------------------------ the hub's other ways out: north up the highway to the Ramp, east
-      // down the boulevard to the Lake Road (each its own place since 2026-10-29); the road fades out past the edge
-      exitVeil(scene, 53, 0, 12, 'n', night);
+      // down the boulevard to the Lake Road (each its own place since 2026-10-29); the road runs on past the edge (the region's run-outs)
       d.spawns.north = { x: 50, z: 2.4, face: 'S' }; // the west lanes: the median down the middle is solid
-      exitVeil(scene, COLS, 124, 9, 'e', night);
-      exitVeil(scene, COLS, 21, 5, 'e', night, '#8a7656'); // past the trail gate: the footpath's dirt
 
       // ------------------------------------------------ the prologue's places in town (docs/design/prologue.md)
       // the Cellars: Doña Inés's hatch behind the Plaza, a blue lantern by it (night two's water shift, night three)

@@ -139,10 +139,34 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     const g = p && grids.get(p.id);
     return g ? g.get(Math.floor(wx - p.ox), Math.floor(wz - p.oz)) : '#';
   };
+  // the aprons' grid: 4-unit squares from a corner well outside every map
+  const T = 4;
+  const x0 = Math.min(...plan.map((p) => p.ox)) - 2 * T, x1 = Math.max(...plan.map((p) => p.ox + p.cols)) + 2 * T;
+  const z0 = Math.min(...plan.map((p) => p.oz)) - 2 * T, z1 = Math.max(...plan.map((p) => p.oz + p.rows)) + 2 * T;
+  const M = 4 * T; // how far out the aprons run (the camera stops 4.4 inside a map's edge and sees about 9 past it)
+  // where a road leaves for another place, the map's own ground runs on past its edge (the road, its banks, the
+  // brush either side) on whole squares of the grid, 16 units either side and 24 out
+  const runOuts: Array<[number, number, number, number]> = [];
+  const snapX = (v: number, up: boolean): number => x0 + T * (up ? Math.ceil : Math.floor)((v - x0) / T);
+  const snapZ = (v: number, up: boolean): number => z0 + T * (up ? Math.ceil : Math.floor)((v - z0) / T);
   r.pieces.forEach((p, i) => {
     const pl = plan[i]!;
+    const outs: NonNullable<SectionSpec['runOuts']> = [];
+    for (const e of p.spec.exits) {
+      if (ids.has(e.to)) continue; // a seam: the neighbour is the ground beyond
+      const half = (e.w ?? 3) / 2 + 16, D = 24;
+      const ns = e.side === 'n' || e.side === 's';
+      const [a0, a1] = [e.at - half, e.at + half];
+      const [d0, d1] = e.side === 'n' ? [-D, 0] : e.side === 's' ? [pl.rows, pl.rows + D] : e.side === 'w' ? [-D, 0] : [pl.cols, pl.cols + D];
+      const [lx0, lz0, lx1, lz1] = ns ? [a0, d0, a1, d1] : [d0, a0, d1, a1];
+      // snapped out to the grid, in place units (the side touching the map stays on its edge)
+      const wx0 = e.side === 'e' ? pl.ox + lx0 : snapX(pl.ox + lx0, false), wx1 = e.side === 'w' ? pl.ox + lx1 : snapX(pl.ox + lx1, true);
+      const wz0 = e.side === 's' ? pl.oz + lz0 : snapZ(pl.oz + lz0, false), wz1 = e.side === 'n' ? pl.oz + lz1 : snapZ(pl.oz + lz1, true);
+      runOuts.push([wx0, wz0, wx1, wz1]);
+      outs.push({ side: e.side, x0: wx0 - pl.ox, z0: wz0 - pl.oz, x1: wx1 - pl.ox, z1: wz1 - pl.oz });
+    }
     const spec: SectionSpec = {
-      ...p.spec, origin: [pl.ox, pl.oz], heightSeed: r.heightSeed, aprons: false, noMotes: true,
+      ...p.spec, origin: [pl.ox, pl.oz], heightSeed: r.heightSeed, aprons: false, noMotes: true, runOuts: outs,
       exits: p.spec.exits.map((e) => (ids.has(e.to) ? { ...e, seam: true } : e)),
       outside: (x, z) => cellAt(x + pl.ox, z + pl.oz),
     };
@@ -150,16 +174,16 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     grids.set(pl.id, sectionGrid(spec));
   });
 
-  // 2. aprons: every 4-unit square in and around the region that no map covers, in runs along each row
-  const T = 4;
-  const x0 = Math.min(...plan.map((p) => p.ox)) - 2 * T, x1 = Math.max(...plan.map((p) => p.ox + p.cols)) + 2 * T;
-  const z0 = Math.min(...plan.map((p) => p.oz)) - 2 * T, z1 = Math.max(...plan.map((p) => p.oz + p.rows)) + 2 * T;
+  // 2. aprons: every 4-unit square in and around the region that no map or run-out covers, in runs along each row
   const apronMat = new THREE.MeshStandardMaterial({ map: r.apron, roughness: 1 });
-  const covered = (ax: number, az: number): boolean => plan.some((p) => ax + T > p.ox && ax < p.ox + p.cols && az + T > p.oz && az < p.oz + p.rows);
-  for (let az = z0; az < z1; az += T) {
+  const covered = (ax: number, az: number): boolean =>
+    plan.some((p) => ax + T > p.ox && ax < p.ox + p.cols && az + T > p.oz && az < p.oz + p.rows) ||
+    runOuts.some(([rx0, rz0, rx1, rz1]) => ax + T > rx0 && ax < rx1 && az + T > rz0 && az < rz1);
+  const ax0 = x0 - M + 2 * T, ax1 = x1 + M - 2 * T;
+  for (let az = z0 - M + 2 * T; az < z1 + M - 2 * T; az += T) {
     let run = -1;
-    for (let ax = x0; ax <= x1; ax += T) {
-      const free = ax < x1 && !covered(ax, az);
+    for (let ax = ax0; ax <= ax1; ax += T) {
+      const free = ax < ax1 && !covered(ax, az);
       if (free && run < 0) run = ax;
       if (!free && run >= 0) {
         const a = new THREE.Mesh(planeGeo(ax - run + 0.02, T + 0.02), apronMat);

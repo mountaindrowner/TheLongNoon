@@ -7,7 +7,7 @@ import { building, windowAt, M } from '../../engine/buildings';
 import { addSolid, heightAt } from '../../engine/world';
 import { fbm } from '../../engine/noise';
 import { STRAW, palm, nopal, lanternPost, carHulk, shadeSail, jugs, drum } from './props';
-import { spanPaint, cairn, jerseys, exitVeil } from './kit';
+import { spanPaint, cairn, jerseys } from './kit';
 import { spanDoor } from './doors';
 import { SPAN_FLORA, mesquite } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
@@ -205,7 +205,6 @@ export function churchOnTheHill(night: boolean): SectionSpec {
       );
       for (const [x, z, s] of [[50, 22, 0.5], [96, 30, 0.45], [12, 44, 0.5]] as Array<[number, number, number]>) rock(scene, x, z, s, seed());
       for (const [x, z, s] of [[14, 28, 1.0], [104, 22, 1.1], [92, 12, 0.9]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.3);
-      exitVeil(scene, 36, ROWS, 6, 's', night, '#8a7656'); // back down the trail, its own place
       brushFill(d, 151, 1);
       openScatter(d, 152, ['x', 's'], 0.6, (x, z) => clearOf(TRAIL, 2.4)(x, z) && !(x > 30 && x < 94 && z > 28 && z < 66));
     },

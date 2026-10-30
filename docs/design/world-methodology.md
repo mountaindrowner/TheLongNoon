@@ -123,7 +123,7 @@ The Story File leaves this open; the Span is already one continuous
 
 **The owner's decision, 2026-10-29: C, with each region as hub and spokes.** Regions and the caravan legs between
 them stay as C has them. Inside a region, a hub (the town or stop) joins its spokes, and every map is loaded on its
-own through a transition at its edge (the road fades out, then the dissolve), as B does. Only one map is built at a
+own through a transition at its edge (the road runs on out of sight, then the dissolve), as B does. Only one map is built at a
 time, which keeps phones in budget and loading behind the transition (`docs/architecture/scaling.md`). The Span:
 Seven Flags is the hub; the Ramp, the Lake Road (then the White Bowl), the Trail North (then the church) and the mall
 are spokes.

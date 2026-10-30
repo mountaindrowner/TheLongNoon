@@ -20,7 +20,7 @@ const FLOWERS = ['#e3c34a', '#ece6d6', '#5e6fd0', '#c4473a', '#b07ad0'].map(H);
 
 /** Paint a piece of the outdoor floor (x0, z0, w × h units) as one pixel-art texture, 16px per unit.
  *  Big maps are painted in tiles so no texture is larger than a phone can hold. */
-function paintGround(x0: number, z0: number, w: number, h: number): THREE.CanvasTexture {
+function paintGround(x0: number, z0: number, w: number, h: number, cellOf: (x: number, z: number) => string = cell): THREE.CanvasTexture {
   const wd = world();
   const W = w * TEXEL_PER_UNIT, Hh = h * TEXEL_PER_UNIT;
   const p = new Pix(W, Hh);
@@ -31,7 +31,7 @@ function paintGround(x0: number, z0: number, w: number, h: number): THREE.Canvas
       // jittered lookup → organic, hand-drawn boundaries instead of tile seams
       const jx = x + (fbm(x * 0.9, z * 0.9, 9, 2) - 0.5) * 0.75;
       const jz = z + (fbm(x * 0.9, z * 0.9, 19, 2) - 0.5) * 0.75;
-      const c = cell(Math.floor(jx), Math.floor(jz));
+      const c = cellOf(Math.floor(jx), Math.floor(jz));
       const fine = r();
       let col: RGB;
       const custom = wd.paint?.(c, x, z, fine);
@@ -122,7 +122,11 @@ export function buildGround(scene: THREE.Scene): void {
     m.receiveShadow = true;
     scene.add(m);
   }
-  if (!aprons) return; // the overworld frames all its chunks at once
+  if (!aprons) {
+    // the region frames this map: a bank under every edge, so where the land beyond sits lower, no sky shows between
+    skirt(scene, [[0, 0], [COLS, 0], [COLS, ROWS], [0, ROWS]]);
+    return;
+  }
 
   // a frame of scrubland beyond the map edge (level with the berm top), so
   // the diorama never shows a void at the edges of the camera
@@ -185,6 +189,46 @@ export function buildGround(scene: THREE.Scene): void {
     a.receiveShadow = true;
     scene.add(a);
   }
+}
+
+/**
+ * Ground beyond a map's edge, x0..x0+w by z0..z0+h: heights from the active map (which runs its land on past its
+ * edges), painted from `cellOf` (the glyphs the edge runs out with). Where a road leaves for somewhere else, this is
+ * the road going on, so the camera never looks past the map's rim.
+ */
+export function buildPatch(scene: THREE.Object3D, x0: number, z0: number, w: number, h: number, cellOf: (x: number, z: number) => string): void {
+  const K = 2;
+  const g = new THREE.PlaneGeometry(w, h, w * K, h * K);
+  g.rotateX(-Math.PI / 2);
+  g.translate(x0 + w / 2, 0, z0 + h / 2);
+  const pos = g.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: paintGround(x0, z0, w, h, cellOf), roughness: 1, metalness: 0 }));
+  m.receiveShadow = true;
+  scene.add(m);
+  skirt(scene, [[x0, z0], [x0 + w, z0], [x0 + w, z0 + h], [x0, z0 + h]]);
+}
+
+const skirtMat = new THREE.MeshStandardMaterial({ color: '#2e271c', roughness: 1, side: THREE.DoubleSide });
+/** A bank of earth hanging from the ground's edge around a closed outline, down to well below anything beside it. */
+function skirt(scene: THREE.Object3D, ring: Array<[number, number]>): void {
+  const v: number[] = [], idx: number[] = [];
+  for (let i = 0; i < ring.length; i++) {
+    const [ax, az] = ring[i]!, [bx, bz] = ring[(i + 1) % ring.length]!;
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) * 2));
+    for (let k = 0; k < n; k++) {
+      const base = v.length / 3;
+      const p = [[ax + (bx - ax) * k / n, az + (bz - az) * k / n], [ax + (bx - ax) * (k + 1) / n, az + (bz - az) * (k + 1) / n]];
+      for (const [x, z] of p) v.push(x!, heightAt(x!, z!) - 0.01, z!, x!, -2.5, z!);
+      idx.push(base, base + 1, base + 2, base + 2, base + 1, base + 3);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  scene.add(new THREE.Mesh(g, skirtMat));
 }
 
 // ------------------------------------------------------------------ water

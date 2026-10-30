@@ -7,7 +7,7 @@ import { M } from '../../engine/buildings';
 import { addSolid } from '../../engine/world';
 import { fbm } from '../../engine/noise';
 import { STRAW, nopal, lanternPost, windmill, skull } from './props';
-import { spanPaint, cairn, trailGate, exitVeil } from './kit';
+import { spanPaint, cairn, trailGate } from './kit';
 import { SPAN_FLORA, deadMesquite } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
 import { ruinWall, rubble } from './ruins';
@@ -146,8 +146,6 @@ export function trailNorth(night: boolean): SectionSpec {
       // the way back to town: the same gate, seen from the trail's side
       d.built.push(trailGate(scene, 2.4, 37, 3.2, Math.PI / 2, night));
       d.spawns.town = { x: 4.4, z: 37, face: 'E' };
-      exitVeil(scene, 0, 37, 5, 'w', night, '#8a7656');
-      exitVeil(scene, 52, 0, 6, 'n', night, '#8a7656'); // up to the church, its own place
       brushFill(d, 141, 1);
       openScatter(d, 142, ['x', 's'], 0.8, (x, z) => clearOf(PATH, 2.6)(x, z) && Math.hypot(x - 64, z - 24) > 5 && Math.hypot(x - BRIDGE.x, z - BRIDGE.z) > 5);
     },

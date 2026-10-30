@@ -5,7 +5,7 @@ import { rock } from '../../engine/props';
 import { box, beam, colMat, shade } from '../../engine/geo';
 import { addSolid } from '../../engine/world';
 import { carHulk, tires } from './props';
-import { spanPaint, retainingWall, jerseys, fallenSign, gantry, fuelCanopy, cairn, exitVeil } from './kit';
+import { spanPaint, retainingWall, jerseys, fallenSign, gantry, fuelCanopy, cairn } from './kit';
 import { spanDoor } from './doors';
 import { SPAN_FLORA } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
@@ -111,6 +111,10 @@ export function ramp(night: boolean): SectionSpec {
         for (let z = 40; z < ROWS; z += 0.5) addSolid(ex - 0.35, z - 0.3, ex + 0.35, z + 0.3);
       }
       for (const wx of [HW.x0 - 0.15, HW.x1 + 0.15]) for (let z = 44; z < ROWS; z += 4) retainingWall(scene, wx, z, wx, Math.min(ROWS, z + 4), deckY(z + 2));
+      // and all of it runs on south past the edge, down toward town, out of sight
+      jerseys(scene, [[13, ROWS - 0.6], [13, ROWS + 24]], seed());
+      for (const ex of [HW.x0 + 0.4, HW.x1 - 0.4]) jerseys(scene, [[ex, ROWS - 0.2], [ex, ROWS + 24]], seed());
+      for (const wx of [HW.x0 - 0.15, HW.x1 + 0.15]) for (let z = ROWS; z < ROWS + 24; z += 4) retainingWall(scene, wx, z, wx, z + 4, TOP);
       // the piers either side, the half that still stands over the northbound lanes, the half that fell
       for (const px of [4.6, 21.4]) { scene.add(box(1.2, 5.2, 1.6, M.concrete(), px, 0, BRIDGE)); addSolid(px - 0.6, BRIDGE - 0.8, px + 0.6, BRIDGE + 0.8); }
       scene.add(box(1.0, 5.2, 1.4, M.concrete(), 13, 0, BRIDGE)); addSolid(12.5, BRIDGE - 0.7, 13.5, BRIDGE + 0.7);
@@ -151,8 +155,6 @@ export function ramp(night: boolean): SectionSpec {
       // ------------------------------------------------ a second sign down by the ramp's foot: the sled, on the last night
       fallenSign(scene, 24, 52, -0.4);
       d.things.push({ x: 24, z: 53.8, r: 2.6, label: 'Sign', script: 'sled' });
-      // back down to town: the highway fades out past the south edge (the hub, its own place)
-      exitVeil(scene, 13, ROWS, 12, 's', night);
       d.spawns.town = { x: 10, z: ROWS - 2.4, face: 'N' }; // the west lanes, clear of the median
       brushFill(d, 63, 1);
       openScatter(d, 64, ['x', 's'], 0.9, (x, z) => clearOf(FRONTAGE, 3)(x, z) && clearOf([A, B], 4)(x, z) && x > HW.x1 + 1.5);

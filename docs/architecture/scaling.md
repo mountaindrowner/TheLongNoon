@@ -75,9 +75,8 @@ the region?"*, then *"try to make our current region and maps like that."*
   - the Lake Road, east down the boulevard, and the White Bowl down past it;
   - the Trail North, through the trail gate, and the church up past it;
   - the mall, through the underpass.
-- **A road off the map fades out**, into the dark by night and into the white by day, the way Octopath ends a path.
-  The road surface runs on under the fade, so the camera never looks past the map's rim (`exitVeil`, kit.ts).
-  Walking into it is the transition: the dissolve, then the next place.
+- **A road off the map runs on past the edge** with its banks and brush, further than the camera ever sees (the
+  run-outs, region.ts). Walking into it is the transition: the dissolve, then the next place.
 - **Only one place is built at a time,** so each map's cost (the table above) is the most a frame ever costs there.
 - Story markers for somewhere else point at the way there, through the hub if need be (`gateTo`, region.ts).
 - `edgeIssues`, the door checks and the prologue checker cover every place.

@@ -477,8 +477,8 @@ region … try to make our current region and maps like that."*
     (`REGIONS`, region.ts).
   - They're joined at their roads (`LINKS`): north up the highway, east down the boulevard, the trail gate, the
     underpass, the Lake Road down to the White Bowl, and the trail up to the church.
-- **Each new crossing** ends its road in a fade over a strip of the same road (`exitVeil`, kit.ts): the dark by
-  night, the white by day. The trail gate and the underpass keep their own dressing.
+- **Each crossing** runs on past the map's edge (piece 13). The trail gate and the underpass keep their own
+  dressing.
 - **Spawns at the highway crossing** are off the median, which is solid.
 - **Markers** for somewhere else point at the way there, through the hub (`gateTo`).
 - **Arriving on a map** fires its step on a crossing too (the White Bowl, night six).
@@ -491,6 +491,32 @@ region … try to make our current region and maps like that."*
   4.1 M triangles), down from two maps at a seam (6.2–7.7 M triangles). Memory returns to where it was after every
   round trip.
 
+## Piece 13 (done): the world runs on past the crossings
+
+The owner, 2026-10-30: *"if you look past the space, it's like a white line … it should still continue a little bit
+past what you can see. To not remove the immersion."*
+
+- **What was wrong.** Past a crossing, the road ran 22 units on as a flat strip and faded to a flat colour: navy by
+  night, a pale cream by day, which read as a white band at the top of the frame. Along the other edges, the region's
+  land beyond sat lower than the map's rim, with nothing under the rim, so a thin line of sky showed through.
+- **Run-outs** (region.ts, section.ts). Past every exit, the map's own ground goes on, 16 units either side of the road
+  and 24 out, laid on the region's 4-unit grid:
+  - its glyphs and heights carried straight out from the edge, so the road keeps its paint and level and the banks
+    keep theirs;
+  - painted 16 px a unit by the map's own painter (`buildPatch`, terrain.ts);
+  - the land off the road rolls a little more the farther out it goes;
+  - the edge's own growth goes on along both sides: thicket for brush, trees for a tree line, rock under a bluff,
+    thickest by the road (`runOutFlora`).
+- **No more fade.** The camera stops 4.4 inside an edge and sees about 9 past it, so the run-out reaches well past
+  anything in frame. Walking into it is still the transition.
+- **Skirts.** Every map and run-out hangs a bank of earth from its rim, so no sky shows where the land beside it is
+  lower.
+- **The region's land beyond** now runs 16 units out from every map, not 8.
+- **Props that run with the road:** the highway's barriers and retaining walls go on past the town–Ramp crossing on
+  both sides.
+- **Heights past any edge** now carry on from the edge. Before, the brush drawn just outside a map stood on the
+  edge's slope continued, up to about a unit too high.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
@@ -500,7 +526,7 @@ region … try to make our current region and maps like that."*
 | 64px, 8-direction PixelLab sprites (§13), every figure styled on the protagonist | 64px PixelLab figures in the spec's style, styled on Juno (`docs/design/cast.md`). The game plays four directions; animations are made in four (the owner, 2026-10-27). | Juno is the anchor in place of the spec's style character, so the cast is The Long Noon's own; the owner locked the look on 2026-10-27. Anyone not remade yet still uses the old 16×24 sprites. |
 | Fixed-angle outdoor maps (no occlusion rule) | Overhead props fade when the player is behind them | Shade sails and the tank would otherwise hide Juno. |
 | Every exit lands on its target (§9.4, §20 #12) | Roads to maps not built yet are closed by a barrier or held by a person who turns Juno back | The roads out of the Span lead to regions not built yet (the owner, 2026-10-28). The old turn-back note stays only as a safety net. |
-| One map per scene, exits between maps (§9) | **Back in line since 2026-10-29:** each map is its own place, loaded through a transition at its edge (the road fades out, then the dissolve), around a hub. The region (one coordinate frame, the caravan legs between regions) stays. | The owner chose hub and spokes inside each region (methodology §2.4, scaling.md). |
+| One map per scene, exits between maps (§9) | **Back in line since 2026-10-29:** each map is its own place, loaded through a transition at its edge (the road runs on out of sight, then the dissolve), around a hub. The region (one coordinate frame, the caravan legs between regions) stays. | The owner chose hub and spokes inside each region (methodology §2.4, scaling.md). |
 | Section sizes 40×30 to 58×28 (§9.2) | Large maps are 132×96; the town is two of them | The owner's scale (2026-10-26): the first Span's maps felt too small. |
 | Edge trees: cottonwood, mesquite, dead tree (§9.3) | Walls of bramble with mesquite standing out of them; no lush trees outdoors | South Texas brush country (owner, 2026-10-26). |
 | A battle stage of its own (§14) | The fight happens where it starts, in the drain, framed by one of six stagings (`STAGINGS` in `main.ts`, `?battle=` or `#fight-<name>`): in place, diorama, over the shoulder, hero shot, face-off, diorama with cuts. **Default: directed** (the owner, 2026-10-27): one formation; the camera opens over the shoulder, floats between the shoulder, the diorama and the face-off every five seconds, swings to the hero shot for an enemy's turn, and cuts in over the shoulder on the party's blows. | The owner asked to try orientations, then asked for this mix. The rules stay the first version's; only the framing changes. |

@@ -50,7 +50,8 @@ a place of its own, entered by a crossing at its edge:
 - the Trail North, through the trail gate, and the church up past it;
 - the mall, through the underpass.
 
-A road off the map runs on and fades into the dark by night, the white by day.
+A road off the map runs on past the edge with its banks and its brush, out of sight: walking into it is the
+transition.
 
 ## Seven Flags (192 × 160)
 
