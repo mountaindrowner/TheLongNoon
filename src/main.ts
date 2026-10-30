@@ -17,6 +17,7 @@ import { Tale } from './game/tale';
 import { campfire } from './game/fire';
 import { Sound } from './game/sound';
 import { pauseAfter, voiceOf } from './game/voice';
+import { loadSettings, saveSettings, TEXT_PACE, PIXEL_RATIO, type Settings } from './game/settings';
 import { Fight, type FightDef, type UnitDef } from './game/battle';
 import BATTLES from './game/data/battles.json';
 import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
@@ -83,6 +84,27 @@ function resize(): void {
 }
 addEventListener('resize', resize);
 resize();
+
+// ------------------------------------------------------------ the player's options (game/settings.ts)
+const settings = loadSettings();
+function applySettings(o: Settings): void {
+  sound.setLevels(o);
+  ui.speed = TEXT_PACE[o.text];
+  post.tiltH.enabled = post.tiltV.enabled = o.blur; // the diorama blur (spec §4), off for those who'd rather
+  const pr = Math.min(window.devicePixelRatio, PIXEL_RATIO[o.resolution]);
+  if (Math.abs(renderer.getPixelRatio() - pr) > 0.01) { renderer.setPixelRatio(pr); resize(); }
+  showPerf(o.perf || PERF_ASKED);
+}
+const screenControl = {
+  can: !!document.fullscreenEnabled,
+  on: (): boolean => !!document.fullscreenElement,
+  async toggle(): Promise<void> {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { /* refused: stays as it was */ }
+  },
+};
+async function openOptions(): Promise<void> {
+  await hud.openOptions(settings, (o) => { applySettings(o); saveSettings(o); }, screenControl);
+}
 
 // ------------------------------------------------------------ input
 const keys = new Set<string>();
@@ -478,15 +500,23 @@ let focusY = 0.46;
 const v = new THREE.Vector3();
 /** `?perf` (or `#perf`, which a shared or itch.io page passes on): a corner readout of what each frame costs (for testing on real phones): frames a second, draw calls and
  *  triangles per frame (shadows and post included), what's on the GPU, the JS heap, and the last map built. */
-const PERF = params.has('perf') || location.hash === '#perf' ? Object.assign(document.createElement('div'), { className: 'perf' }) : null;
-if (PERF) {
-  Object.assign(PERF.style, { position: 'fixed', left: '4px', bottom: '4px', zIndex: '99', font: '11px monospace', color: '#cfe', background: 'rgba(0,0,0,.6)', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'pre' });
-  document.body.appendChild(PERF);
-  renderer.info.autoReset = false;
+const PERF_ASKED = params.has('perf') || location.hash === '#perf';
+let PERF: HTMLDivElement | null = null;
+/** The readout on or off (`?perf`, or the options' frame rate). */
+function showPerf(on: boolean): void {
+  if (on && !PERF) {
+    PERF = Object.assign(document.createElement('div'), { className: 'perf' });
+    Object.assign(PERF.style, { position: 'fixed', left: '4px', bottom: '4px', zIndex: '99', font: '11px monospace', color: '#cfe', background: 'rgba(0,0,0,.6)', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'pre' });
+    document.body.appendChild(PERF);
+  }
+  if (PERF) PERF.hidden = !on;
+  renderer.info.autoReset = !on;
 }
+showPerf(PERF_ASKED);
+applySettings(settings);
 let perfAge = 0, perfFrames = 0, perfCalls = 0, perfTris = 0, perfLast = performance.now();
 function perfTick(): void {
-  if (!PERF) return;
+  if (!PERF || PERF.hidden) return;
   const now = performance.now();
   perfFrames++; perfAge += (now - perfLast) / 1000; perfLast = now; perfCalls = renderer.info.render.calls; perfTris = renderer.info.render.triangles;
   renderer.info.reset();
@@ -998,6 +1028,7 @@ async function openPause(): Promise<void> {
   else if (a === 'save') saveGame(false);
   else if (a === 'load') await loadGame();
   else if (a === 'title') await titleScreen();
+  else if (a === 'options') { await openOptions(); await openPause(); }
 }
 
 async function titleScreen(): Promise<void> {
@@ -1014,7 +1045,8 @@ async function titleScreen(): Promise<void> {
   camHold = new THREE.Vector3(START.x + 2, 0.8, START.z - 6);
   camZoomTo = 1.25;
   sound.music('intro');
-  const a = await hud.titleScreen(hasSave());
+  let a = await hud.titleScreen(hasSave());
+  while (a === 'options') { await openOptions(); a = await hud.titleScreen(hasSave()); }
   camZoomTo = 1;
   if (a === 'continue') { await ui.fade(true, 400); camHold = null; if (await loadGame()) { await ui.fade(false, 600); return; } }
   await newGame();

@@ -38,6 +38,8 @@ export class UI {
   onType: ((name: string, text: string, i: number) => void) | null = null;
   /** How long the typing waits after a character (default: the same short beat for every one). */
   pace: (text: string, i: number, name: string) => number = () => 22;
+  /** The player's text speed: a scale on every wait (0 shows each line whole, at once, unspoken). */
+  speed = 1;
 
   /** Touch stick vector in [-1,1]², and a one-shot A press. */
   stick = { x: 0, y: 0 };
@@ -299,13 +301,14 @@ export class UI {
     this.more.style.visibility = 'hidden';
     clearTimeout(this.typing);
     const who = this.speech!.name ?? '';
+    if (this.speed <= 0) { this.shown = text.length; this.text.textContent = text; this.more.style.visibility = 'visible'; return; }
     // one timer: each character shows, speaks if it should, and sets how long until the next
     const next = (): void => {
       this.shown++;
       this.text.textContent = text.slice(0, this.shown);
       this.onType?.(who, text, this.shown - 1);
       if (this.shown >= text.length) { this.more.style.visibility = 'visible'; return; }
-      this.typing = window.setTimeout(next, this.pace(text, this.shown - 1, who));
+      this.typing = window.setTimeout(next, this.pace(text, this.shown - 1, who) * this.speed);
     };
     this.typing = window.setTimeout(next, 0);
   }

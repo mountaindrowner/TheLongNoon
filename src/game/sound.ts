@@ -34,12 +34,14 @@ export class Sound {
   private m!: GainNode;
   private sfx!: GainNode;
   private mus!: GainNode;
+  /** The speakers' voices, apart from the other effects so each has its own volume. */
+  private voices!: GainNode;
   private wind!: GainNode;
   private wn!: AudioBuffer;
   private tracks: Record<string, { el: HTMLAudioElement; g: GainNode; to: number }> = {};
   private want: Track = 'none';
-  muted = false;
-  musicOn = true;
+  /** Volumes 0–10 (the options menu): everything, the music, the effects and the world, the voices. */
+  private levels = { master: 8, music: 7, sfx: 8, voices: 8 };
 
   get started(): boolean { return this.ctx !== null; }
 
@@ -51,6 +53,7 @@ export class Sound {
       const c = (this.ctx = new C());
       this.m = c.createGain(); this.m.connect(c.destination);
       this.sfx = c.createGain(); this.sfx.connect(this.m);
+      this.voices = c.createGain(); this.voices.connect(this.m);
       this.mus = c.createGain(); this.mus.connect(this.m);
       this.applyVol();
       const n = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = n.getChannelData(0);
@@ -76,10 +79,17 @@ export class Sound {
     } catch (e) { console.warn('audio', e); this.ctx = null; }
   }
 
+  /** Set the volumes (0–10 each); heard at once if sound has started, and kept for when it does. */
+  setLevels(l: { master: number; music: number; sfx: number; voices: number }): void { this.levels = { ...l }; this.applyVol(); }
+
   applyVol(): void {
     if (!this.ctx) return;
-    this.sfx.gain.value = this.muted ? 0 : 0.9;
-    this.mus.gain.value = this.musicOn ? 0.16 : 0;
+    // a slider's steps sound even: loudness goes by the square of the setting; 8 of 10 is the old level
+    const k = (n: number): number => (n / 8) ** 2;
+    this.m.gain.value = k(this.levels.master);
+    this.sfx.gain.value = 0.9 * k(this.levels.sfx);
+    this.mus.gain.value = 0.16 * k(this.levels.music);
+    this.voices.gain.value = 0.9 * k(this.levels.voices);
   }
 
   /** Cross-fade to a track (the fight's starts from the top). */
@@ -166,8 +176,8 @@ export class Sound {
     if (this.planned?.text !== text) this.planned = { text, at: planLine(text) };
     const s = this.planned.at.get(i);
     if (!s) return;
-    if (!name) { this.noise(0.02, 0.008, { type: 'bandpass', f: 1700, q: 1.2 }); return; }
-    utter(this.ctx, this.sfx, this.wn, voiceOf(name), s);
+    if (!name) { this.noise(0.02, 0.008, { type: 'bandpass', f: 1700, q: 1.2, dest: this.voices }); return; }
+    utter(this.ctx, this.voices, this.wn, voiceOf(name), s);
   }
 
   // ---------------------------------------------------------------- the world
@@ -241,6 +251,6 @@ export class Sound {
   /** By name, for scripts' `sfx` command. */
   play(name: string): void {
     const fn = (this as unknown as Record<string, unknown>)[name];
-    if (typeof fn === 'function' && !['init', 'music', 'play', 'applyVol', 'setDay'].includes(name)) (fn as () => void).call(this);
+    if (typeof fn === 'function' && !['init', 'music', 'play', 'applyVol', 'setLevels', 'setDay'].includes(name)) (fn as () => void).call(this);
   }
 }

@@ -57,6 +57,36 @@ test('the title opens on New game; the old tale is told by the fire, and skippin
   expect(errors).toEqual([]);
 });
 
+test('options from the title: the volumes and text speed change by keys and taps, and stay after a reload', async ({ page }, info) => {
+  test.setTimeout(420_000);
+  const errors = watchErrors(page);
+  await boot(page);
+  await page.locator('.title-screen.on .menu-item', { hasText: 'Options' }).click();
+  await expect(page.locator('.options.on .opt-row').first()).toBeFocused();
+  // Music is the second row: down, then two notches down
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('.opt-row', { hasText: 'Music' }).locator('.opt-num')).toHaveText('5');
+  // a tap steps a choice
+  await page.locator('.opt-row', { hasText: 'Text speed' }).locator('.opt-val').click();
+  await expect(page.locator('.opt-row', { hasText: 'Text speed' }).locator('.opt-val')).toHaveText('Fast');
+  await page.screenshot({ path: info.outputPath('options.png') });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.options.on')).toHaveCount(0);
+  await expect(page.locator('.title-screen.on .menu-item').first()).toHaveText('New game');
+  // kept on the device, not in the save
+  await boot(page);
+  const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('longnoon.settings')));
+  expect(kept.music).toBe(5);
+  expect(kept.text).toBe('fast');
+  await page.locator('.title-screen.on .menu-item', { hasText: 'Options' }).click();
+  await expect(page.locator('.opt-row', { hasText: 'Music' }).locator('.opt-num')).toHaveText('5');
+  await page.locator('.opt-act', { hasText: 'Back to defaults' }).click();
+  await expect(page.locator('.opt-row', { hasText: 'Music' }).locator('.opt-num')).toHaveText('7');
+  expect(errors).toEqual([]);
+});
+
 test('home: feed the goats and fill up at the tank, and the milk is ready for Chayo', async ({ page }) => {
   test.setTimeout(420_000);
   const errors = watchErrors(page);

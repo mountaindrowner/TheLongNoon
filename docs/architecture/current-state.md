@@ -565,6 +565,30 @@ types). The game's first version gave each speaker one beep every other letter. 
 - **The narrator** has no voice, only a soft tick at each syllable.
 - **Level:** about as loud as the old beeps, at the effects volume, muted with them.
 
+## Piece 15 (done): the options
+
+The owner, 2026-10-30: *"a full menu … for options like volume sliders for music vs SFX and such."* The title and
+the pause menu now both have **Options** (`hud.ts` `Options`, `game/settings.ts`).
+
+- **Sound:** four volumes of ten notches each:
+  - everything;
+  - the music;
+  - the effects and the world (steps, menus, the fight, wind and animals);
+  - the voices, which are on a bus of their own.
+
+  Loudness goes by the square of a notch, so the steps sound even. The default 8 of 10 is the old level.
+- **Text speed:** slow, normal or fast, or *at once*, which shows each line whole and unspoken.
+- **Picture:**
+  - depth blur, the tilt-shift, which is on by default (spec §4) and can be turned off;
+  - resolution: sharp (up to 1.5 pixels per screen pixel, as before), balanced (1) or fast (0.75), for phones;
+  - full screen, where the browser allows it;
+  - the frame-rate readout that `?perf` shows.
+- **Controls:** the keys, or the touch controls on a phone.
+- **Using it:** arrows move between rows and change values, Enter steps, Escape closes. Every part is a tap target
+  too, and each change applies at once.
+- **Where it's kept:** on the device (`longnoon.settings`), apart from the saves. Changing options never touches a
+  save's shape (rule 8).
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

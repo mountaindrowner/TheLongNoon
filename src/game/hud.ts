@@ -1,6 +1,7 @@
 import type { GameState } from './state';
 import { CONDITIONS } from './sun';
 import { ITEM_NAMES } from './state';
+import { DEFAULT_SETTINGS, type Settings } from './settings';
 
 /**
  * The story's screen furniture, ported from the first version (legacy/poc2
@@ -10,7 +11,7 @@ import { ITEM_NAMES } from './state';
  * - the objective under it, and a marker over the target;
  * - toasts and the daylight warning;
  * - the staybook's pages;
- * - the title, the pause menu and the end card;
+ * - the title, the pause menu, the options and the end card;
  * - the chapter cards and the skip button for the tale.
  */
 
@@ -65,6 +66,169 @@ class Menu {
   }
 }
 
+/** What the options screen can't hold itself: going full screen, which only the page can ask for. */
+export interface ScreenControl { can: boolean; on(): boolean; toggle(): Promise<void> }
+
+type OptRow =
+  | { kind: 'head'; label: string }
+  | { kind: 'level'; key: 'master' | 'music' | 'sfx' | 'voices'; label: string }
+  | { kind: 'choice'; key: 'text' | 'blur' | 'resolution' | 'perf'; label: string; values: Array<[Settings[keyof Settings], string]> }
+  | { kind: 'full'; label: string }
+  | { kind: 'note'; label: string }
+  | { kind: 'act'; id: 'reset' | 'back'; label: string };
+
+const OPTIONS: OptRow[] = [
+  { kind: 'head', label: 'Sound' },
+  { kind: 'level', key: 'master', label: 'Everything' },
+  { kind: 'level', key: 'music', label: 'Music' },
+  { kind: 'level', key: 'sfx', label: 'Effects and the world' },
+  { kind: 'level', key: 'voices', label: 'Voices' },
+  { kind: 'head', label: 'Text' },
+  { kind: 'choice', key: 'text', label: 'Text speed', values: [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast'], ['instant', 'At once']] },
+  { kind: 'head', label: 'Picture' },
+  { kind: 'choice', key: 'blur', label: 'Depth blur', values: [[true, 'On'], [false, 'Off']] },
+  { kind: 'choice', key: 'resolution', label: 'Resolution', values: [['sharp', 'Sharp'], ['balanced', 'Balanced'], ['fast', 'Fast']] },
+  { kind: 'full', label: 'Full screen' },
+  { kind: 'choice', key: 'perf', label: 'Frame rate', values: [[false, 'Hidden'], [true, 'Shown']] },
+  { kind: 'head', label: 'Controls' },
+  { kind: 'note', label: touch() ? 'Drag on the left side to walk; push far to run.\nA talks and looks. Book opens the staybook, Menu this menu.\nTap the map to bring it near or far.' : 'WASD or the arrows walk; hold Shift to run.\nE or Space talks and looks. B or Tab opens the staybook.\nM brings the map near or far. Esc opens this menu.' },
+  { kind: 'act', id: 'reset', label: 'Back to defaults' },
+  { kind: 'act', id: 'back', label: 'Done' },
+];
+
+/**
+ * The options screen: rows of volumes (ten notches), choices that step left and right, and the controls. Arrows
+ * move and change, Enter steps a choice, Escape closes; every part is a tap target too. Each change is applied
+ * as it's made.
+ */
+class Options {
+  readonly box: HTMLDivElement;
+  private readonly list: HTMLDivElement;
+  private s!: Settings;
+  private apply: (s: Settings) => void = () => {};
+  private screen: ScreenControl | null = null;
+  private done: (() => void) | null = null;
+  private rows: Array<{ row: OptRow; el: HTMLElement; paint(): void }> = [];
+  constructor(parent: HTMLElement, private readonly sfx: (n: string) => void) {
+    this.box = el('div', 'options', parent);
+    const panel = el('div', 'opt-panel', this.box);
+    el('h2', '', panel, 'Options');
+    this.list = el('div', 'opt-list', panel);
+  }
+  get open(): boolean { return this.done !== null; }
+
+  show(s: Settings, apply: (s: Settings) => void, screen: ScreenControl): Promise<void> {
+    this.s = s; this.apply = apply; this.screen = screen;
+    this.build();
+    this.box.classList.add('on');
+    setTimeout(() => this.rows.find((r) => r.row.kind !== 'head' && r.row.kind !== 'note')?.el.focus({ preventScroll: true }), 30);
+    return new Promise((r) => { this.done = r; });
+  }
+  private close(): void {
+    const d = this.done;
+    this.done = null;
+    this.box.classList.remove('on');
+    this.sfx('back');
+    d?.();
+  }
+  private change(): void { this.apply(this.s); this.rows.forEach((r) => r.paint()); }
+
+  private build(): void {
+    this.list.replaceChildren();
+    this.rows = [];
+    for (const row of OPTIONS) {
+      if (row.kind === 'full' && !this.screen?.can) continue;
+      if (row.kind === 'head') { el('h3', '', this.list, row.label); continue; }
+      if (row.kind === 'note') { const n = el('p', 'opt-note', this.list); for (const l of row.label.split('\n')) el('span', '', n, l); continue; }
+      if (row.kind === 'act') {
+        const b = el('button', 'menu-item opt-act', this.list, row.label);
+        b.addEventListener('click', (e) => { e.stopPropagation(); this.act(row.id); });
+        b.addEventListener('mouseenter', () => b.focus());
+        this.rows.push({ row, el: b, paint: () => {} });
+        continue;
+      }
+      const r = el('div', 'opt-row', this.list);
+      r.tabIndex = 0;
+      el('span', 'opt-label', r, row.label);
+      const ctl = el('div', 'opt-ctl', r);
+      const less = el('button', 'opt-step', ctl, '‹');
+      const mid = el('div', row.kind === 'level' ? 'opt-pips' : 'opt-val', ctl);
+      const more = el('button', 'opt-step', ctl, '›');
+      less.tabIndex = more.tabIndex = -1;
+      less.setAttribute('aria-label', 'Less'); more.setAttribute('aria-label', 'More');
+      less.addEventListener('click', (e) => { e.stopPropagation(); r.focus(); this.step(row, -1); });
+      more.addEventListener('click', (e) => { e.stopPropagation(); r.focus(); this.step(row, 1); });
+      r.addEventListener('mouseenter', () => r.focus({ preventScroll: true }));
+      let paint: () => void;
+      if (row.kind === 'level') {
+        r.setAttribute('role', 'slider'); r.setAttribute('aria-valuemin', '0'); r.setAttribute('aria-valuemax', '10');
+        const pips = Array.from({ length: 10 }, (_, i) => {
+          const p = el('i', '', mid);
+          p.addEventListener('click', (e) => { e.stopPropagation(); r.focus(); const v = i + 1; this.s[row.key] = this.s[row.key] === v && v === 1 ? 0 : v; this.sfx('tick'); this.change(); });
+          return p;
+        });
+        const num = el('b', 'opt-num', ctl);
+        ctl.insertBefore(num, more);
+        paint = () => { const v = this.s[row.key]; pips.forEach((p, i) => p.classList.toggle('on', i < v)); num.textContent = String(v); r.setAttribute('aria-valuenow', String(v)); };
+      } else if (row.kind === 'full') {
+        paint = () => { mid.textContent = this.screen?.on() ? 'On' : 'Off'; };
+        mid.addEventListener('click', (e) => { e.stopPropagation(); this.step(row, 1); });
+      } else {
+        paint = () => { const v = this.s[row.key]; mid.textContent = row.values.find(([x]) => x === v)?.[1] ?? String(v); };
+        mid.addEventListener('click', (e) => { e.stopPropagation(); r.focus(); this.step(row, 1); });
+      }
+      paint();
+      this.rows.push({ row, el: r, paint });
+    }
+  }
+
+  private step(row: OptRow, d: number): void {
+    if (row.kind === 'level') {
+      const v = Math.max(0, Math.min(10, this.s[row.key] + d));
+      if (v === this.s[row.key]) return;
+      this.s[row.key] = v;
+    } else if (row.kind === 'choice') {
+      const i = row.values.findIndex(([x]) => x === this.s[row.key]);
+      const n = row.values.length;
+      (this.s as unknown as Record<string, unknown>)[row.key] = row.values[(i + d + n) % n]![0];
+    } else if (row.kind === 'full') {
+      void this.screen?.toggle().then(() => this.rows.forEach((r) => r.paint()));
+      this.sfx('tick');
+      return;
+    } else return;
+    this.sfx('tick');
+    this.change();
+  }
+  private act(id: 'reset' | 'back'): void {
+    if (id === 'back') { this.close(); return; }
+    Object.assign(this.s, DEFAULT_SETTINGS);
+    this.sfx('blip');
+    this.change();
+  }
+
+  key(code: string): boolean {
+    if (!this.done) return false;
+    const els = this.rows.map((r) => r.el);
+    const i = els.indexOf(document.activeElement as HTMLElement);
+    const row = this.rows[i]?.row;
+    if (code === 'ArrowDown' || code === 'ArrowUp' || code === 'KeyS' || code === 'KeyW') {
+      const d = code === 'ArrowDown' || code === 'KeyS' ? 1 : -1;
+      const next = els[(Math.max(0, i) + d + els.length) % els.length];
+      next?.focus(); next?.scrollIntoView({ block: 'nearest' });
+      this.sfx('tick');
+      return true;
+    }
+    if ((code === 'ArrowLeft' || code === 'ArrowRight' || code === 'KeyA' || code === 'KeyD') && row) { this.step(row, code === 'ArrowLeft' || code === 'KeyA' ? -1 : 1); return true; }
+    if (code === 'Enter' || code === 'Space' || code === 'KeyE' || code === 'KeyZ') {
+      if (row?.kind === 'act') this.act(row.id);
+      else if (row) this.step(row, 1);
+      return true;
+    }
+    if (code === 'Escape' || code === 'Backspace' || code === 'KeyQ') { this.close(); return true; }
+    return true; // nothing else gets through while it's open
+  }
+}
+
 export class Hud {
   private readonly root: HTMLDivElement;
   private readonly status: HTMLDivElement;
@@ -95,6 +259,7 @@ export class Hud {
   private readonly titleMenu: Menu;
   private readonly pauseMenu: Menu;
   private readonly cardMenu: Menu;
+  private readonly options: Options;
   private bookClose: (() => void) | null = null;
   /** Plays an interface sound by name (game/sound.ts). */
   sfx: (n: string) => void = () => {};
@@ -144,14 +309,16 @@ export class Hud {
     el('p', '', this.card, 'Given to the Sun');
     this.cardMenu = new Menu(this.card, 'card-menu', sfx);
     this.menus.push(this.titleMenu, this.pauseMenu, this.cardMenu);
+    this.options = new Options(this.root, sfx);
     this.show(false);
   }
 
   /** Whether any menu or the book is up (the world waits). */
-  get modal(): boolean { return this.menus.some((m) => m.open) || this.bookClose !== null; }
+  get modal(): boolean { return this.menus.some((m) => m.open) || this.bookClose !== null || this.options.open; }
 
   /** Keys for whatever's open. True when it was used. */
   key(code: string): boolean {
+    if (this.options.key(code)) return true;
     if (this.bookKey?.(code)) return true;
     for (const m of this.menus) if (m.key(code)) return true;
     return false;
@@ -277,11 +444,17 @@ export class Hud {
   get bookOpen(): boolean { return this.bookClose !== null; }
 
   // ---------------------------------------------------------------- menus
-  async titleScreen(canContinue: boolean): Promise<'new' | 'continue'> {
+  async titleScreen(canContinue: boolean): Promise<'new' | 'continue' | 'options'> {
     this.title.classList.add('on');
-    const a = await this.titleMenu.show([{ id: 'new', label: 'New game' }, { id: 'continue', label: 'Continue', hidden: !canContinue }]);
-    this.title.classList.remove('on');
-    return a === 'continue' ? 'continue' : 'new';
+    const a = await this.titleMenu.show([{ id: 'new', label: 'New game' }, { id: 'continue', label: 'Continue', hidden: !canContinue }, { id: 'options', label: 'Options' }]);
+    if (a !== 'options') this.title.classList.remove('on');
+    return a === 'continue' || a === 'options' ? a : 'new';
+  }
+
+  /** The options screen over whatever's showing; resolves when it's closed. */
+  openOptions(s: Settings, apply: (s: Settings) => void, screen: ScreenControl): Promise<void> {
+    this.sfx('open');
+    return this.options.show(s, apply, screen);
   }
 
   async openPause(s: GameState, canLoad: boolean): Promise<string | null> {
@@ -300,6 +473,7 @@ export class Hud {
       { id: 'book', label: 'Staybook', hidden: s.pages.length === 0 },
       { id: 'save', label: 'Save' },
       { id: 'load', label: 'Load last save', hidden: !canLoad },
+      { id: 'options', label: 'Options' },
       { id: 'title', label: 'Quit to title' },
     ], true);
     this.pause.classList.remove('on');
