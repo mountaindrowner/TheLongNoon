@@ -36,16 +36,18 @@ Triangles include the shadow pass.
 
 | Where | Draw calls | Triangles | Meshes |
 |---|---|---|---|
-| Seven Flags (the town, the hub) | 680 | 3.9 M | 2,374 |
-| The Lake Road | 170–226 | 3.8–4.1 M | 497 |
-| The White Bowl | 130 | 2.7 M | 323 |
-| The Ramp | 376 | 1.5 M | 344 |
-| The Trail North | 376 | 2.9 M | 313 |
-| The church | 604 | 2.9 M | 550 |
-| The mall | 338 | 2.4 M | 418 |
+| Seven Flags (the town, the hub) | 686 | 4.3 M | 2,415 |
+| The Lake Road | 178–220 | 4.1–4.4 M | 483 |
+| The White Bowl | 148 | 3.0 M | 330 |
+| The Ramp | 384 | 1.7 M | 418 |
+| The Trail North | 388 | 3.1 M | 310 |
+| The church | 606 | 3.0 M | 558 |
+| The mall | 340 | 2.5 M | 429 |
 | A room | ~530 | 9 k | ~120 |
 
-The cutaway walls in rooms are many small pieces, hence the draw calls.
+The cutaway walls in rooms are many small pieces, hence the draw calls. Since 2026-10-30 each place also carries its
+run-outs, the ground and brush past each crossing (current-state.md piece 13): 0.1–0.4 M triangles a place, almost no
+draw calls.
 
 - **Before hub and spokes,** two maps were drawn at once wherever they met. The town's east edge with the Lake Road
   came to about 7.7 M triangles, and the Lake Road with the White Bowl to 6.2 M.

@@ -514,6 +514,8 @@ past what you can see. To not remove the immersion."*
 - **The region's land beyond** now runs 16 units out from every map, not 8.
 - **Props that run with the road:** the highway's barriers and retaining walls go on past the town–Ramp crossing on
   both sides.
+- **Cost:** 0.1–0.4 M more triangles a place, almost no more draw calls. The brush stops where the camera stops
+  seeing: 14 units past a north edge, 10 past a side one, 5 past a south one. Past that the run-out is bare ground.
 - **Heights past any edge** now carry on from the edge. Before, the brush drawn just outside a map stood on the
   edge's slope continued, up to about a unit too high.
 
