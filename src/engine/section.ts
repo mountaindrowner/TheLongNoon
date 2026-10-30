@@ -464,12 +464,16 @@ function runOutFlora(d: Dress, spec: SectionSpec, outCell: (x: number, z: number
     const openAt: number[] = [];
     for (let a = 0; a < len; a++) if (edge(a) !== '#') openAt.push(a + 0.5);
     const fromRoad = (a: number): number => openAt.reduce((m, o) => Math.min(m, Math.abs(Math.min(len - 0.5, Math.max(0.5, a)) - o) + Math.max(0, -a, a - len)), 99);
-    for (let z = ro.z0 + 0.4; z < ro.z1; z += 1.3) for (let x = ro.x0 + 0.4; x < ro.x1; x += 1.3) {
+    // only as far as the camera can see past this side (it looks north: far past a north edge, barely past a south
+    // one); the rest of the run-out is bare ground, which costs next to nothing
+    const reach = ro.side === 'n' ? 14 : ro.side === 's' ? 5 : 10;
+    for (let z = ro.z0 + 0.4; z < ro.z1; z += 1.4) for (let x = ro.x0 + 0.4; x < ro.x1; x += 1.4) {
       const px = x + (r() - 0.5) * 0.9, pz = z + (r() - 0.5) * 0.9;
       if (px > 0 && px < COLS && pz > 0 && pz < ROWS) continue;
-      if (outCell(Math.floor(px), Math.floor(pz)) !== '#') continue;
+      const out = ro.side === 'n' ? -pz : ro.side === 's' ? pz - ROWS : ro.side === 'w' ? -px : px - COLS;
+      if (out > reach || outCell(Math.floor(px), Math.floor(pz)) !== '#') continue;
       const dr = fromRoad(ns ? px : pz);
-      if (dr < 0.9 || r() > (dr < 3 ? 0.85 : dr < 7 ? 0.5 : 0.3)) continue;
+      if (dr < 0.9 || dr > 12 || r() > (dr < 3 ? 0.8 : dr < 7 ? 0.45 : 0.25)) continue;
       const k = r(), s = 0.9 + r() * 0.6;
       const o = st === 'brush' ? (k < 0.86 ? F.thicket(px, pz, s, d.seed()) : k < 0.95 ? F.tree(px, pz, s * 0.8, d.seed()) : F.dead(px, pz, 1.0, d.seed()))
         : st === 'trees' ? (k < 0.6 ? F.tree(px, pz, s, d.seed()) : F.bush(px, pz, s * 0.8, d.seed()))
