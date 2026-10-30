@@ -37,7 +37,7 @@ export class UI {
   /** A character of a line has just appeared (the line, and its index): the speaker's voice hangs off this. */
   onType: ((name: string, text: string, i: number) => void) | null = null;
   /** How long the typing waits after a character (default: the same short beat for every one). */
-  pace: (text: string, i: number) => number = () => 22;
+  pace: (text: string, i: number, name: string) => number = () => 22;
 
   /** Touch stick vector in [-1,1]², and a one-shot A press. */
   stick = { x: 0, y: 0 };
@@ -305,7 +305,7 @@ export class UI {
       this.text.textContent = text.slice(0, this.shown);
       this.onType?.(who, text, this.shown - 1);
       if (this.shown >= text.length) { this.more.style.visibility = 'visible'; return; }
-      this.typing = window.setTimeout(next, this.pace(text, this.shown - 1));
+      this.typing = window.setTimeout(next, this.pace(text, this.shown - 1, who));
     };
     this.typing = window.setTimeout(next, 0);
   }

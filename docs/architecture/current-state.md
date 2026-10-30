@@ -537,6 +537,20 @@ types). The game's first version gave each speaker one beep every other letter. 
   - NIM and the Keeper are machines: a square buzz, flat, no breath.
   - Every speaker in `dialogue.json` and on the maps has a voice set from `tools/cast.json`. A name without one
     gets a fixed voice from its letters.
+- **What a voice can be** (2026-10-30, second pass):
+  - pitch and tube;
+  - breath, rasp (an octave-down catch and a rough pitch), nasal (a low hum, a hollow middle) and whisper;
+  - a wobble, slow for age and quick for a shiver;
+  - a speed that sets the typing and the sounds both;
+  - how far the tune moves, and a sing-song lilt;
+  - a mouth half shut, brightness, a visor or speaker;
+  - a machine's square or sine buzz, and sounds that drop out.
+  The in-game cast is voiced with these, from who they are: Kit fast and lively, Güero half a whisper, Beto
+  rasping, Chayo sing-song through her nose, Memo flat, NIM a bright child of a machine.
+- **The voice catalog** is a private page (`Long Noon Voices`) with every person in the game and in the story
+  file's proposed cast. Each one types its line in its voice over a pitch trace and can be retuned there;
+  **Copy** gives the line for `VOICES`. The proposed cast's voices stay on that page, out of this public repo,
+  until those people are in the game.
 - **The text decides what plays.** A sound starts only where a group of vowels starts, about once a syllable. Its
   letters pick the vowel ("oo" is *u*, "ee" is *i*), and a silent final e stays silent. The same line sounds the
   same every time.

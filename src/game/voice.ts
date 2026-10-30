@@ -10,8 +10,10 @@
  * - **The tune** comes from the punctuation already in the line: the pitch drifts down through a phrase and
  *   starts again at each comma; a question rises on its last word; an exclamation starts high; trailing dots
  *   fade out; a word in capitals is shouted.
- * - **Old voices** wobble slowly, about twice a second, rather than wandering. **Machines** buzz square and
- *   flat, with no breath and no tune.
+ * - **Who's talking** sets the rest: old voices wobble slowly, about twice a second, rather than wandering; a
+ *   hard life rasps; some talk through the nose, some barely above a whisper, some fast, some in a drawl, some
+ *   flat and some all over the place; a visor or a speaker thins a voice. **Machines** buzz square and flat,
+ *   with no breath.
  *
  * The idea and the method follow a devlog on mumble speech the owner shared (2026-10-30).
  */
@@ -23,45 +25,77 @@ export interface VoiceProfile {
   tract: number;
   /** Air in the voice, 0–1. */
   breath?: number;
-  /** An old voice's slow wobble, as a fraction of pitch (0.03 is plenty). */
+  /** A slow wobble in the pitch, as a fraction of it (0.03 is plenty): an old voice. */
   wobble?: number;
+  /** How fast it wobbles, Hz (default 2.1: age; 5–6 is a shiver, a fever). */
+  wobbleHz?: number;
+  /** Gravel: a rough, creaking buzz (0–1). A hard life, a smoker's throat, a fever. */
+  rasp?: number;
+  /** Through the nose (0–1). */
+  nasal?: number;
+  /** Mostly air, little buzz (0–1): a whisper, somebody practising not being heard. */
+  whisper?: number;
   /** Talks with the mouth almost shut: the vowels pulled together and dulled. */
   closed?: boolean;
-  /** A machine: square buzz, no breath, no tune. */
+  /** Brightness of the top end (1 normal; under 1 dark and warm, over 1 sharp). */
+  bright?: number;
+  /** How far the tune moves (1 normal; 0.3 flat and controlled, 1.6 all over the place). */
+  range?: number;
+  /** A sing-song rise and fall from syllable to syllable (0–0.1). */
+  lilt?: number;
+  /** Speed (1 normal): the typing and the sounds both; a drawl under 1, a chatterbox over. */
+  rate?: number;
+  /** Heard through a visor, a speaker or a radio: thin, and a little broken. */
+  radio?: boolean;
+  /** A machine: square buzz, no breath, no tune of its own unless `range` gives it one. */
   machine?: boolean;
+  /** The buzz's wave, over the default (sawtooth; square for a machine): 'sine' is smooth, too smooth. */
+  wave?: OscillatorType;
+  /** Sounds that drop out (0–1): a failing machine. */
+  dropout?: number;
   /** Loudness against the others (1 normal). */
   vol?: number;
 }
 
-/** Each speaker's voice, from who they are (tools/cast.json). Anyone missing gets one from their name. */
+/**
+ * Each speaker's voice, from who they are (tools/cast.json, the prologue's dialogue): age and build set the
+ * pitch and the tube, the person sets the rest. Anyone missing gets a voice from their name.
+ */
 export const VOICES: Record<string, VoiceProfile> = {
-  Juno: { f0: 228, tract: 1.17, breath: 0.22 },
-  Kit: { f0: 285, tract: 1.25, breath: 0.18 },
-  'Little Juno': { f0: 335, tract: 1.38, breath: 0.2 },
-  Tavo: { f0: 300, tract: 1.3, breath: 0.16 },
-  Nina: { f0: 315, tract: 1.32, breath: 0.2 },
-  'Güero': { f0: 325, tract: 1.35, breath: 0.18 },
-  'Hermana Lupe': { f0: 205, tract: 1.12, breath: 0.32, wobble: 0.03 },
-  'Abuela Toña': { f0: 212, tract: 1.11, breath: 0.38, wobble: 0.05 },
-  'Doña Chayo': { f0: 192, tract: 1.1, breath: 0.14, vol: 1.15 },
-  'Doña Fina': { f0: 200, tract: 1.13, breath: 0.2 },
-  'Doña Marta': { f0: 214, tract: 1.12, breath: 0.2, wobble: 0.015 },
-  'Doña Inés': { f0: 222, tract: 1.16, breath: 0.34, vol: 0.85 },
-  'Mamá': { f0: 210, tract: 1.15, breath: 0.24 },
-  Traveler: { f0: 204, tract: 1.14, breath: 0.32 },
-  'Papá': { f0: 116, tract: 1.0, breath: 0.22 },
-  'Rubén': { f0: 108, tract: 0.98, breath: 0.26, closed: true, vol: 0.9 },
-  Memo: { f0: 124, tract: 1.0, breath: 0.18 },
-  Chuy: { f0: 136, tract: 1.03, breath: 0.16 },
-  Benny: { f0: 142, tract: 1.04, breath: 0.16 },
-  'Pastor Abel': { f0: 98, tract: 0.92, breath: 0.22 },
-  'Don Beto': { f0: 104, tract: 0.96, breath: 0.26, wobble: 0.03 },
-  'Abuelo Nacho': { f0: 114, tract: 0.97, breath: 0.36, wobble: 0.05 },
-  Scavenger: { f0: 118, tract: 1.0, breath: 0.24, closed: true },
-  Neto: { f0: 118, tract: 1.0, breath: 0.24, closed: true },
-  Noonrider: { f0: 112, tract: 1.0, breath: 0.1, closed: true },
-  NIM: { f0: 150, tract: 1.06, machine: true, vol: 0.8 },
-  Keeper: { f0: 360, tract: 1.2, machine: true, wobble: 0.04, vol: 0.7 },
+  // the young: Juno steady and low for her age, Kit never stops, Güero barely there
+  Juno: { f0: 214, tract: 1.16, breath: 0.24, range: 0.85 },
+  Kit: { f0: 292, tract: 1.25, breath: 0.16, rate: 1.25, range: 1.45, bright: 1.15 },
+  'Little Juno': { f0: 340, tract: 1.38, breath: 0.2, range: 1.4 },
+  Tavo: { f0: 305, tract: 1.3, breath: 0.14, rate: 1.15, range: 1.3, bright: 1.1 },
+  Nina: { f0: 318, tract: 1.32, breath: 0.2, range: 0.9, lilt: 0.03 },
+  'Güero': { f0: 330, tract: 1.35, breath: 0.3, whisper: 0.55, vol: 0.8, range: 0.8 },
+  // the old: slow, wobbling, each their own way
+  'Hermana Lupe': { f0: 200, tract: 1.12, breath: 0.3, wobble: 0.03, rate: 0.85, range: 0.8, bright: 0.9 },
+  'Abuela Toña': { f0: 212, tract: 1.11, breath: 0.4, wobble: 0.05, rate: 0.8, whisper: 0.2, lilt: 0.03 },
+  'Don Beto': { f0: 102, tract: 0.95, breath: 0.24, wobble: 0.025, rasp: 0.35, rate: 0.85, range: 1.35 },
+  'Abuelo Nacho': { f0: 116, tract: 0.97, breath: 0.38, wobble: 0.055, rate: 0.75, rasp: 0.2 },
+  // the market and the well: Chayo sells, Fina is plain, Marta is glad of you
+  'Doña Chayo': { f0: 188, tract: 1.09, breath: 0.12, vol: 1.15, lilt: 0.06, rate: 1.1, range: 1.25, nasal: 0.25 },
+  'Doña Fina': { f0: 198, tract: 1.13, breath: 0.2, range: 0.8 },
+  'Doña Marta': { f0: 218, tract: 1.12, breath: 0.18, wobble: 0.015, lilt: 0.05, bright: 1.1, range: 1.3 },
+  'Doña Inés': { f0: 224, tract: 1.16, breath: 0.36, whisper: 0.25, vol: 0.85, rate: 0.95 },
+  'Mamá': { f0: 208, tract: 1.15, breath: 0.24, lilt: 0.02 },
+  Traveler: { f0: 200, tract: 1.14, breath: 0.34, rasp: 0.15, rate: 0.9 },
+  // the men: tired, quiet, laconic, warm
+  'Papá': { f0: 114, tract: 1.0, breath: 0.26, range: 0.85, rate: 0.95 },
+  'Rubén': { f0: 106, tract: 0.98, breath: 0.26, closed: true, vol: 0.9, range: 0.6 },
+  Memo: { f0: 122, tract: 1.0, breath: 0.16, range: 0.55, rate: 0.95, rasp: 0.1 },
+  Chuy: { f0: 138, tract: 1.03, breath: 0.14, rate: 1.15, nasal: 0.2, bright: 1.1 },
+  Benny: { f0: 146, tract: 1.05, breath: 0.16, bright: 1.15, range: 1.25, rate: 1.1 },
+  'Pastor Abel': { f0: 96, tract: 0.91, breath: 0.22, bright: 0.85, rate: 0.85, range: 0.9 },
+  // the mall: a scavenger mutters through his nose
+  Scavenger: { f0: 120, tract: 1.0, breath: 0.22, closed: true, nasal: 0.45, rasp: 0.25 },
+  Neto: { f0: 128, tract: 1.01, breath: 0.24, closed: true, nasal: 0.35, rate: 1.1 },
+  // through a visor
+  Noonrider: { f0: 110, tract: 1.0, breath: 0.1, radio: true, range: 0.4, rasp: 0.15 },
+  // machines: NIM a bright child of a machine, the Keeper's cracked speaker keening
+  NIM: { f0: 236, tract: 1.22, machine: true, range: 1.5, bright: 1.2, rate: 1.1, vol: 0.75 },
+  Keeper: { f0: 360, tract: 1.2, machine: true, wave: 'sine', wobble: 0.04, wobbleHz: 3.2, radio: true, lilt: 0.05, range: 0.6, vol: 0.75 },
 };
 
 /** A voice for anyone without one: a grown man or woman, fixed by the name. */
@@ -70,8 +104,9 @@ export function voiceOf(name: string): VoiceProfile {
   if (v) return v;
   let h = 2166136261;
   for (const ch of name) h = Math.imul(h ^ ch.codePointAt(0)!, 16777619);
-  const r = (h >>> 0) / 4294967296, woman = r > 0.5, k = (r * 7) % 1;
-  return woman ? { f0: 195 + k * 35, tract: 1.1 + k * 0.08, breath: 0.22 } : { f0: 102 + k * 40, tract: 0.95 + k * 0.08, breath: 0.2 };
+  const r = (h >>> 0) / 4294967296, woman = r > 0.5, k = (r * 7) % 1, q = (r * 13) % 1;
+  const base = woman ? { f0: 195 + k * 35, tract: 1.1 + k * 0.08 } : { f0: 102 + k * 40, tract: 0.95 + k * 0.08 };
+  return { ...base, breath: 0.16 + q * 0.16, rate: 0.9 + q * 0.2, range: 0.8 + k * 0.4 };
 }
 
 type Vowel = 'a' | 'e' | 'i' | 'o' | 'u';
@@ -85,7 +120,7 @@ const FORMANTS: Record<Vowel, [number, number, number]> = {
 };
 
 /** One sound in a line: where it falls, which vowel, its pitch against the speaker's, how loud. */
-export interface Syllable { at: number; vowel: Vowel; pitch: number; gain: number }
+export interface Syllable { at: number; vowel: Vowel; pitch: number; gain: number; /** its place in the phrase */ k?: number }
 
 const VOWEL = /[aeiouyáéíóúü]/i;
 const fold = (c: string): string => c.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -138,62 +173,110 @@ export function planLine(text: string): Map<number, Syllable> {
       if (trail) { gain *= 1 - 0.55 * t; pitch -= 0.04 * t; }
       const word = body.slice(s.word[0], s.word[1]);
       if (word.length > 1 && word === word.toUpperCase() && /\p{Lu}/u.test(word)) { pitch *= 1.22; gain *= 1.55; }
-      out.set(start + s.i, { at: start + s.i, vowel: vowelOf(s.group), pitch, gain });
+      out.set(start + s.i, { at: start + s.i, vowel: vowelOf(s.group), pitch, gain, k });
     });
   }
   return out;
 }
+
+/** A soft-clip curve for voices heard through something (a visor, a speaker). */
+let clipCurve: Float32Array | null = null;
+const clip = (): Float32Array => {
+  if (clipCurve) return clipCurve;
+  clipCurve = new Float32Array(257);
+  for (let i = 0; i < 257; i++) { const x = (i - 128) / 128; clipCurve[i] = Math.tanh(x * 3.2) / Math.tanh(3.2); }
+  return clipCurve;
+};
 
 /**
  * Play one syllable now on `dest` (or at `when` on an offline context). `noise` is a buffer of white noise.
  * Each sound runs a little longer than the gap to the next, so they run together into babble.
  */
 export function utter(c: BaseAudioContext, dest: AudioNode, noise: AudioBuffer, v: VoiceProfile, s: Syllable, when = c.currentTime): void {
-  const t = when, dur = 0.13, vol = 0.075 * (v.vol ?? 1) * s.gain;
+  if (v.dropout && Math.random() < v.dropout) return;
+  const rate = v.rate ?? 1, machine = !!v.machine;
+  const t = when, dur = 0.13 / Math.sqrt(rate), vol = 0.075 * (v.vol ?? 1) * s.gain;
   const tract = v.tract * (v.closed ? 0.94 : 1);
   let [f1, f2, f3] = FORMANTS[s.vowel];
   if (v.closed) { f1 = 300 + (f1 - 300) * 0.55; f2 = 1300 + (f2 - 1300) * 0.5; } // the vowels pulled toward a mumble
-  // the buzz: the speaker's pitch, where the syllable sits in its phrase, a nudge, and an old voice's wobble
-  const machine = !!v.machine;
+  // the buzz: the speaker's pitch, the phrase's tune (as wide as they speak), a lilt, a nudge, a wobble
+  const range = v.range ?? (machine ? 0 : 1);
+  const lilt = v.lilt ? 1 + v.lilt * Math.sin((s.k ?? 0) * 1.9) : 1;
   const nudge = machine ? 1 : 1 + (Math.random() - 0.5) * 0.05;
-  const f0 = v.f0 * (machine ? 1 : s.pitch) * nudge;
+  const f0 = v.f0 * (1 + (s.pitch - 1) * range) * lilt * nudge;
+  const rasp = v.rasp ?? 0;
   const src = c.createOscillator();
-  src.type = machine ? 'square' : 'sawtooth';
-  const N = 9, curve = new Float32Array(N);
+  src.type = v.wave ?? (machine ? 'square' : 'sawtooth');
+  const N = 12, curve = new Float32Array(N), wHz = v.wobbleHz ?? 2.1;
   for (let k = 0; k < N; k++) {
     const tk = t + (dur * k) / (N - 1);
-    const wob = v.wobble ? 1 + v.wobble * Math.sin(tk * 2 * Math.PI * 2.1) : 1;
-    curve[k] = f0 * wob * (1 - (machine ? 0 : 0.03) * (k / (N - 1))); // a voice sags a little through a sound
+    const wob = v.wobble ? 1 + v.wobble * Math.sin(tk * 2 * Math.PI * wHz) : 1;
+    const grit = rasp ? 1 + (Math.random() - 0.5) * 0.06 * rasp : 1; // a rough voice never holds a pitch
+    curve[k] = f0 * wob * grit * (1 - (machine ? 0 : 0.03) * (k / (N - 1))); // and every voice sags a little
   }
   src.frequency.setValueCurveAtTime(curve, t, dur);
-  // the breath: soft noise under the buzz
+  const buzz = c.createGain();
+  buzz.gain.value = 1 - (v.whisper ?? 0) * 0.92;
+  src.connect(buzz);
+  // gravel: the folds catching every other cycle, a buzz an octave down under the voice
+  let sub: OscillatorNode | null = null;
+  if (rasp) {
+    sub = c.createOscillator();
+    sub.type = 'sawtooth';
+    sub.frequency.setValueCurveAtTime(curve.map((f) => f / 2), t, dur);
+    const sg = c.createGain();
+    sg.gain.value = rasp * 0.55;
+    sub.connect(sg); sg.connect(buzz);
+  }
+  // the breath: soft noise under the buzz (most of a whisper)
   const air = c.createBufferSource();
   air.buffer = noise;
   const airG = c.createGain();
-  airG.gain.value = machine ? 0 : (v.breath ?? 0.2) * 0.9;
+  airG.gain.value = machine ? 0 : ((v.breath ?? 0.2) * 0.9 + (v.whisper ?? 0) * 1.6 + rasp * 0.15);
   air.connect(airG);
-  // the tube: three bands, louder low, through to a gentle top cut (lower for a shut mouth)
+  // the tube: three bands, louder low (and through the nose, a low hum and a hollow in the middle)
   const mix = c.createGain();
-  const top = c.createBiquadFilter();
-  top.type = 'lowpass';
-  top.frequency.value = v.closed ? 1900 : 4200;
-  ([[f1, 90, 1], [f2, 110, 1], [f3, 160, 0.6]] as Array<[number, number, number]>).forEach(([f, bw, g]) => {
+  const nasal = v.nasal ?? 0;
+  const bands: Array<[number, number, number]> = [[f1, 90, 1 - nasal * 0.45], [f2, 110, 1], [f3, 160, 0.6]];
+  if (nasal) bands.push([260, 70, nasal * 1.3]);
+  for (const [f, bw, g] of bands) {
     const bp = c.createBiquadFilter();
     bp.type = 'bandpass';
     bp.frequency.value = f * tract;
-    bp.Q.value = (f * tract) / (bw * tract);
+    bp.Q.value = f / bw;
     const bg = c.createGain();
     bg.gain.value = g;
-    src.connect(bp); airG.connect(bp); bp.connect(bg); bg.connect(mix);
-  });
+    buzz.connect(bp); airG.connect(bp); bp.connect(bg); bg.connect(mix);
+  }
+  let node: AudioNode = mix;
+  if (nasal) {
+    const hollow = c.createBiquadFilter();
+    hollow.type = 'peaking'; hollow.frequency.value = 1000 * tract; hollow.Q.value = 2; hollow.gain.value = -10 * nasal;
+    node.connect(hollow); node = hollow;
+  }
+  // the top end: a gentle cut, lower for a shut mouth, moved by brightness
+  const top = c.createBiquadFilter();
+  top.type = 'lowpass';
+  top.frequency.value = (v.closed ? 1900 : 4200) * (v.bright ?? 1);
+  node.connect(top); node = top;
+  // through a visor or a speaker: only the middle gets through, a little broken
+  if (v.radio) {
+    const lo = c.createBiquadFilter(); lo.type = 'highpass'; lo.frequency.value = 450;
+    const hi = c.createBiquadFilter(); hi.type = 'lowpass'; hi.frequency.value = 2700;
+    const pre = c.createGain(); pre.gain.value = 6;
+    const sh = c.createWaveShaper(); sh.curve = clip() as Float32Array<ArrayBuffer>;
+    const post = c.createGain(); post.gain.value = 0.22;
+    node.connect(lo); lo.connect(hi); hi.connect(pre); pre.connect(sh); sh.connect(post); node = post;
+  }
   // the shape: swell, hold, let go (not a strike that dies away)
   const env = c.createGain();
   env.gain.setValueAtTime(0, t);
   env.gain.linearRampToValueAtTime(vol, t + 0.03);
   env.gain.setValueAtTime(vol, t + dur * 0.55);
   env.gain.linearRampToValueAtTime(0, t + dur);
-  mix.connect(top); top.connect(env); env.connect(dest);
+  node.connect(env); env.connect(dest);
   src.start(t); src.stop(t + dur + 0.02);
+  sub?.start(t); sub?.stop(t + dur + 0.02);
   air.start(t, Math.random() * Math.max(0, noise.duration - dur - 0.1)); air.stop(t + dur + 0.02);
 }
 

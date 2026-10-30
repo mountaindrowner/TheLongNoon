@@ -16,7 +16,7 @@ import { Hud, PAGE_ORDER, type Page } from './game/hud';
 import { Tale } from './game/tale';
 import { campfire } from './game/fire';
 import { Sound } from './game/sound';
-import { pauseAfter } from './game/voice';
+import { pauseAfter, voiceOf } from './game/voice';
 import { Fight, type FightDef, type UnitDef } from './game/battle';
 import BATTLES from './game/data/battles.json';
 import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
@@ -70,7 +70,7 @@ const hud = new Hud(ui.root);
 const tale = new Tale(ui.root);
 const sound = new Sound();
 ui.onType = (name, text, i) => sound.voice(name, text, i);
-ui.pace = (text, i) => pauseAfter(text, i, 30);
+ui.pace = (text, i, name) => pauseAfter(text, i, 30 / (name ? voiceOf(name).rate ?? 1 : 1));
 hud.sfx = (n) => sound.play(n);
 // browsers start sound only after a tap or a key
 for (const ev of ['pointerdown', 'keydown'] as const) addEventListener(ev, () => sound.init(), { capture: true });
