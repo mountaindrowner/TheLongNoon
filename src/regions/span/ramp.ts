@@ -5,7 +5,7 @@ import { rock } from '../../engine/props';
 import { box, beam, colMat, shade } from '../../engine/geo';
 import { addSolid } from '../../engine/world';
 import { carHulk, tires } from './props';
-import { spanPaint, retainingWall, jerseys, fallenSign, gantry, fuelCanopy, cairn } from './kit';
+import { spanPaint, retainingWall, jerseys, fallenSign, gantry, fuelCanopy, cairn, exitVeil } from './kit';
 import { spanDoor } from './doors';
 import { SPAN_FLORA } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
@@ -151,6 +151,9 @@ export function ramp(night: boolean): SectionSpec {
       // ------------------------------------------------ a second sign down by the ramp's foot: the sled, on the last night
       fallenSign(scene, 24, 52, -0.4);
       d.things.push({ x: 24, z: 53.8, r: 2.6, label: 'Sign', script: 'sled' });
+      // back down to town: the highway fades out past the south edge (the hub, its own place)
+      exitVeil(scene, 13, ROWS, 12, 's', night);
+      d.spawns.town = { x: 10, z: ROWS - 2.4, face: 'N' }; // the west lanes, clear of the median
       brushFill(d, 63, 1);
       openScatter(d, 64, ['x', 's'], 0.9, (x, z) => clearOf(FRONTAGE, 3)(x, z) && clearOf([A, B], 4)(x, z) && x > HW.x1 + 1.5);
 

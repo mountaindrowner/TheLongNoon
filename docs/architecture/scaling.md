@@ -31,17 +31,27 @@ add maybe 150–300 KB.
 
 ## At run time
 
-| Where | Draw calls | Triangles | Meshes | Notes |
-|---|---|---|---|---|
-| Seven Flags (the town) | 750 | 3.9 M | 2,463 | triangles include the shadow pass |
-| The church on the hill | 600 | 2.9 M | 583 | |
-| The White Bowl | 130 | 2.7 M | 407 | |
-| A room | ~530 | 9 k | ~120 | the cutaway walls are many small pieces |
+Since the Span became hub and spokes (below), every map is built alone, so each row is that map's whole cost.
+Triangles include the shadow pass.
 
-- **Memory:** the JS heap is about 160 MB in town, up to 350 MB in the moment of swapping regions (before the old
-  one is collected).
-- **Maps stream:** only the maps near Juno exist. More maps don't make any frame cost more. Frame cost depends on
-  how dense the maps around her are, not on how many there are.
+| Where | Draw calls | Triangles | Meshes |
+|---|---|---|---|
+| Seven Flags (the town, the hub) | 680 | 3.9 M | 2,374 |
+| The Lake Road | 170–226 | 3.8–4.1 M | 497 |
+| The White Bowl | 130 | 2.7 M | 323 |
+| The Ramp | 376 | 1.5 M | 344 |
+| The Trail North | 376 | 2.9 M | 313 |
+| The church | 604 | 2.9 M | 550 |
+| The mall | 338 | 2.4 M | 418 |
+| A room | ~530 | 9 k | ~120 |
+
+The cutaway walls in rooms are many small pieces, hence the draw calls.
+
+- **Before hub and spokes,** two maps were drawn at once wherever they met. The town's east edge with the Lake Road
+  came to about 7.7 M triangles, and the Lake Road with the White Bowl to 6.2 M.
+- **Memory:** the JS heap is about 160 MB in town. It reaches about 350 MB in the moment of going from one place to
+  another, before the old one is collected.
+- **More maps don't make any frame cost more.** Only the place Juno is in exists.
 - **Building a map** took 3 to 20 s here, in software rendering on a shared CPU. On a real machine it should be a
   fraction of that, spread over frames, but it hasn't been measured on a phone. `?perf` now shows it.
 
@@ -55,9 +65,27 @@ add maybe 150–300 KB.
 All four are now freed. After three round trips through every region, the textures, geometries and heap are back
 where they started. Before this, a long session, and phones above all, would have run out of GPU memory.
 
+## Hub and spokes (the owner, 2026-10-29)
+
+*"Would it be better to have regions that have main hubs and have connections, but you load into separate maps in
+the region?"*, then *"try to make our current region and maps like that."*
+
+- **Seven Flags is the hub.** Every other map is a place of its own, loaded through a transition at its edge:
+  - the Ramp, north up the highway;
+  - the Lake Road, east down the boulevard, and the White Bowl down past it;
+  - the Trail North, through the trail gate, and the church up past it;
+  - the mall, through the underpass.
+- **A road off the map fades out**, into the dark by night and into the white by day, the way Octopath ends a path.
+  The road surface runs on under the fade, so the camera never looks past the map's rim (`exitVeil`, kit.ts).
+  Walking into it is the transition: the dissolve, then the next place.
+- **Only one place is built at a time,** so each map's cost (the table above) is the most a frame ever costs there.
+- Story markers for somewhere else point at the way there, through the hub if need be (`gateTo`, region.ts).
+- `edgeIssues`, the door checks and the prologue checker cover every place.
+
 ## Verdict
 
-**The direction holds, and three things need to change before the game grows.**
+**The direction holds, and three things need to change before the game grows.** (The world model already changed:
+hub and spokes, 2026-10-29.)
 
 **What scales:**
 

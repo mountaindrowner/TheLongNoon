@@ -42,14 +42,20 @@ for (const time of ['lamp', 'night', 'white']) {
 
 // Region coordinates (src/regions/span/region.ts PLACE): the Ramp (40,0) 88×64; Seven Flags, the town (0,64) 192×160;
 // the Lake Road (192,128) 96×132; the White Bowl (156,260) 132×96; the Trail North (192,48) 88×72; the church (208,-48)
-// 120×96; the mall (-40,224) 132×96. The town region holds the first four; the trail and the church are the hill, the
-// mall is a place of its own (one coordinate frame for all three).
+// 120×96; the mall (-40,224) 132×96. Hub and spokes (2026-10-29): the town is the hub; the Ramp, the Lake Road with
+// the White Bowl, the hill (trail and church) and the mall are each their own place (one coordinate frame for all).
 test('every map is where the region says it is', async ({ page }) => {
   test.setTimeout(240_000);
   await boot(page, 'night');
   const where = await page.evaluate(() => [[80, 30], [100, 150], [240, 200], [240, 300], [230, 80], [260, 0], [20, 280]].map(([x, z]) => window.__LN.pieceAtPoint(x, z)));
-  expect(where).toEqual(['ramp', 'seven-flags', 'lake-road', 'white-bowl', null, null, null]);
+  expect(where).toEqual([null, 'seven-flags', null, null, null, null, null]);
   expect(await page.evaluate(() => window.__LN.piece)).toBe('seven-flags');
+  // and each spoke holds its own maps
+  for (const [id, x, z, want] of [['northroad', 80, 30, 'ramp'], ['lakeside', 240, 200, 'lake-road'], ['bowl', 240, 300, 'white-bowl']]) {
+    await page.evaluate(([id, x, z]) => window.__LN.go(id, { x, z }), [id, x, z]);
+    await until(page, (id) => window.__LN.areaId === id && !window.__LN.busy, id, 180_000);
+    expect(await page.evaluate(() => window.__LN.piece)).toBe(want);
+  }
 });
 
 test('the hill and the mall are places of their own: through the trail gate and the underpass, and back', async ({ page }, info) => {
@@ -70,22 +76,24 @@ test('the hill and the mall are places of their own: through the trail gate and 
   await page.screenshot({ path: info.outputPath('arrive-mall.png') });
   expect(await walk(56, 227.6, 'ArrowUp', 'span')).toEqual(['span', 'seven-flags']);
   // north-east: through the trail gate, up the Old Trail
-  expect(await walk(188, 85, 'ArrowRight', 'hill')).toEqual(['hill', 'trail']);
+  expect(await walk(188, 85, 'ArrowRight', 'oldtrail')).toEqual(['oldtrail', 'trail']);
   await page.screenshot({ path: info.outputPath('arrive-hill.png') });
   expect(await walk(195.4, 85, 'ArrowLeft', 'span')).toEqual(['span', 'seven-flags']);
   expect(errors).toEqual([]);
 });
 
-test('Juno walks out of town onto the Lake Road with no cut, and solid things stop her', async ({ page }) => {
+test('Juno walks out of town east onto the Lake Road (its own place), and solid things stop her', async ({ page }) => {
   test.setTimeout(300_000);
   await boot(page);
-  // Del Mar runs east past Memo's barricade into the Lake Road through a gap in the brush at x 192
-  await page.evaluate(() => window.__LN.tp(191.2, 188));
+  // Del Mar runs east past Memo's barricade and fades out at the town's edge (x 192): walking into it loads the Lake Road
+  await page.evaluate(() => window.__LN.tp(190.4, 188));
   await page.keyboard.down('KeyD');
-  await until(page, () => window.__LN.pos[0] > 192.4, undefined, 150_000);
+  await until(page, () => window.__LN.areaId === 'lakeside', undefined, 240_000);
   await page.keyboard.up('KeyD');
+  await until(page, () => !window.__LN.busy);
   expect(await page.evaluate(() => window.__LN.piece)).toBe('lake-road');
-  expect(await page.evaluate(() => window.__LN.areaId)).toBe('span');
+  await page.evaluate(() => window.__LN.go('span', 'start'));
+  await until(page, () => window.__LN.areaId === 'span' && !window.__LN.busy, undefined, 180_000);
   // Mar Farm's front wall is solid: walking north across the lot stops at its face (z 64 + 115.9)
   await page.evaluate(() => window.__LN.tp(139, 182));
   await page.keyboard.down('KeyW');
@@ -137,8 +145,8 @@ test('every edge Juno can reach is a barrier, or a person who turns her back', a
   await boot(page, 'night');
   // walks out from Juno over every map: nothing reachable past a map's edge or onto a road to a map not built
   expect(await page.evaluate(() => window.__LN.edgeIssues())).toEqual([]);
-  // and the same in the hill and the mall, each from where you come in
-  for (const [id, spawn] of [['hill', 'trail:town'], ['mallside', 'mall:town']]) {
+  // and the same in every spoke, each from where you come in
+  for (const [id, spawn] of [['northroad', 'ramp:town'], ['lakeside', 'lake-road:town'], ['bowl', 'white-bowl:road'], ['oldtrail', 'trail:town'], ['hill', 'church:trail'], ['mallside', 'mall:town']]) {
     await page.evaluate(([id, spawn]) => window.__LN.go(id, spawn), [id, spawn]);
     await until(page, (id) => window.__LN.areaId === id && !window.__LN.busy, id, 180_000);
     expect(await page.evaluate(() => window.__LN.edgeIssues())).toEqual([]);
@@ -150,6 +158,8 @@ test('the boulevard east is closed with barriers, and they stop her', async ({ p
   const errors = watchErrors(page);
   await boot(page);
   // Del Mar goes on east past the Lake Road's fork (x 288, z 128 + 60); barriers stand across it near x 282.6
+  await page.evaluate(() => window.__LN.go('lakeside', { x: 278, z: 188 }));
+  await until(page, () => window.__LN.areaId === 'lakeside' && !window.__LN.busy, undefined, 180_000);
   await page.evaluate(() => window.__LN.tp(278, 188));
   await page.keyboard.down('KeyD');
   await until(page, () => window.__LN.pos[0] > 280);
@@ -164,7 +174,9 @@ test('Chuy holds the road north: stepping onto his line, he talks and turns Juno
   test.setTimeout(300_000);
   const errors = watchErrors(page);
   await boot(page);
-  // the Ramp is at (40, 0); Chuy's line runs across the highway at z 1.5 to 4.2
+  // the Ramp is at (40, 0), its own place north of town; Chuy's line runs across the highway at z 1.5 to 4.2
+  await page.evaluate(() => window.__LN.go('northroad', { x: 54, z: 8 }));
+  await until(page, () => window.__LN.areaId === 'northroad' && !window.__LN.busy, undefined, 180_000);
   await page.evaluate(() => window.__LN.tp(54, 8));
   await page.keyboard.down('KeyW');
   await until(page, () => window.__LN.talking, undefined, 150_000);
@@ -189,11 +201,13 @@ test('the highway is walled off; the on-ramp at the top of town leads up onto it
   for (;;) { const x = (await pos(page))[0]; if (Math.abs(x - prev) < 1e-4) break; prev = x; await page.waitForTimeout(1500); }
   await page.keyboard.up('KeyA');
   expect((await pos(page))[0]).toBeGreaterThan(26);
-  // up on the deck north of the junction, walking north up the west lanes (the median barriers are solid) leaves town for the Ramp
-  await page.evaluate(() => window.__LN.tp(50, 64 + 4));
+  // up on the deck north of the junction, walking north up the west lanes (the median barriers are solid) leaves town:
+  // the highway fades out at the edge, and walking into it loads the Ramp
+  await page.evaluate(() => window.__LN.tp(50, 64 + 2.2));
   await page.keyboard.down('KeyW');
-  await until(page, () => window.__LN.pos[1] < 63.4, undefined, 150_000);
+  await until(page, () => window.__LN.areaId === 'northroad', undefined, 240_000);
   await page.keyboard.up('KeyW');
+  await until(page, () => !window.__LN.busy);
   expect(await page.evaluate(() => window.__LN.piece)).toBe('ramp');
 });
 

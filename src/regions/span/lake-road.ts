@@ -4,7 +4,7 @@ import { boardSign } from '../../engine/props';
 import { fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, nopal, carHulk, tires, lanternPost, skull, drum } from './props';
-import { spanPaint, tracks, billboard, trafficSignal, busShelter, cairn, headwall, jerseys } from './kit';
+import { spanPaint, tracks, billboard, trafficSignal, busShelter, cairn, headwall, jerseys, exitVeil } from './kit';
 import { SPAN_FLORA, mesquite, deadMesquite } from './brush';
 import { brushFill, openScatter, motte, clearOf } from './fill';
 import { salvageFence, rubble, ruinWall } from './ruins';
@@ -126,6 +126,11 @@ export function lakeRoad(night: boolean): SectionSpec {
       tires(scene, 26, 96, 6); drum(scene, 10, 97); drum(scene, 11, 97.6, true);
 
       // ------------------------------------------------ brush
+      // back west to town: the boulevard fades out past the edge (the hub, its own place)
+      exitVeil(scene, 0, 60, 9, 'w', night);
+      // down to the White Bowl, its own place: the road, and the drain beside it
+      exitVeil(scene, 44, ROWS, 8, 's', night);
+      exitVeil(scene, 69, ROWS, 6, 's', night, '#8a8a84');
       brushFill(d, 74, 1);
       for (const [x, z, s] of [[56, 70, 1.1], [30, 108, 1.0], [52, 92, 1.0]] as Array<[number, number, number]>) d.tree(mesquite(x, z, s, seed()), 0.3);
       d.tree(deadMesquite(46, 40, 1.1, seed()), 0.2);

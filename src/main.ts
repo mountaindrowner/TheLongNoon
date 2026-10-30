@@ -28,7 +28,7 @@ import STORIES from './game/data/stories.json';
 import { cond as condOf, objective, tasksDone, nightOf, walk, lint, type Quests, type Catalog, type Paper } from './game/progress';
 import { SKY } from './regions/span/moods';
 import { fadeOccluders, swaySpan } from './regions/span/props';
-import { SPAN, HILL, START, REGIONS, GATES, regionOf, regionAt, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
+import { SPAN, HILL, TRAIL, START, REGIONS, gateTo, regionOf, regionAt, spanRegion, spanRooms, UNBUILT } from './regions/span/region';
 
 /**
  * The Long Noon, rebuilt on the world style spec (docs/style/world-style-spec.md)
@@ -318,7 +318,7 @@ async function go(to: string, spawn: string | Spot): Promise<void> {
   lastPiece = '';
   await ui.dissolve(false);
   if (!(to in REGIONS)) { ui.nameTag(w.area.title, w.area.sub); arrived(to); }
-  else if (crossing) { const p = (w.area as Region).pieceAt(player.x, player.z); if (p) { ui.nameTag(p.title, p.sub); lastPiece = p.id; } }
+  else if (crossing) { const p = (w.area as Region).pieceAt(player.x, player.z); if (p) { ui.nameTag(p.title, p.sub); lastPiece = p.id; arrived(p.id); } }
   busy = false;
 }
 
@@ -566,7 +566,7 @@ function frame(): void {
   if (isOut(cur) && time.phase === 'Shutter' && !fight.active) goingIn(dt);
   // once the bell is home, Benny rings it at Lamp: heard on the hill and down the trail
   if (time.phase !== lastPhase) {
-    if (lastPhase && time.phase === 'Lamp' && S.flags.bell_hung && cur.id === HILL) sound.bell();
+    if (lastPhase && time.phase === 'Lamp' && S.flags.bell_hung && (cur.id === HILL || cur.id === TRAIL)) sound.bell();
     lastPhase = time.phase;
   }
   follow(dt);
@@ -825,7 +825,7 @@ function markGoal(): void {
   let g = mode === 'play' && isOut(cur) && free() ? goalPoint() : null;
   // a goal in another region (the hill, the mall, the town): point at the way there
   const there = g && regionAt(g[0], g[1]);
-  if (there && there !== cur.id) g = GATES[cur.id]?.[there] ?? null;
+  if (there && there !== cur.id) g = gateTo(cur.id, there);
   if (!g || Math.hypot(player.x - g[0], player.z - g[1]) < 2.4) { hud.mark(null); return; }
   v.set(g[0], cur.area.ground(g[0], g[1]) + 2.1, g[1]).project(camera);
   hud.mark({ x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight, behind: v.z > 1 });
@@ -1780,6 +1780,16 @@ load().then(() => {
     get buildMs() { return isOut(cur) ? (cur.area as Region).buildMs : {}; },
     /** What the renderer carries right now (draw calls and triangles of the last frame, geometries and textures on the
      *  GPU) and the JS heap where the browser tells it: for checking that the game holds as it grows. */
+    /** What's drawn at a point on the screen (0..1 across and down): for finding where a stray shape comes from. */
+    pick(sx: number, sy: number) {
+      const rc = new THREE.Raycaster();
+      rc.setFromCamera(new THREE.Vector2(sx * 2 - 1, 1 - sy * 2), camera);
+      return rc.intersectObjects(cur.scene.children, true).filter((h) => h.object.type !== 'Points').slice(0, 5).map((h) => {
+        const m = h.object as THREE.Mesh, mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial | undefined;
+        const chain: string[] = []; for (let o: THREE.Object3D | null = m; o && chain.length < 5; o = o.parent) chain.push(o.name || o.type);
+        return { at: [+h.point.x.toFixed(1), +h.point.y.toFixed(2), +h.point.z.toFixed(1)], type: m.type, geo: m.geometry?.type, color: mat?.color?.getHexString?.(), map: !!mat?.map, chain: chain.join(' < ') };
+      });
+    },
     async stats() {
       // the renderer's counters reset with every pass (the post passes too): count one whole frame instead
       const r = renderer.info;
@@ -1969,10 +1979,14 @@ load().then(() => {
       problems.push(...lint(Q, DIALOGUE as unknown as Dialogue, CATALOG, ['drainStarted', 'drainDone', 'night', 'drone_down']));
       // the white, night three: there and back from Mar Farm in the open, against what water and health can take
       const span = places.get(SPAN)!, hatchAt = span.spawns['seven-flags:hatch'];
-      const g = span.npcs.find((n) => n.id === 'guero');
-      if (g && hatchAt) {
-        // walks measured from the lot in front of Mar Farm (the region's start), while every map was built
-        const out = near(span, g.x, g.z, 1.6), hatchFromHome = near(span, hatchAt.x, hatchAt.z, 1.0);
+      // Güero is wherever he waits on night three (out east, past the hub's edge): Mar Farm to that place's way in,
+      // then on to him; walks measured while every map was built
+      const P3 = [...places.values()].find((P) => P.out && P.npcs.some((n) => n.id === 'guero'));
+      const g = P3?.npcs.find((n) => n.id === 'guero');
+      if (P3 && g && hatchAt) {
+        const gate = P3 === span ? null : gateTo(SPAN, P3.id);
+        const leg1 = gate ? near(span, gate[0], gate[1], 1.6) : 0, leg2 = near(P3, g.x, g.z, 1.6);
+        const out = leg1 === null || leg2 === null ? null : leg1 + leg2, hatchFromHome = near(span, hatchAt.x, hatchAt.z, 1.0);
         if (out === null || hatchFromHome === null) problems.push('night three: Güero or the hatch can\'t be walked to from Mar Farm');
         else {
           // the walk back is no longer than out and on to the hatch

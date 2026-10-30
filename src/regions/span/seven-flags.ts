@@ -9,7 +9,7 @@ import { addSolid, heightAt } from '../../engine/world';
 import { rng, fbm } from '../../engine/noise';
 import { dressDoor, markDoor } from '../../engine/doorway';
 import { STRAW, palm, nopal, waterTower, lanternPost, solarPanels, clothesline, shadeSail, jugs, drum, tires, carHulk, burialPlatform, roofLetters, blockWall, mailbox } from './props';
-import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall, underpass, trailGate } from './kit';
+import { spanPaint, stall, stringLights, sevenFlags, well, lawnkeeper, bench, belfry, headwall, jerseys, retainingWall, underpass, trailGate, exitVeil } from './kit';
 import { spanDoor, type SpanDoor } from './doors';
 import { SPAN_FLORA, mesquite } from './brush';
 import { brushFill, openScatter, motte } from './fill';
@@ -466,6 +466,13 @@ export function sevenFlagsTown(night: boolean): SectionSpec {
       // north-east: the Old Trail narrows to a gate of two posts, a lantern hung between them
       d.built.push(trailGate(scene, 189.6, 21, 3.2, Math.PI / 2, night));
       d.spawns.trail = { x: 187.6, z: 21, face: 'W' };
+
+      // ------------------------------------------------ the hub's other ways out: north up the highway to the Ramp, east
+      // down the boulevard to the Lake Road (each its own place since 2026-10-29); the road fades out past the edge
+      exitVeil(scene, 53, 0, 12, 'n', night);
+      d.spawns.north = { x: 50, z: 2.4, face: 'S' }; // the west lanes: the median down the middle is solid
+      exitVeil(scene, COLS, 124, 9, 'e', night);
+      exitVeil(scene, COLS, 21, 5, 'e', night, '#8a7656'); // past the trail gate: the footpath's dirt
 
       // ------------------------------------------------ the prologue's places in town (docs/design/prologue.md)
       // the Cellars: Doña Inés's hatch behind the Plaza, a blue lantern by it (night two's water shift, night three)

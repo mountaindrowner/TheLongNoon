@@ -177,7 +177,7 @@ test('side stories: the flour to the church, Neto and the bell at the mall, and 
   expect((await flags()).q_neto).toBe(true);
 
   // up the hill (a place of its own, through the trail gate): Marta takes the sack; Benny tells of the bell
-  await inRoom(page, 'hill', 'trail:town');
+  await inRoom(page, 'hill', 'church:trail');
   await talkAt(page, 274, 5.8, 0, -1, 'Doña Marta');
   expect((await flags()).flour_given).toBe(true);
   await talkAt(page, 267.6, -15, 0, -1, 'Benny');
@@ -206,7 +206,7 @@ test('side stories: the flour to the church, Neto and the bell at the mall, and 
   expect((await flags()).q_neto_done).toBe(true);
   await talkAt(page, 81.9, 209.1, 0, -1, 'Doña Chayo');
   expect((await flags()).q_flour_done).toBe(true);
-  await inRoom(page, 'hill', 'trail:town');
+  await inRoom(page, 'hill', 'church:trail');
   await talkAt(page, 267.6, -15, 0, -1, 'Benny');
   expect((await flags()).bell_hung).toBe(true);
   expect(await page.evaluate(() => window.__LN.bellUp)).toBe(true);
@@ -272,6 +272,8 @@ test('night three: the white takes Juno while she searches, Güero is lost, and 
   const errors = watchErrors(page);
   await boot(page, '?step=n3_search&clock=09:00');
   // out on the Lake Road in full sun, nothing left
+  await page.evaluate(() => window.__LN.go('lakeside', { x: 226, z: 190 }));
+  await until(page, () => window.__LN.areaId === 'lakeside' && !window.__LN.busy, undefined, 240_000);
   await page.evaluate(async () => { const s = window.__LN.state; s.water = 0; s.party.juno.hp = 1; delete s.items.wraps; await window.__LN.tp(226, 190); });
   await until(page, () => window.__LN.talking, undefined, 600_000);
   await readThrough(page);
@@ -285,7 +287,9 @@ test('night seven: Chuy lets Juno by, and up the Thirty-Five the prologue ends',
   test.setTimeout(900_000);
   const errors = watchErrors(page);
   await boot(page, '?step=n7_leave&time=lamp');
-  // up the northbound lanes (the median is at x 53)
+  // up the northbound lanes of the Ramp (the median is at x 53)
+  await page.evaluate(() => window.__LN.go('northroad', { x: 50, z: 5 }));
+  await until(page, () => window.__LN.areaId === 'northroad' && !window.__LN.busy, undefined, 240_000);
   await page.evaluate(async () => { await window.__LN.tp(50, 5); window.__LN.face(0, -1); });
   await page.keyboard.down('ArrowUp');
   await until(page, () => window.__LN.talking, undefined, 300_000);

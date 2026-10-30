@@ -462,5 +462,5 @@ n7_leave: Leave at Lamp, up the Thirty-Five
 
 ## Notes from the checker
 
-- n3_search: Güero is 129 units' walk from span's start
-- night three in the white: at most 306 units in the open (61 s running, wraps on); full water and health last 120 s before she faints
+- n3_search: Güero is 68 units' walk from lakeside's start
+- night three in the white: at most 296 units in the open (59 s running, wraps on); full water and health last 120 s before she faints

@@ -43,8 +43,20 @@ import { churchOnTheHill } from './church';
  */
 
 export const SPAN = 'span';
-/** The hill north-east of town (the Trail North and the church) and the dead mall south-west: places of their own,
- *  reached from town by a transition (the owner, 2026-10-29), not walked into across a seam. */
+/**
+ * The Span as hub and spokes (the owner, 2026-10-29: "regions that have main hubs and have connections, but you
+ * load into separate maps"). Seven Flags is the hub. Each spoke is its own place, loaded on its own through a
+ * transition at its edge:
+ * - north up the highway to the Ramp;
+ * - east down the boulevard to the Lake Road, and on down to the White Bowl;
+ * - the trail gate north-east to the Trail North, and on up to the church on the hill;
+ * - the underpass south-west to the mall.
+ * Every map is a place of its own, and only one is ever built at a time.
+ */
+export const NORTH = 'northroad';
+export const LAKE = 'lakeside';
+export const BOWL = 'bowl';
+export const TRAIL = 'oldtrail';
 export const HILL = 'hill';
 export const MALLSIDE = 'mallside';
 
@@ -67,8 +79,12 @@ export const START: Spot = { x: 137, z: 64 + 122.5, face: 'N' };
 
 /** The outdoor regions: their maps, their names, and where you arrive if nothing says otherwise. */
 export const REGIONS: Record<string, { title: string; sub: string; pieces: string[]; start: Spot }> = {
-  [SPAN]: { title: 'Seven Flags', sub: 'A town that stayed', pieces: ['ramp', 'seven-flags', 'lake-road', 'white-bowl'], start: START },
-  [HILL]: { title: 'The Hill', sub: 'Up the Old Trail', pieces: ['trail', 'church'], start: { x: 196.4, z: 85, face: 'E' } },
+  [SPAN]: { title: 'Seven Flags', sub: 'A town that stayed', pieces: ['seven-flags'], start: START },
+  [NORTH]: { title: 'The Ramp', sub: 'The road to the Thirty-Five', pieces: ['ramp'], start: { x: 50, z: 61.6, face: 'N' } },
+  [LAKE]: { title: 'The Lake Road', sub: 'East to the White Bowl', pieces: ['lake-road'], start: { x: 194.4, z: 188, face: 'E' } },
+  [BOWL]: { title: 'The White Bowl', sub: 'Where the lake was', pieces: ['white-bowl'], start: { x: 236, z: 262.6, face: 'S' } },
+  [TRAIL]: { title: 'The Trail North', sub: 'Lanterns toward the hill', pieces: ['trail'], start: { x: 196.4, z: 85, face: 'E' } },
+  [HILL]: { title: 'The Open Door', sub: 'A church on the rise', pieces: ['church'], start: { x: 244, z: 45.4, face: 'N' } },
   [MALLSIDE]: { title: 'The Mall', sub: 'Under the long roof', pieces: ['mall'], start: { x: 56, z: 228.2, face: 'S' } },
 };
 /** The region a map belongs to. */
@@ -81,12 +97,29 @@ export function regionAt(x: number, z: number): string | null {
   }
   return null;
 }
-/** Where, in one region, the way to another one is (for markers pointing at a place in the other). */
-export const GATES: Record<string, Record<string, [number, number]>> = {
-  [SPAN]: { [HILL]: [189.6, 85], [MALLSIDE]: [56.3, 222.6] },
-  [HILL]: { [SPAN]: [194.4, 85], [MALLSIDE]: [194.4, 85] },
-  [MALLSIDE]: { [SPAN]: [56, 225.6], [HILL]: [56, 225.6] },
-};
+/** The ways between places: a point just inside each side's edge. */
+const LINKS: Array<[string, [number, number], string, [number, number]]> = [
+  [SPAN, [50, 65.6], NORTH, [50, 62.4]],
+  [SPAN, [190.4, 188], LAKE, [193.6, 188]],
+  [SPAN, [189.6, 85], TRAIL, [194.4, 85]],
+  [LAKE, [236, 258.6], BOWL, [236, 261.4]],
+  [TRAIL, [244, 49.4], HILL, [244, 46.6]],
+  [SPAN, [56.3, 222.6], MALLSIDE, [56, 225.6]],
+];
+/** Where, in region `from`, the way toward region `to` starts (through the hub if they don't touch): for markers
+ *  pointing at a place somewhere else. */
+export function gateTo(from: string, to: string): [number, number] | null {
+  const next = new Map<string, [number, number]>(), seen = new Set([from]), q: string[] = [from];
+  for (let h = 0; h < q.length; h++) {
+    const here = q[h]!;
+    for (const [a, pa, b, pb] of LINKS) for (const [x, px, y] of [[a, pa, b], [b, pb, a]] as Array<[string, [number, number], string]>) {
+      if (x !== here || seen.has(y)) continue;
+      seen.add(y); q.push(y);
+      next.set(y, here === from ? px : next.get(here)!);
+    }
+  }
+  return next.get(to) ?? null;
+}
 
 const BUILDERS: Record<string, (night: boolean) => import('../../engine/section').SectionSpec> = {
   ramp, 'seven-flags': sevenFlagsTown, 'lake-road': lakeRoad, 'white-bowl': whiteBowl, trail: trailNorth, church: churchOnTheHill, mall: abandonedMall,
@@ -140,7 +173,7 @@ export function spanRooms(night: boolean): Record<string, AreaBuilder> {
     'mall-shop': mallShop({ to: 'mall-court', spawn: 'grille', night }),
     cellar: cellar({ to: SPAN, spawn: 'seven-flags:hatch', night }),
     'big-store': bigStore({ to: SPAN, spawn: 'seven-flags:dock', night }),
-    fuselage: fuselage({ to: SPAN, spawn: 'white-bowl:wreck', night }),
+    fuselage: fuselage({ to: BOWL, spawn: 'white-bowl:wreck', night }),
   };
 }
 

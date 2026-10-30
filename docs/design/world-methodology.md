@@ -121,6 +121,13 @@ The Story File leaves this open; the Span is already one continuous
 | **B. Separate maps everywhere** (OHMFRONT's method) | Octopath-like; a quick pixel dissolve between maps, a travel card between regions | Density, quality, phone performance | Less "open"; the road becomes a chain of rooms unless the web is rich |
 | **C. Open regions, joined by caravan legs** *(recommended)* | Each region is one open, streamed area like the Span, with interiors and dungeons as separate maps. Between regions, the caravan travels on a **road map** (the moving homestead: pick highway, brush or drains; road events; camp at Shutter). | Your "journeys are adventures," the caravan, the open world, real distances compressed | Each region still needs a strong internal web of stops and routes |
 
+**The owner's decision, 2026-10-29: C, with each region as hub and spokes.** Regions and the caravan legs between
+them stay as C has them. Inside a region, a hub (the town or stop) joins its spokes, and every map is loaded on its
+own through a transition at its edge (the road fades out, then the dissolve), as B does. Only one map is built at a
+time, which keeps phones in budget and loading behind the transition (`docs/architecture/scaling.md`). The Span:
+Seven Flags is the hub; the Ramp, the Lake Road (then the White Bowl), the Trail North (then the church) and the mall
+are spokes.
+
 **Why C:** it keeps the Span's open feel, makes the road legs a game of
 their own (route choice, events, water budget), and stops a 400-mile
 interstate from becoming 400 miles of walking. OHMFRONT went the other way

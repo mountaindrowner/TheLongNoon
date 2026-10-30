@@ -43,9 +43,14 @@ lit doors with rooms behind them, the ways on that are closed for now, and who s
 
 ![The Span, how the maps connect](overview/region-map.png)
 
-Since 2026-10-29 the hill (the trail and the church) and the mall are places of their own, entered by a transition:
-the trail gate north-east and the underpass under the old rail bank south-west (current-state piece 10). The town's
-four maps are still one walk.
+Since 2026-10-29 the Span is hub and spokes (current-state piece 12). Seven Flags is the hub, and every other map is
+a place of its own, entered by a crossing at its edge:
+- the Ramp, north up the highway;
+- the Lake Road, east down the boulevard, and the White Bowl down past it;
+- the Trail North, through the trail gate, and the church up past it;
+- the mall, through the underpass.
+
+A road off the map runs on and fades into the dark by night, the white by day.
 
 ## Seven Flags (192 × 160)
 
