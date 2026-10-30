@@ -1,12 +1,13 @@
 import introUrl from '../assets/music/intro.mp3';
 import exploreUrl from '../assets/music/explore.mp3';
 import combatUrl from '../assets/music/combat.mp3';
+import { planLine, utter, voiceOf, type Syllable } from './voice';
 
 /**
  * Sound, from the first version (legacy/poc2 22-audio.js): three music
  * tracks (the title and the tale, the town, the fight; re-encoded at 64 kbps
  * to keep the one-file build small) and every effect synthesized on the spot:
- * menus, a voice blip per speaker, footsteps, goats, chickens, a coyote at
+ * menus, every speaker's mumbled voice (voice.ts), footsteps, goats, chickens, a coyote at
  * night, wind louder in the white, the fight, the drone.
  *
  * Browsers only start sound after a tap or a key, so `init` runs on the
@@ -17,12 +18,6 @@ type Track = 'intro' | 'explore' | 'combat' | 'none';
 interface ToneOpts { delay?: number; a?: number; lp?: number; pan?: number; dest?: AudioNode }
 interface NoiseOpts { delay?: number; a?: number; type?: BiquadFilterType; f?: number; f1?: number; q?: number; pan?: number; dest?: AudioNode }
 
-/** Pitch, wave and loudness of each speaker's blip. */
-const VOICES: Record<string, [number, OscillatorType, number]> = {
-  'Papá': [245, 'square', 0.016], 'Mamá': [440, 'sine', 0.04], 'Little Juno': [900, 'triangle', 0.028], 'Juno': [520, 'square', 0.016], 'Kit': [690, 'triangle', 0.03],
-  'Hermana Lupe': [360, 'sine', 0.04], 'Doña Chayo': [430, 'triangle', 0.03], 'Don Beto': [230, 'square', 0.014], 'Rubén': [300, 'square', 0.014], 'Tavo': [760, 'triangle', 0.028],
-  'Abuelo Nacho': [205, 'sine', 0.045], 'Doña Fina': [470, 'triangle', 0.028], 'Memo': [260, 'square', 0.014], 'Nina': [840, 'triangle', 0.028], 'Abuela Toña': [330, 'sine', 0.04],
-};
 /** Footsteps by ground: filter, frequency, Q, length, loudness, a second scuff. */
 const STEPS: Record<string, [BiquadFilterType, number, number, number, number, number?]> = {
   hard: ['bandpass', 1500, 1.2, 0.035, 0.05],
@@ -163,11 +158,16 @@ export class Sound {
   coin(): void { this.tone('square', 988, 988, 0.07, 0.025, { lp: 3000 }); this.tone('square', 1319, 1319, 0.14, 0.025, { delay: 0.07, lp: 3000 }); }
   chime(): void { [784, 988, 1175].forEach((f, i) => this.tone('triangle', f, f, 0.35, 0.03, { delay: i * 0.09 })); }
   save(): void { this.tone('sine', 660, 660, 0.2, 0.04); this.tone('sine', 880, 880, 0.3, 0.04, { delay: 0.12 }); }
-  voice(name: string): void {
-    const v = VOICES[name];
-    if (!v) { this.noise(0.022, 0.012, { type: 'bandpass', f: 1700, q: 1.2 }); return; }
-    const f = v[0] * (1 + (Math.random() - 0.5) * 0.12);
-    this.tone(v[1], f, f * 0.93, 0.055, v[2]);
+  private planned: { text: string; at: Map<number, Syllable> } | null = null;
+  /** A letter of a line has just been typed: if it starts a syllable, the speaker says it (the narrator's
+   *  lines only tick, softly). */
+  voice(name: string, text: string, i: number): void {
+    if (!this.ctx) return;
+    if (this.planned?.text !== text) this.planned = { text, at: planLine(text) };
+    const s = this.planned.at.get(i);
+    if (!s) return;
+    if (!name) { this.noise(0.02, 0.008, { type: 'bandpass', f: 1700, q: 1.2 }); return; }
+    utter(this.ctx, this.sfx, this.wn, voiceOf(name), s);
   }
 
   // ---------------------------------------------------------------- the world

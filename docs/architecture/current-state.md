@@ -519,6 +519,38 @@ past what you can see. To not remove the immersion."*
 - **Heights past any edge** now carry on from the edge. Before, the brush drawn just outside a map stood on the
   edge's slope continued, up to about a unit too high.
 
+## Piece 14 (done): mumble speech
+
+The owner, 2026-10-30, shared a devlog on mumble speech (people "talk" in sounds built from the text while it
+types). The game's first version gave each speaker one beep every other letter. Now each speaker has a voice
+(`game/voice.ts`), synthesized as the line types. Nothing is recorded, and nothing is added to the download.
+
+- **The voice:**
+  - a buzz with some breath in it, through the three formant bands of a vowel (Peterson and Barney's averages);
+  - each sound swells, holds and lets go, and runs a little into the next;
+  - no two buzzes are pitched quite alike.
+- **Who sounds like whom:**
+  - The tube length moves the bands together: a woman's voice is about 15% shorter, a child's about 30%. Pitch
+    alone would sound like a man straining.
+  - Old voices (Nacho, Toña, Beto, Lupe) wobble slowly, about twice a second.
+  - Rubén, the scavengers and the Noonrider mutter with the mouth nearly shut.
+  - NIM and the Keeper are machines: a square buzz, flat, no breath.
+  - Every speaker in `dialogue.json` and on the maps has a voice set from `tools/cast.json`. A name without one
+    gets a fixed voice from its letters.
+- **The text decides what plays.** A sound starts only where a group of vowels starts, about once a syllable. Its
+  letters pick the vowel ("oo" is *u*, "ee" is *i*), and a silent final e stays silent. The same line sounds the
+  same every time.
+- **The tune comes from the punctuation:**
+  - the pitch drifts down through a phrase and starts again after a comma;
+  - a question rises on its last word, and an exclamation starts high;
+  - trailing dots fade;
+  - a word in capitals is shouted.
+- **The typing has a rhythm.** One timer types every character (`ui.pace`): 30 ms a letter, three times that after
+  a comma or a dash, six times after the end of a sentence, nine after an ellipsis. It used to be a flat 22 ms a
+  letter. A press still shows the whole line at once, and the voice stops with it.
+- **The narrator** has no voice, only a soft tick at each syllable.
+- **Level:** about as loud as the old beeps, at the effects volume, muted with them.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |
