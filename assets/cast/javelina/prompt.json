@@ -1,0 +1,20 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a javelina, a South Texas collared peccary: stocky and low, bristly grizzled grey-black coat, a pale band like a collar around its shoulders, short thin legs, a long snout, small sharp tusks, angry little eyes. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1",
+    "template_id": "dog"
+  },
+  "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+  "anims": {},
+  "at": "2026-10-31T20:47:59.905Z"
+}
