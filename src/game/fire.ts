@@ -156,11 +156,11 @@ export function storyCamp(x: number, y: number, z: number): { group: THREE.Group
   const g = new THREE.Group();
   g.position.set(x, y, z);
   const crate = colMat('#7a5a3a', { roughness: 1 }), dark = colMat('#2a2420', { roughness: 0.8 });
-  // little Juno's blanket, striped, in front of the fire
-  const blanket = box(1.1, 0.025, 0.75, colMat('#7a3226', { roughness: 1 }), -0.35, 0, 1.15);
-  blanket.rotation.y = 0.15;
+  // little Juno's blanket, striped, across the fire from us
+  const blanket = box(1.1, 0.025, 0.75, colMat('#7a3226', { roughness: 1 }), 0.05, 0, -1.2);
+  blanket.rotation.y = -0.1;
   g.add(blanket);
-  for (const dz of [-0.24, 0.24]) { const st = box(1.12, 0.03, 0.08, colMat('#d8b46a', { roughness: 1 }), -0.35, 0, 1.15 + dz); st.rotation.y = 0.15; g.add(st); }
+  for (const dz of [-0.24, 0.24]) { const st = box(1.12, 0.03, 0.08, colMat('#d8b46a', { roughness: 1 }), 0.05, 0, -1.2 + dz); st.rotation.y = -0.1; g.add(st); }
   // Papá's crate and the crank radio he listened to every night
   g.add(box(0.5, 0.42, 0.42, crate, -1.85, 0, -0.35));
   g.add(box(0.3, 0.17, 0.12, dark, -1.85, 0.42, -0.35));

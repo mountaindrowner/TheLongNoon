@@ -1110,8 +1110,8 @@ async function theTale(): Promise<void> {
   camp = storyCamp(FIRE.x, y, FIRE.z);
   cur.scene.add(camp.group);
   (cur.area as Region).addLamp({ pos: new THREE.Vector3(FIRE.x, y + 0.8, FIRE.z), color: new THREE.Color('#ff8f3e'), intensity: 3.6, dist: 8, flicker: 0.35, tag: 'tale' });
-  // Papá by his radio, Mamá on her stool, little Juno on the blanket with her back to us, watching the fire
-  for (const [id, dx, dz, face] of [['elias', -1.25, -0.6, 'S'], ['kidjuno', -0.35, 1.1, 'N'], ['rosa', 1.25, -0.45, 'W']] as const) {
+  // Papá by his radio, Mamá on her stool, little Juno on her blanket across the fire from us, between them
+  for (const [id, dx, dz, face] of [['elias', -1.3, -0.45, 'S'], ['kidjuno', 0.05, -1.15, 'S'], ['rosa', 1.3, -0.35, 'W']] as const) {
     const a = await Actor.person(id, cur.tint);
     a.place(FIRE.x + dx, cur.area.ground(FIRE.x + dx, FIRE.z + dz), FIRE.z + dz);
     a.dir = face;
