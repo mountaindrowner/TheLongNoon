@@ -18,9 +18,21 @@ import type { GameState } from './state';
  */
 
 export interface PartDef { id: string; name: string; hp: number; soft?: boolean; armor?: number }
-export interface FoeDef { id: string; name: string; spd: number; parts: PartDef[]; flee?: number }
+export interface FoeDef {
+  id: string; name: string; spd: number; parts: PartDef[]; flee?: number;
+  /** An animal: it goes for the weakest, and says how ("lunges at", "charges at", "strikes at"). */
+  beast?: string;
+  /** How hard it hits (default by kind). */
+  dmg?: [number, number];
+}
 export interface UnitDef { name: string; hp: number; atk: number; spd: number; weapon: string; sling?: boolean }
-export interface FightDef { noRun: string; party: string[]; enemies: FoeDef[]; intro: string }
+export interface FightDef {
+  noRun: string; party: string[]; enemies: FoeDef[]; intro: string;
+  /** A fight met on the road can be run from (the story's fights can't). */
+  canRun?: boolean;
+  /** The line when it's won (default: the drain's). */
+  won?: string;
+}
 
 interface Unit { id: string; name: string; party: true; actor: Actor; hp: number; max: number; atk: number; spd: number; ct: number; sling: boolean; weapon: string; brace: boolean }
 interface Part extends PartDef { max: number }
@@ -98,6 +110,8 @@ export class Fight {
   private qteRes: (() => void) | null = null;
   private party: Unit[] = [];
   private on = false;
+  /** Set when the party gets away from a fight that can be run from. */
+  private ran = false;
 
   constructor(parent: HTMLElement, private readonly w: FightWorld) {
     this.root = document.createElement('div');
@@ -283,7 +297,13 @@ export class Fight {
         await this.say(`${u.name} drinks. One less cup of water.`, 900);
         return;
       }
-      if (c === 'run') { await this.say(def.noRun, 1200); continue; }
+      if (c === 'run') {
+        if (!def.canRun) { await this.say(def.noRun, 1200); continue; }
+        // usually you get away; a slow turn costs you
+        if (Math.random() < 0.7) { this.ran = true; this.w.sound.back(); await this.say('Juno and Kit get away.', 1000); return; }
+        await this.say("Can't get away!", 900);
+        return;
+      }
     }
   }
 
@@ -349,11 +369,11 @@ export class Fight {
     const up = this.party.filter((p) => p.hp > 0);
     if (!up.length) return;
     // animals bite the weakest; machines spark and ram (a Warden harder, and its sweep finds everyone)
-    if (f.id === 'coyote' || f.id.startsWith('dog')) {
+    if (f.def.beast || f.id === 'coyote' || f.id.startsWith('dog')) {
       const t = up.slice().sort((a, b) => a.hp - b.hp)[0]!;
       this.w.sound.growl();
-      await this.say(`The ${f.name.toLowerCase()} lunges at ${t.name}!`, 450);
-      await this.hit(f, [t], ri(4, 6), 'lunge');
+      await this.say(`The ${f.name.toLowerCase()} ${f.def.beast ?? 'lunges at'} ${t.name}!`, 450);
+      await this.hit(f, [t], ri(...(f.def.dmg ?? [4, 6])), 'lunge');
       return;
     }
     const big = f.id === 'warden', it = `The ${f.name}`;
@@ -363,16 +383,17 @@ export class Fight {
     this.w.sound.servo();
     await this.say(big ? `${it} stamps down on ${t.name}!` : `${it} rams ${t.name}!`, 450);
     if (f.eyeBroken && Math.random() < 0.4) { await this.lunge(f.actor, t.actor, 0.35); this.float(t.actor, 'Miss', 'miss'); await this.say('Blind, it slams into the ground instead.', 1000); return; }
-    await this.hit(f, [t], big ? ri(9, 13) : ri(7, 10), 'ram');
+    await this.hit(f, [t], f.def.dmg ? ri(...f.def.dmg) : big ? ri(9, 13) : ri(7, 10), 'ram');
   }
 
   /**
    * Fight it out. `party` and `foes` are actors already standing where they fight.
    * Resolves 'win', or 'lose' with the player's pick ('retry' or 'load').
    */
-  async fight(def: FightDef, units: Record<string, UnitDef>, partyActors: Record<string, Actor>, foeActors: Actor[], retry = false): Promise<'win' | 'retry' | 'load'> {
+  async fight(def: FightDef, units: Record<string, UnitDef>, partyActors: Record<string, Actor>, foeActors: Actor[], retry = false): Promise<'win' | 'retry' | 'load' | 'ran'> {
     const s = this.w.state;
     this.on = true;
+    this.ran = false;
     this.root.classList.add('on');
     this.party = def.party.map((id) => {
       const b = units[id]!;
@@ -390,11 +411,13 @@ export class Fight {
       this.w.onTurn?.(u.party ? 'party' : 'foe', u.actor);
       if (u.party) { this.w.sound.turn(); await this.playerTurn(u, foes, def); } else await this.enemyTurn(u);
       this.renderParty(null);
+      if (this.ran) break;
       if (foes.every((f) => !alive(f))) result = 'win';
       else if (this.party.every((p) => p.hp <= 0)) result = 'lose';
     }
     this.turnbar.innerHTML = '';
     const writeBack = (): void => { for (const p of this.party) { if (p.id === 'juno') s.party.juno.hp = Math.max(1, p.hp); else s.party.kit.hp = Math.max(1, p.hp); } };
+    if (this.ran) { writeBack(); this.end(); return 'ran'; }
     if (result === 'lose') {
       this.w.sound.ko();
       await this.say('Juno goes down.', 1300);
@@ -406,7 +429,7 @@ export class Fight {
       this.end();
       return c === 'load' ? 'load' : 'retry';
     }
-    await this.say('The drain goes quiet.', 0);
+    await this.say(def.won ?? 'The drain goes quiet.', 0);
     this.w.sound.music('none');
     this.w.sound.victory();
     await sleep(1700);

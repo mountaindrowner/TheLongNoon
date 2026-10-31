@@ -17,7 +17,7 @@ import { Dream } from './game/dream';
 import { campfire, storyCamp } from './game/fire';
 import { Sound } from './game/sound';
 import { pauseAfter, voiceOf } from './game/voice';
-import { loadSettings, saveSettings, TEXT_PACE, PIXEL_RATIO, type Settings } from './game/settings';
+import { loadSettings, saveSettings, TEXT_PACE, PIXEL_RATIO, ENCOUNTER_RATE, type Settings } from './game/settings';
 import { Fight, type FightDef, type UnitDef } from './game/battle';
 import BATTLES from './game/data/battles.json';
 import { newState, save as writeSave, load as readSave, hasSave, ITEM_NAMES, type GameState } from './game/state';
@@ -348,6 +348,7 @@ async function go(to: string, spawn: string | Spot): Promise<void> {
 
 /** Reaching a map or a room the step is waiting for (`arrive` in data/quests.json). */
 function arrived(at: string): void {
+  roadGrace = 20; // a little way in before anything finds you
   const a = STEPS[S?.step]?.arrive;
   if (!a || a.at !== at || mode !== 'play') return;
   if (a.then) setStep(a.then);
@@ -547,6 +548,7 @@ function frame(): void {
       player.moving = false;
       void run('drainIntro');
     }
+    roadTick();
   }
   if (lookUp > 0) skyward();
   dream.draw(dt);
@@ -1487,16 +1489,18 @@ async function spawnEnemies(): Promise<void> {
   stageFight(st);
 }
 
-async function battle(id = 'drain'): Promise<'win' | 'load'> {
+async function battle(id = 'drain'): Promise<'win' | 'load' | 'ran'> {
   if (!staged) stageFight(STAGINGS[BATTLE]!);
   const B = BATTLES as unknown as Record<string, FightDef> & { units: Record<string, UnitDef> };
   sound.battleStart();
   sound.music('combat');
   minimap.hidden = true;
+  let ran = false;
   for (let retry = false; ; retry = true) {
     // what the white did to Juno follows her into the fight (game/sun.ts)
     const j = B.units.juno!, units = { ...B.units, juno: { ...j, hp: maxHp(S), spd: has(S, 'heat') ? j.spd * 0.75 : j.spd } };
     const r = await fight.fight(B[id]!, units, { juno: player, kit: kitActor! }, foes, retry);
+    if (r === 'ran') { ran = true; break; }
     if (r === 'win') break;
     if (r === 'load') { unstage(); clearFoes(); camHold = null; minimap.hidden = false; await loadGame(); return 'load'; }
     for (const a of foes) a.root.visible = true;
@@ -1513,11 +1517,50 @@ async function battle(id = 'drain'): Promise<'win' | 'load'> {
   sound.music('explore');
   await ui.fade(false, 600);
   camHold = null;
-  return 'win';
+  return ran ? 'ran' : 'win';
 }
+// ---------------------------------------------------------------- chance fights on the road (battles.json `encounters`)
+/**
+ * Off the hub at night, out past the lanterns' light, something can find Juno and Kit: Strays and Mowers on the
+ * Lake Road, javelinas, coyotes and a rattlesnake on the Trail North, dogs and a Sorter round the mall. Never in
+ * town, never by day (the story's daylight is its own danger), never inside a lantern's light, and not again for a
+ * while after the last one. They can be run from. A win turns up something small: water, or a tin of white.
+ */
+const ROAD = (BATTLES as unknown as { encounters: Record<string, string[]> }).encounters;
+let roadGrace = 20, roadLast: [number, number] | null = null, roadBusy = false;
+function roadTick(): void {
+  const table = ROAD[cur.id], rate = ENCOUNTER_RATE[settings.encounters];
+  const night = time.phase === 'Lamp' || time.phase === 'Long night';
+  if (!table || !rate || !night || roadBusy || !free() || fight.active || !S.joined.includes('kit') || !kitActor) { roadLast = null; return; }
+  const d = roadLast ? Math.hypot(player.x - roadLast[0], player.z - roadLast[1]) : 0;
+  roadLast = [player.x, player.z];
+  if (d <= 0 || d > 3) return; // standing still, or carried somewhere
+  if ((cur.area as Region).pastLamps(player.x, player.z) <= 0) return; // in a lantern's light
+  if (roadGrace > 0) { roadGrace -= d; return; }
+  if (Math.random() < 1 - Math.pow(1 - rate, d)) void roadFight(table[Math.floor(Math.random() * table.length)]!);
+}
+async function roadFight(id: string): Promise<'win' | 'load' | 'ran'> {
+  roadBusy = true;
+  player.moving = false;
+  keys.clear();
+  sound.growl();
+  await ui.fade(true, 160, '#efe6d2');
+  await ui.fade(false, 200);
+  const r = await fightHere(id);
+  if (r === 'win') roadFind();
+  roadGrace = 25; roadLast = null; roadBusy = false;
+  return r;
+}
+/** What a win turns up: a cup of water about half the time, now and then a tin of white. */
+function roadFind(): void {
+  const k = Math.random();
+  if (k < 0.45 && S.water < 10) { S.water++; hud.toast('Found a cup of water', true); }
+  else if (k < 0.65) { S.white++; hud.toast('Found a tin of white', true); }
+}
+
 /** A fight the story starts where Juno stands (the dogs, the Warden): its foes come in, everyone takes their
  *  marks, and it's fought there. Indoors it's framed from the overworld camera (walls close in on the others). */
-async function fightHere(id: string): Promise<'win' | 'load'> {
+async function fightHere(id: string): Promise<'win' | 'load' | 'ran'> {
   const def = (BATTLES as unknown as Record<string, { enemies: Array<{ sprite?: string; height?: number }> }>)[id];
   if (!def) { console.warn('[fight] no fight', id); return 'win'; }
   fightId = id;
@@ -1815,6 +1858,8 @@ declare global { interface Window { __LN?: Record<string, unknown> } }
 load().then(() => {
   window.__LN = {
     ready: true,
+    /** Start a chance fight here, now (tests). */
+    encounter: (id: string) => roadFight(id),
     get pos() { return [player.x, player.z]; },
     get areaId() { return cur.area.id; },
     pieceAtPoint(x: number, z: number) { return isOut(cur) ? (cur.area as Region).pieceAt(x, z)?.id ?? null : null; },

@@ -40,7 +40,7 @@ const CAST_URL = Object.fromEntries(Object.entries(import.meta.glob('../assets/c
 const CAST_OF: Record<string, string> = { strayBroken: 'stray' };
 const castId = (id: string): string | null => { for (const c of [CAST_OF[id] ?? id, BASE[id]]) if (c && CAST_META[c] && CAST_URL[c]) return c; return null; };
 /** What an animal is when its own look isn't drawn yet. */
-const BASE: Record<string, string> = { pancha: 'goat', dog: 'coyote', warden: 'hauler' };
+const BASE: Record<string, string> = { pancha: 'goat', dog: 'coyote', warden: 'hauler', mower: 'stray', sorter: 'keeper', javelina: 'dog', rattler: 'coyote' };
 /** Animals come in a few looks (the owner, 2026-10-27: "a little bit of variation"): one picked from where it
  *  stands, so a pen is mixed and stays the same each visit. Only looks that have been drawn are used. */
 export function variant(kind: string, x: number, z: number): string {

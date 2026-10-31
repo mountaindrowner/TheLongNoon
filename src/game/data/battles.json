@@ -462,7 +462,8 @@
         ],
         "flee": 4
       }
-    ]
+    ],
+    "won": "The dogs scatter into the dark of the back rooms."
   },
   "warden": {
     "spot": "here",
@@ -495,6 +496,534 @@
           }
         ]
       }
+    ],
+    "won": "The Warden goes down. Its searchlight fades out."
+  },
+  "e_mowers": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Mowers! Still cutting a lawn that isn't there.",
+    "won": "The mowers wind down and go quiet.",
+    "enemies": [
+      {
+        "id": "mower1",
+        "name": "Mower",
+        "sprite": "mower",
+        "height": 0.7,
+        "spd": 9,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Eye lamp",
+            "hp": 7,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Shell",
+            "hp": 18,
+            "armor": 0.4
+          }
+        ],
+        "dmg": [
+          4,
+          7
+        ]
+      },
+      {
+        "id": "mower2",
+        "name": "Mower",
+        "sprite": "mower",
+        "height": 0.7,
+        "spd": 9,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Eye lamp",
+            "hp": 7,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Shell",
+            "hp": 18,
+            "armor": 0.4
+          }
+        ],
+        "dmg": [
+          4,
+          7
+        ]
+      }
+    ]
+  },
+  "e_strays": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Strays, out of the dark!",
+    "won": "The Strays go still.",
+    "enemies": [
+      {
+        "id": "stray1",
+        "name": "Stray",
+        "sprite": "stray",
+        "height": 1.0,
+        "spd": 7,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Sensor eye",
+            "hp": 8,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Chassis",
+            "hp": 24,
+            "armor": 0.35
+          }
+        ]
+      },
+      {
+        "id": "stray2",
+        "name": "Stray",
+        "sprite": "stray",
+        "height": 1.0,
+        "spd": 7,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Sensor eye",
+            "hp": 8,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Chassis",
+            "hp": 24,
+            "armor": 0.35
+          }
+        ]
+      }
+    ]
+  },
+  "e_stray_coyote": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A Stray, and a coyote following it for the scraps.",
+    "won": "Quiet again.",
+    "enemies": [
+      {
+        "id": "stray1",
+        "name": "Stray",
+        "sprite": "stray",
+        "height": 1.0,
+        "spd": 7,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Sensor eye",
+            "hp": 8,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Chassis",
+            "hp": 24,
+            "armor": 0.35
+          }
+        ]
+      },
+      {
+        "id": "coyote",
+        "name": "Coyote",
+        "sprite": "coyote",
+        "height": 0.85,
+        "spd": 13,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Coyote",
+            "hp": 13,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "lunges at"
+      }
+    ]
+  },
+  "e_crawler": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A crawler, looking for crops in the dark.",
+    "won": "The crawler folds its legs and stops.",
+    "enemies": [
+      {
+        "id": "crawler",
+        "name": "Crawler",
+        "sprite": "sprinkler",
+        "height": 0.9,
+        "spd": 8,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Sprinkler head",
+            "hp": 9,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Shell",
+            "hp": 24,
+            "armor": 0.3
+          }
+        ],
+        "dmg": [
+          5,
+          8
+        ]
+      }
+    ]
+  },
+  "e_javelinas": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Javelinas, out of the brush!",
+    "won": "The javelinas crash off into the brush.",
+    "enemies": [
+      {
+        "id": "javelina1",
+        "name": "Javelina",
+        "sprite": "javelina",
+        "height": 0.75,
+        "spd": 11,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Javelina",
+            "hp": 15,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "charges at",
+        "dmg": [
+          5,
+          7
+        ]
+      },
+      {
+        "id": "javelina2",
+        "name": "Javelina",
+        "sprite": "javelina",
+        "height": 0.75,
+        "spd": 11,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Javelina",
+            "hp": 15,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "charges at",
+        "dmg": [
+          5,
+          7
+        ]
+      }
+    ]
+  },
+  "e_rattler": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A rattle in the dark. Snake!",
+    "won": "The snake goes still.",
+    "enemies": [
+      {
+        "id": "rattler",
+        "name": "Rattlesnake",
+        "sprite": "rattler",
+        "height": 0.45,
+        "spd": 15,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Rattlesnake",
+            "hp": 9,
+            "soft": true
+          }
+        ],
+        "beast": "strikes at",
+        "dmg": [
+          6,
+          8
+        ]
+      },
+      {
+        "id": "javelina1",
+        "name": "Javelina",
+        "sprite": "javelina",
+        "height": 0.75,
+        "spd": 11,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Javelina",
+            "hp": 15,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "charges at",
+        "dmg": [
+          5,
+          7
+        ]
+      }
+    ]
+  },
+  "e_coyotes": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Coyotes, circling.",
+    "won": "The coyotes slink off.",
+    "enemies": [
+      {
+        "id": "coyote1",
+        "name": "Coyote",
+        "sprite": "coyote",
+        "height": 0.85,
+        "spd": 13,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Coyote",
+            "hp": 13,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "lunges at"
+      },
+      {
+        "id": "coyote2",
+        "name": "Coyote",
+        "sprite": "coyote2",
+        "height": 0.85,
+        "spd": 13,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Coyote",
+            "hp": 13,
+            "soft": true
+          }
+        ],
+        "flee": 4,
+        "beast": "lunges at"
+      }
+    ]
+  },
+  "e_sorter": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A Sorter, still sorting the dark.",
+    "won": "The Sorter folds over and stops.",
+    "enemies": [
+      {
+        "id": "sorter",
+        "name": "Sorter",
+        "sprite": "sorter",
+        "height": 1.8,
+        "spd": 8,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Scanner",
+            "hp": 10,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Frame",
+            "hp": 32,
+            "armor": 0.35
+          }
+        ],
+        "dmg": [
+          7,
+          10
+        ]
+      }
+    ]
+  },
+  "e_dogs": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "Dogs, out of the dead stores!",
+    "won": "The dogs scatter.",
+    "enemies": [
+      {
+        "id": "dog1",
+        "name": "Dog",
+        "sprite": "dog",
+        "height": 0.8,
+        "spd": 12,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Dog",
+            "hp": 11,
+            "soft": true
+          }
+        ],
+        "flee": 3
+      },
+      {
+        "id": "dog2",
+        "name": "Dog",
+        "sprite": "dog",
+        "height": 0.8,
+        "spd": 12,
+        "parts": [
+          {
+            "id": "body",
+            "name": "Dog",
+            "hp": 11,
+            "soft": true
+          }
+        ],
+        "flee": 3
+      }
+    ]
+  },
+  "e_sorter_mower": {
+    "spot": "here",
+    "canRun": true,
+    "noRun": "",
+    "party": [
+      "juno",
+      "kit"
+    ],
+    "intro": "A Sorter, and a Mower in the parking lot.",
+    "won": "Quiet again.",
+    "enemies": [
+      {
+        "id": "sorter",
+        "name": "Sorter",
+        "sprite": "sorter",
+        "height": 1.8,
+        "spd": 8,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Scanner",
+            "hp": 10,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Frame",
+            "hp": 32,
+            "armor": 0.35
+          }
+        ],
+        "dmg": [
+          7,
+          10
+        ]
+      },
+      {
+        "id": "mower1",
+        "name": "Mower",
+        "sprite": "mower",
+        "height": 0.7,
+        "spd": 9,
+        "parts": [
+          {
+            "id": "eye",
+            "name": "Eye lamp",
+            "hp": 7,
+            "soft": true
+          },
+          {
+            "id": "body",
+            "name": "Shell",
+            "hp": 18,
+            "armor": 0.4
+          }
+        ],
+        "dmg": [
+          4,
+          7
+        ]
+      }
+    ]
+  },
+  "encounters": {
+    "lakeside": [
+      "e_mowers",
+      "e_strays",
+      "e_stray_coyote",
+      "e_crawler"
+    ],
+    "oldtrail": [
+      "e_javelinas",
+      "e_rattler",
+      "e_coyotes"
+    ],
+    "mallside": [
+      "e_sorter",
+      "e_dogs",
+      "e_sorter_mower"
     ]
   }
 }

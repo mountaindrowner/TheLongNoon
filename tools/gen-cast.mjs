@@ -37,7 +37,7 @@ const COST = { figure: 15, template: 4, custom: 4, portrait: 17 };
 // animations in four directions (the owner, 2026-10-27): front, back and both sides
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
-const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog', dog: 'dog' };
+const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog', dog: 'dog', javelina: 'dog' };
 /** The four-legged skeleton has its own templates (idle, walk, run; no attack). */
 const DOG = { idle: 'idle', walk: 'walk-8-frames', run: 'running-8-frames' };
 const ANIM = {
@@ -70,6 +70,23 @@ const CUSTOM = {
   keeper: { idle: 'idle: sweeping the ground slowly with its broom, swaying on its base', walk: 'rolling forward on its base, broom held out' },
   hauler: { idle: 'idle: idling, beacon turning, chains swaying', walk: 'rolling forward on its treads, forklift jaw bobbing' },
   sprinkler: { idle: 'idle: sprinkler head turning, legs shifting', walk: 'crawling forward on four spindly legs like a crab' },
+  // the road's chance fights (2026-10-31)
+  mower: {
+    idle: 'idle: idling on its four wheels, blades whirring underneath, amber eye pulsing', walk: 'rolling forward on its four small wheels, shell bobbing',
+    attack: 'charging forward with its blades screaming underneath, kicking up grass and grit, then rolling back',
+    hurt: 'jolting backward from a heavy hit, shell cracking, sparks spitting from underneath',
+  },
+  sorter: {
+    idle: 'idle: swaying on its tread, red scanner bar sweeping side to side, claw opening and closing', walk: 'rolling forward on its single tread, arm swinging',
+    attack: 'swinging its long arm down hard and snapping the pincer claw shut in front of it, then pulling back',
+    hurt: 'rocking back on its tread from a hit, scanner flickering, sparks from the cut cables',
+  },
+  javelina: { attack: 'charging forward head down, tusks first, then skidding back', hurt: 'squealing and flinching back from a hit, bristles up' },
+  rattler: {
+    idle: 'idle: coiled, head swaying slowly, tongue flicking, tail rattle shaking', walk: 'slithering forward in S-curves, head low',
+    attack: 'striking forward fast from the coil, jaws wide, then snapping back into the coil',
+    hurt: 'recoiling and writhing from a hit, coils tightening',
+  },
 };
 
 const H = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };

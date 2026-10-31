@@ -639,6 +639,35 @@ Also the campfire scene looks wonky."*
 
   Little Juno asks and Mamá cuts in, so it plays as a family by a fire rather than a lecture.
 
+## Piece 17 (done): fights on the road
+
+The owner, 2026-10-31: *"we need more combat for sure. Random encounters … something simple for now, a simple
+system with simple rewards, with more to come later … and make enemy pixel figures for it."*
+
+- **Where:**
+  - the Lake Road: Mowers, Strays, a Stray with a coyote after its scraps, the crawler;
+  - the Trail North: javelinas, a rattlesnake with a javelina, coyotes;
+  - round the mall: a Sorter, dogs, a Sorter with a Mower.
+
+  The groups and their tables are in `battles.json` (`e_*`, `encounters`). Never in town.
+- **When:**
+  - at night only (Lamp and the long night): the white is its own danger;
+  - never inside a lantern's light: the light is safety, the way the town lives (methodology §4.6);
+  - only once Kit walks with Juno;
+  - not in the first 20 units walked into a place, nor the first 25 after a fight.
+- **How often:** each unit walked in the dark has a 1 in 40 chance (Options: *Fights on the road*: Normal; Fewer
+  is 1 in 90; None).
+- **Running:** these can be run from, about 70% a try; a failed try spends the turn. The story's fights still
+  can't be.
+- **Rewards (simple, more later):** a win turns up a cup of water about half the time, and now and then a tin of
+  white. There are no experience points or levels yet: that's the owner's to decide.
+- **New enemies,** made with PixelLab on Juno's style like the rest of the cast (`cast.md`): the Mower, the Sorter,
+  the javelina and the rattlesnake. The Mower and the Sorter are Strays from the story file's list (lawn units,
+  warehouse sorters); the javelina and the snake are the brush country's own. Animals go for the weakest and say
+  how (`beast`); each foe can carry its own damage (`dmg`).
+- **Each fight ends on its own line** (`won`). Before this, every fight ended *"The drain goes quiet."*
+- **Tested:** a playtest starts one on the Lake Road at night and runs from it.
+
 ## Where this departs from the spec, on purpose
 
 | Spec says | The Long Noon does | Why |

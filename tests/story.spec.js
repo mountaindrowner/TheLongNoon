@@ -303,6 +303,31 @@ test('the dogs in the Big Store: walking into the back starts the fight, indoors
   expect(errors).toEqual([]);
 });
 
+test('a chance fight on the Lake Road at night: it comes up, and Juno and Kit can run from it', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
+  test.setTimeout(900_000);
+  const errors = watchErrors(page);
+  await boot(page, '?step=n4_mower&time=night');
+  await page.evaluate(() => window.__LN.go('lakeside', { x: 200, z: 188 }));
+  await until(page, () => window.__LN.areaId === 'lakeside' && !window.__LN.busy, undefined, 300_000);
+  const over = page.evaluate(() => window.__LN.encounter('e_mowers'));
+  // Juno, Kit and two Mowers on the turn strip
+  await until(page, () => document.querySelectorAll('.fight.on .f-turns > *').length >= 4, undefined, 240_000);
+  await page.screenshot({ path: info.outputPath('road-fight.png') });
+  let result = null;
+  over.then((r) => { result = r; });
+  for (let i = 0; i < 20 && result === null; i++) {
+    const run = page.locator('.fight.on .f-menu button', { hasText: 'Run' });
+    await Promise.race([run.waitFor({ timeout: 120_000 }), over]).catch(() => {});
+    if (result !== null) break;
+    if (await run.count()) await run.first().click();
+    await page.waitForTimeout(400);
+  }
+  expect(await over).toBe('ran');
+  await expect(page.locator('.fight.on')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('night three: the white takes Juno while she searches, Güero is lost, and night four begins', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1080p', 'long scene: 1080p only');
   test.setTimeout(900_000);

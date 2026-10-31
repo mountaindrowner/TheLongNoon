@@ -72,7 +72,7 @@ export interface ScreenControl { can: boolean; on(): boolean; toggle(): Promise<
 type OptRow =
   | { kind: 'head'; label: string }
   | { kind: 'level'; key: 'master' | 'music' | 'sfx' | 'voices'; label: string }
-  | { kind: 'choice'; key: 'text' | 'blur' | 'resolution' | 'perf'; label: string; values: Array<[Settings[keyof Settings], string]> }
+  | { kind: 'choice'; key: 'text' | 'blur' | 'resolution' | 'perf' | 'encounters'; label: string; values: Array<[Settings[keyof Settings], string]> }
   | { kind: 'full'; label: string }
   | { kind: 'note'; label: string }
   | { kind: 'act'; id: 'reset' | 'back'; label: string };
@@ -85,6 +85,8 @@ const OPTIONS: OptRow[] = [
   { kind: 'level', key: 'voices', label: 'Voices' },
   { kind: 'head', label: 'Text' },
   { kind: 'choice', key: 'text', label: 'Text speed', values: [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast'], ['instant', 'At once']] },
+  { kind: 'head', label: 'The road' },
+  { kind: 'choice', key: 'encounters', label: 'Fights on the road', values: [['normal', 'Normal'], ['fewer', 'Fewer'], ['off', 'None']] },
   { kind: 'head', label: 'Picture' },
   { kind: 'choice', key: 'blur', label: 'Depth blur', values: [[true, 'On'], [false, 'Off']] },
   { kind: 'choice', key: 'resolution', label: 'Resolution', values: [['sharp', 'Sharp'], ['balanced', 'Balanced'], ['fast', 'Fast']] },

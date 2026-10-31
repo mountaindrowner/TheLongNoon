@@ -5,6 +5,7 @@
 
 export type TextSpeed = 'slow' | 'normal' | 'fast' | 'instant';
 export type Resolution = 'sharp' | 'balanced' | 'fast';
+export type Encounters = 'normal' | 'fewer' | 'off';
 
 export interface Settings {
   /** Volumes, 0–10. */
@@ -19,9 +20,13 @@ export interface Settings {
   resolution: Resolution;
   /** The frame-rate readout in the corner (`?perf` turns it on too). */
   perf: boolean;
+  /** How often something finds you on the road at night. */
+  encounters: Encounters;
 }
 
-export const DEFAULT_SETTINGS: Settings = { master: 8, music: 7, sfx: 8, voices: 8, text: 'normal', blur: true, resolution: 'sharp', perf: false };
+export const DEFAULT_SETTINGS: Settings = { master: 8, music: 7, sfx: 8, voices: 8, text: 'normal', blur: true, resolution: 'sharp', perf: false, encounters: 'normal' };
+/** The chance, each unit walked past the grace, that something finds you. */
+export const ENCOUNTER_RATE: Record<Encounters, number> = { normal: 1 / 40, fewer: 1 / 90, off: 0 };
 
 /** How long each character waits against normal, by text speed. */
 export const TEXT_PACE: Record<TextSpeed, number> = { slow: 1.6, normal: 1, fast: 0.5, instant: 0 };
@@ -37,6 +42,7 @@ export function loadSettings(): Settings {
     for (const k of ['master', 'music', 'sfx', 'voices'] as const) s[k] = Math.max(0, Math.min(10, Math.round(Number(s[k]) || 0)));
     if (!(s.text in TEXT_PACE)) s.text = DEFAULT_SETTINGS.text;
     if (!(s.resolution in PIXEL_RATIO)) s.resolution = DEFAULT_SETTINGS.resolution;
+    if (!(s.encounters in ENCOUNTER_RATE)) s.encounters = DEFAULT_SETTINGS.encounters;
     return s;
   } catch {
     return { ...DEFAULT_SETTINGS };

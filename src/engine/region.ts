@@ -118,6 +118,8 @@ export interface Region extends Area {
   /** Add a lamp to the region's shared light pool (a scene's fire), or take a tag's lamps away again. */
   addLamp(l: Lamp): void;
   dropLamps(tag: string): void;
+  /** How far a point is past the reach of the nearest lamp (0 or less: in its light). */
+  pastLamps(x: number, z: number): number;
 }
 
 const inside = (p: PiecePlan, x: number, z: number): boolean => x >= p.ox && x < p.ox + p.cols && z >= p.oz && z < p.oz + p.rows;
@@ -386,6 +388,7 @@ export async function buildRegion(scene: THREE.Scene, night: boolean, r: RegionS
     async idle() { while (building.size) await Promise.allSettled([...building.values()]); },
     addLamp(l) { pool.add(l); },
     dropLamps(tag) { pool.drop(tag); },
+    pastLamps: (x, z) => pool.outside(x, z),
     groundColor(x, z) {
       const p = planAt(x, z);
       if (!p) return null;

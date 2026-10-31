@@ -168,6 +168,10 @@ There's no story file in the repo yet. These come from what is written down:
 | keeper | **the Keeper ("La Llorona")** | the dry creek, the concrete pipe | A tall old cleaning machine. It sweeps the sand at the pipe's mouth at night, and its cracked speaker keens; the town calls it La Llorona. | Seven Flags key; Keepers thread; Beto's lines |
 | sprinkler | **the crawler** | dead fields, yards | An old irrigation robot on four legs, still looking for crops to water. It spits hot dust. | the methodology's routine examples (§4.3) |
 | hauler | **the hauler** | the Lake Road, the White Bowl | A cargo machine twice a Stray's size: treads, a forklift jaw, three red eyes, dragging chains. Its tracks are the big ones Memo has seen around the lake. | Memo's lines |
+| mower | **a Mower** | the Lake Road | A lawn-care Stray: a squat orange robot mower on four wheels, one amber eye, blades underneath. Met on the road at night. | the Strays' list (lawn units), 2026-10-31 |
+| sorter | **a Sorter** | the mall | A warehouse sorting robot as tall as a man: one tread, a long pincer arm, a red scanner bar. Met round the mall at night. | the Strays' list (warehouse sorters), 2026-10-31 |
+| javelina | **a javelina** | the Trail North | A South Texas collared peccary: stocky, bristly, tusks. Charges in pairs. | the brush country, 2026-10-31 |
+| rattler | **a rattlesnake** | the Trail North | A western diamondback, coiled and quick. | the brush country, 2026-10-31 |
 | noonrider | **a Noonrider** | the road north (the Ninety Miles) | A raider who rides the daylight for Halogen: a white cold-rig suit, a mirrored visor, a heat cape, a toll tag, a cattle prod | the Noonriders thread |
 
 **Not decided:**

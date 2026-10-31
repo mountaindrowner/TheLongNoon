@@ -213,6 +213,12 @@ export class LightPool {
     }
   }
   add(l: Lamp): void { this.lamps.push(l); }
+  /** How far (x, z) is from the nearest lamp's light, in units past its reach (0 or less: inside it). */
+  outside(x: number, z: number): number {
+    let best = Infinity;
+    for (const l of this.lamps) best = Math.min(best, Math.hypot(l.pos.x - x, l.pos.z - z) - l.dist * 0.8);
+    return best;
+  }
   /** Take away every lamp a streamed-out map added. */
   drop(tag: string): void { for (let i = this.lamps.length - 1; i >= 0; i--) if (this.lamps[i]!.tag === tag) this.lamps.splice(i, 1); }
   update(t: number, focus: THREE.Vector3): void {
