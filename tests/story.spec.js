@@ -56,7 +56,7 @@ test('the title opens on New game; the old tale is told by the fire, and skippin
   await page.keyboard.press('Escape');
   await until(page, () => window.__LN.mode === 'play' && window.__LN.talking, undefined, 240_000);
   expect(await ln(page, 'step')).toBe('burial');
-  await expect(page.locator('.status.on')).toContainText('Lamp');
+  await expect(page.locator('.status.on')).toContainText('Lamp', { timeout: 60_000 }); // a frame can take seconds in software rendering
   await page.screenshot({ path: info.outputPath('burial.png') });
   expect(errors).toEqual([]);
 });
