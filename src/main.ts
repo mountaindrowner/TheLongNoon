@@ -1545,11 +1545,26 @@ async function roadFight(id: string): Promise<'win' | 'load' | 'ran'> {
   keys.clear();
   sound.growl();
   await ui.fade(true, 160, '#efe6d2');
+  // under the flash, onto the nearest open ground, so nothing stands between the fight and its camera
+  const spot = openGround(player.x, player.z);
+  if (spot) { player.place(spot[0], cur.area.ground(spot[0], spot[1]), spot[1]); kitActor?.place(spot[0] + 0.9, cur.area.ground(spot[0] + 0.9, spot[1] + 0.4), spot[1] + 0.4); }
   await ui.fade(false, 200);
   const r = await fightHere(id);
   if (r === 'win') roadFind();
   roadGrace = 25; roadLast = null; roadBusy = false;
   return r;
+}
+/** The nearest point with clear ground around it: the foes ahead (north), the camera's side behind (south). */
+function openGround(x: number, z: number): [number, number] | null {
+  const clear = (cx: number, cz: number): boolean => {
+    for (let dz = -7; dz <= 6; dz += 1.5) for (let dx = -4.5; dx <= 4.5; dx += 1.5) if (cur.area.blocked(cx + dx, cz + dz, 0.3)) return false;
+    return true;
+  };
+  for (let r = 0; r <= 16; r += 2) for (let k = 0; k < (r ? 12 : 1); k++) {
+    const a = (k / 12) * Math.PI * 2, cx = x + Math.cos(a) * r, cz = z + Math.sin(a) * r;
+    if (clear(cx, cz)) return [cx, cz];
+  }
+  return null;
 }
 /** What a win turns up: a cup of water about half the time, now and then a tin of white. */
 function roadFind(): void {

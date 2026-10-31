@@ -1,0 +1,88 @@
+{
+  "source": "pixellab",
+  "endpoint": "v2/create-character-pro",
+  "body": {
+    "description": "a Sorter, an old-world warehouse robot: a narrow boxy body on a single rubber tread, one long jointed mechanical arm with a two-finger gripper, a red scanner light bar across its flat head, chipped blue-and-white paint, a faded barcode label on its side. no humans, no rider",
+    "style_description": "modern indie action-adventure pixel art: chunky stylized proportions, big bold readable silhouette, saturated colours, lineless with strong graphic light and shadow shapes, expressive and punchy",
+    "method": "create_with_style",
+    "view": "low top-down",
+    "image_size": {
+      "width": 64,
+      "height": 64
+    },
+    "no_background": true,
+    "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
+  },
+  "character_id": "2badc25f-6581-4def-85aa-0608cce642e6",
+  "anims": {
+    "idle": {
+      "animation_group_id": "329a2b51-a501-4ac4-ac71-7ad449191930",
+      "fps": 5,
+      "body": {
+        "character_id": "2badc25f-6581-4def-85aa-0608cce642e6",
+        "mode": "v3",
+        "action_description": "idle: swaying on its tread, red scanner bar sweeping side to side, claw opening and closing",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "f60c7981-b851-47f2-999f-4ee7905fa4c7",
+      "fps": 11,
+      "body": {
+        "character_id": "2badc25f-6581-4def-85aa-0608cce642e6",
+        "mode": "v3",
+        "action_description": "rolling forward on its single tread, arm swinging",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "ee480f7c-a782-4414-a5b6-41e7097ff0ba",
+      "fps": 12,
+      "body": {
+        "character_id": "2badc25f-6581-4def-85aa-0608cce642e6",
+        "mode": "v3",
+        "action_description": "swinging its long arm down hard and snapping the pincer claw shut in front of it, then pulling back",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "81063d04-92c9-4f9b-b2d6-6e325e84bbe3",
+      "fps": 10,
+      "body": {
+        "character_id": "2badc25f-6581-4def-85aa-0608cce642e6",
+        "mode": "v3",
+        "action_description": "rocking back on its tread from a hit, scanner flickering, sparks from the cut cables",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
+  "at": "2026-10-31T21:18:39.991Z"
+}

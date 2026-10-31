@@ -514,7 +514,7 @@
         "id": "mower1",
         "name": "Mower",
         "sprite": "mower",
-        "height": 0.7,
+        "height": 0.9,
         "spd": 9,
         "parts": [
           {
@@ -539,7 +539,7 @@
         "id": "mower2",
         "name": "Mower",
         "sprite": "mower",
-        "height": 0.7,
+        "height": 0.9,
         "spd": 9,
         "parts": [
           {
@@ -776,7 +776,7 @@
         "id": "rattler",
         "name": "Rattlesnake",
         "sprite": "rattler",
-        "height": 0.45,
+        "height": 0.55,
         "spd": 15,
         "parts": [
           {
@@ -985,7 +985,7 @@
         "id": "mower1",
         "name": "Mower",
         "sprite": "mower",
-        "height": 0.7,
+        "height": 0.9,
         "spd": 9,
         "parts": [
           {

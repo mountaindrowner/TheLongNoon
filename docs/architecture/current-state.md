@@ -657,6 +657,8 @@ system with simple rewards, with more to come later … and make enemy pixel fig
   - not in the first 20 units walked into a place, nor the first 25 after a fight.
 - **How often:** each unit walked in the dark has a 1 in 40 chance (Options: *Fights on the road*: Normal; Fewer
   is 1 in 90; None).
+- **Staging:** under the flash that starts a fight, Juno and Kit step onto the nearest open ground, so no wall or
+  thicket stands between the fight and its camera.
 - **Running:** these can be run from, about 70% a try; a failed try spends the turn. The story's fights still
   can't be.
 - **Rewards (simple, more later):** a win turns up a cup of water about half the time, and now and then a tin of
