@@ -346,7 +346,7 @@
         "attack",
         "hurt"
       ],
-      "desc": "a Sorter, an old-world warehouse sorting robot as tall as a man: a narrow body on a single rubber tread, one long jointed arm ending in a pincer claw, a red scanner bar glowing across its head, chipped blue-and-white paint, a faded barcode stencil, dangling cut cables"
+      "desc": "a Sorter, an old-world warehouse robot: a narrow boxy body on a single rubber tread, one long jointed mechanical arm with a two-finger gripper, a red scanner light bar across its flat head, chipped blue-and-white paint, a faded barcode label on its side"
     },
     "javelina": {
       "kind": "creature",
