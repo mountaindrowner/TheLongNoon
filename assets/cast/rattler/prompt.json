@@ -14,6 +14,75 @@
     "style_character_id": "d8dd94ff-62b8-482f-a3ce-31e888d3ceb1"
   },
   "character_id": "901225ef-8e00-43c8-98c9-ae960a680175",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "1bcbd952-befb-4701-9934-705436af4310",
+      "fps": 5,
+      "body": {
+        "character_id": "901225ef-8e00-43c8-98c9-ae960a680175",
+        "mode": "v3",
+        "action_description": "idle: coiled, head swaying slowly, tongue flicking, tail rattle shaking",
+        "frame_count": 8,
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "75d9f179-4c89-4056-a7ca-541750555c0e",
+      "fps": 11,
+      "body": {
+        "character_id": "901225ef-8e00-43c8-98c9-ae960a680175",
+        "mode": "v3",
+        "action_description": "slithering forward in S-curves, head low",
+        "frame_count": 8,
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "4b56ea03-12eb-4607-a529-ccf3df9348c3",
+      "fps": 12,
+      "body": {
+        "character_id": "901225ef-8e00-43c8-98c9-ae960a680175",
+        "mode": "v3",
+        "action_description": "striking forward fast from the coil, jaws wide, then snapping back into the coil",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "4d51631a-f9bb-49b6-bef0-80734a5914dc",
+      "fps": 10,
+      "body": {
+        "character_id": "901225ef-8e00-43c8-98c9-ae960a680175",
+        "mode": "v3",
+        "action_description": "recoiling and writhing from a hit, coils tightening",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-31T20:56:15.484Z"
 }

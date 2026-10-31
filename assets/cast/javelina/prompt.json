@@ -15,6 +15,86 @@
     "template_id": "dog"
   },
   "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
-  "anims": {},
+  "anims": {
+    "idle": {
+      "animation_group_id": "5ee93076-a9db-4218-a4bc-09d0e2849002",
+      "fps": 5,
+      "body": {
+        "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+        "template_animation_id": "idle",
+        "animation_name": "idle",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "walk": {
+      "animation_group_id": "a49391c0-8501-4f33-b745-a9bebfe71df5",
+      "fps": 11,
+      "body": {
+        "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+        "template_animation_id": "walk-8-frames",
+        "animation_name": "walk",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "run": {
+      "animation_group_id": "8bcd3960-e446-4a61-840e-cf54e3b98ea7",
+      "fps": 14,
+      "body": {
+        "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "attack": {
+      "animation_group_id": "2c2d3781-1ba3-4796-867c-a04dfad11ddf",
+      "fps": 12,
+      "body": {
+        "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+        "mode": "v3",
+        "action_description": "charging forward head down, tusks first, then skidding back",
+        "frame_count": 8,
+        "animation_name": "attack",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    },
+    "hurt": {
+      "animation_group_id": "4d8c6015-a72f-4aaa-bb1e-c87fb3886dd4",
+      "fps": 10,
+      "body": {
+        "character_id": "b43ae64d-8fc9-46b8-8f8d-b7cad7c993f8",
+        "mode": "v3",
+        "action_description": "squealing and flinching back from a hit, bristles up",
+        "frame_count": 8,
+        "animation_name": "hurt",
+        "directions": [
+          "south",
+          "east",
+          "north",
+          "west"
+        ]
+      }
+    }
+  },
   "at": "2026-10-31T20:47:59.905Z"
 }
