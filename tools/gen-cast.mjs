@@ -37,7 +37,7 @@ const COST = { figure: 15, template: 4, custom: 4, portrait: 17 };
 // animations in four directions (the owner, 2026-10-27): front, back and both sides
 const DIRS4 = ['south', 'east', 'north', 'west'];
 // people walk and breathe on PixelLab's templates; animals on four legs use a quadruped skeleton; the rest are animated from text
-const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog', dog: 'dog', javelina: 'dog' };
+const BODY = { person: 'mannequin', goat: 'dog', goat2: 'dog', goat3: 'dog', pancha: 'dog', coyote: 'dog', coyote2: 'dog', dog: 'dog' };
 /** The four-legged skeleton has its own templates (idle, walk, run; no attack). */
 const DOG = { idle: 'idle', walk: 'walk-8-frames', run: 'running-8-frames' };
 const ANIM = {
@@ -81,7 +81,12 @@ const CUSTOM = {
     attack: 'swinging its long arm down hard and snapping the pincer claw shut in front of it, then pulling back',
     hurt: 'rocking back on its tread from a hit, scanner flickering, sparks from the cut cables',
   },
-  javelina: { attack: 'charging forward head down, tusks first, then skidding back', hurt: 'squealing and flinching back from a hit, bristles up' },
+  // drawn from text, not on the four-legged skeleton (that made it a dog in the run, and a size bigger standing)
+  javelina: {
+    idle: 'idle: standing on four short thin legs, snout low and sniffing, bristles twitching along its back', walk: 'trotting forward on four short thin legs, head low, body rocking',
+    run: 'charging forward at a fast stiff-legged trot, head down, tusks first',
+    attack: 'charging forward head down, tusks first, then skidding back', hurt: 'squealing and flinching back from a hit, bristles up',
+  },
   rattler: {
     idle: 'idle: coiled, head swaying slowly, tongue flicking, tail rattle shaking', walk: 'slithering forward in S-curves, head low',
     attack: 'striking forward fast from the coil, jaws wide, then snapping back into the coil',
